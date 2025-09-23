@@ -1,9 +1,9 @@
-# Product Requirements Document (PRD): Car Rental Platform  
+# Product Requirements Document (PRD) for NotionRides:
 
 **Team Name:** Notion  
 **Developed for:** QA Circle Hack  
 
-**Product Name:** NotionRides  
+**Product Name:** NotionRides  (Car Rental Platform)
 **Version:** 1  
 
 ---
