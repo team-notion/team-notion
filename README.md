@@ -240,7 +240,7 @@ If an account holder reserves the same car while it’s soft-reserved by a guest
 
 **Channels:**  
 - Email (resend email, firebase)  
-- In-app notification (push notification, firebase...)  
+- In-app notification (firebase)  
 
 ---
 
@@ -257,10 +257,10 @@ If an account holder reserves the same car while it’s soft-reserved by a guest
 | Category        | Requirement |
 |-----------------|-------------|
 | Frontend        | React.js, React Query for query, Tailwind CSS for styling, React icons for icons |
-| Backend         | Python/Django - to be concluded |
-| Database        | PostgreSQL or MongoDB for cars, reservations, users. to be concluded |
+| Backend         | Laravel |
+| Database        | PostgreSQL |
 | Authentication  | Firebase Auth for secure login sessions. |
-| Payment Gateway | Stripe/PayPal integration. to be concluded |
+| Payment Gateway | Stripe/PayPal/Paystack integration. to be concluded |
 | Notifications   | Firebase Push Notifications. |
 | Hosting         | Vercel / Render for backend & frontend deployment. |
 | Security        | HTTPS for all communications; encrypted storage for sensitive data (driver’s license, payment methods). |
