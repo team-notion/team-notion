@@ -278,7 +278,7 @@ If an account holder reserves the same car while it’s soft-reserved by a guest
 
 | Category        | Requirement                                                                                             |
 | --------------- | ------------------------------------------------------------------------------------------------------- |
-| Frontend        | React.js, React Query for query, Tailwind CSS for styling, React icons for icons                        |
+| Frontend        | React.js, React Query for data fetching and caching , Tailwind CSS for styling, React icons for icons                        |
 | Backend         | Laravel                                                                                                 |
 | Database        | PostgreSQL                                                                                              |
 | Authentication  | Firebase Auth for secure login sessions.                                                                |
