@@ -3,5 +3,5 @@
 ## Description
 ...
 
-## Endpoints
+## API Endpoints
 ...
