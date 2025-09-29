@@ -1,5 +1,12 @@
+import BusinessSignup from "./businessSignup";
+import Signup from "./signup";
+
 const Home = () => {
-  return <div>Home</div>;
+  return (
+    <div>
+      <Signup />
+    </div>
+  );
 };
 
 export default Home;
