@@ -124,7 +124,7 @@ System should validate user input and send verification email.
 Customer Profile Management: User should be able to:  
 - Update profile information (name, phone, email, address)  
 - Upload driver’s licence or enter driver’s license ID  
-- Add and manage payment methods – Users can add a credit/debit card, PayPal account, or stripe.  
+- Add and manage payment methods – Users can add a credit/debit card, Stripe.  
 
 Customers Account Login: User should be able to login to an account via:  
 - Email  
@@ -260,7 +260,7 @@ If an account holder reserves the same car while it’s soft-reserved by a guest
 | Backend         | Laravel |
 | Database        | PostgreSQL |
 | Authentication  | Firebase Auth for secure login sessions. |
-| Payment Gateway | Stripe/PayPal/Paystack integration. to be concluded |
+| Payment Gateway | Stripe integration |
 | Notifications   | Firebase Push Notifications. |
 | Hosting         | Vercel / Render for backend & frontend deployment. |
 | Security        | HTTPS for all communications; encrypted storage for sensitive data (driver’s license, payment methods). |
@@ -281,14 +281,16 @@ This PRD outlines NotionRides streamlined car rental platform tailored to a sing
 | S/N | Name                      | Role | 
 |-----|---------------------------|------|
 | 1   | Odegha Clementina         | PM   | 
-| 2   | Ogbuefi Ikemsinachi       | PD   | 
-| 3   | Shalom Nwachukwu-kanu     | PD   |
-| 4   | Grace Nzubechukwu Okorie  | PD   |
-| 5   | Obaloluwa Tubi            | FE   |
-| 6   | Huncho Sherif             | FE   |
-| 7   | George Udonte             | FE   |
-| 8   | Niwagaba Clever           | BE   |
-| 9   | Jethro Ayegbe             | BE   |
+| 2   | Beatrice Damina           | PM   | 
+| 3   | Ogbuefi Ikemsinachi       | PD   | 
+| 4   | Shalom Nwachukwu-kanu     | PD   |
+| 5   | Grace Nzubechukwu Okorie  | PD   |
+| 6   | Obaloluwa Tubi            | FE   |
+| 7   | Huncho Sherif             | FE   |
+| 8   | George Udonte             | FE   |
+| 9   | Niwagaba Clever           | BE   |
+| 10   | Jethro Ayegbe            | BE   |
+
 
 ---
 
