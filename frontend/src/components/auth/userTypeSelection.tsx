@@ -16,10 +16,10 @@ const UserTypeSelection = ({ onNext }: UserTypeSelectionProps) => {
   return (
     <>
       <div className="text-center mb-8">
-        <h1 className="text-3xl md:text-2xl font-semibold text-[#000000] mb-4">
+        <h1 className="text-2xl font-semibold text-[#000000] mb-4">
           Start Your Journey With Us!
         </h1>
-        <p className="text-gray-600 text-base">
+        <p className="text-gray-600 text-sm md:text-base leading-snug">
           Tell us if you're an Owner or a Customer so we can tailor the experience for you
         </p>
       </div>
@@ -30,8 +30,8 @@ const UserTypeSelection = ({ onNext }: UserTypeSelectionProps) => {
           <div className="flex items-center h-6 mt-1">
             <input type="radio" name="userType" value="owner" checked={selectedOption === "owner"} onChange={(e) => setSelectedOption(e.target.value)} className="w-3 h-3 text-gray-600 border-gray-300 focus:ring-gray-500" />
           </div>
-          <div className="flex-1 md:flex gap-1 md:gap-2">
-            <div className="text-lg font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
+          <div className="flex-1 md:flex md:gap-2">
+            <div className="text-base md:text-lg font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
               Business Owner
             </div>
             <div className="text-sm italic text-gray-500 mt-1">
@@ -45,8 +45,8 @@ const UserTypeSelection = ({ onNext }: UserTypeSelectionProps) => {
           <div className="flex items-center h-6 mt-1">
             <input type="radio" name="userType" value="customer" checked={selectedOption === "customer"} onChange={(e) => setSelectedOption(e.target.value)} className="w-3 h-3 text-gray-600 border-gray-300 focus:ring-gray-500" />
           </div>
-          <div className="flex-1 md:flex gap-1 md:gap-2">
-            <div className="text-lg font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
+          <div className="flex-1 md:flex md:gap-2">
+            <div className="text-base md:text-lg font-semibold text-gray-900 group-hover:text-gray-600 transition-colors">
               Customer
             </div>
             <div className="text-sm italic text-gray-500 mt-1">

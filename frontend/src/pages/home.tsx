@@ -1,4 +1,3 @@
-import BusinessSignup from "./businessSignup";
 import Signup from "./signup";
 
 const Home = () => {
