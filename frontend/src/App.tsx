@@ -1,10 +1,11 @@
-import Home from "./pages/home";
+import { RouterProvider } from "react-router";
+import routes from "./routes";
 
 const App = () => {
   return (
-    <div className="bg-amber-700 text-yellow-200">
-      <Home />
-    </div>
+    <>
+      <RouterProvider router={routes} />
+    </>
   );
 };
 

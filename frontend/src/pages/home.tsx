@@ -1,8 +1,10 @@
+import BusinessSignup from "./businessSignup";
+import Signup from "./signup";
+
 const Home = () => {
   return (
     <div>
-      <h1>Home</h1>
-      <p>Notion Rides</p>
+      <Signup />
     </div>
   );
 };
