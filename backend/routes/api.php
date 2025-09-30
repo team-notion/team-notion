@@ -4,7 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 
-Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register/customer', [AuthController::class, 'registerCustomer']);
+Route::post('/register/business', [AuthController::class, 'registerBusinessOwner']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
