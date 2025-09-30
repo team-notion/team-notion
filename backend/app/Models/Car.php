@@ -8,13 +8,22 @@ class Car extends Model
 {
     protected $fillable = [
         'owner_id',
-        'make',
         'model',
         'type',
-        'price_per_day',
-        'availability_start',
-        'availability_end',
-        'rules'
+        'year_of_manufacture',
+        'daily_price',
+        'photos',
+        'availability_dates',
+        'rental_rules',
+        'deposit',
+        'deposit_percentage',
+        'cutoff_hours',
+    ];
+
+    protected $casts = [
+        'photos' => 'array',
+        'availability_dates' => 'array',
+        'deposit_percentage' => 'boolean',
     ];
 
     public function owner()
