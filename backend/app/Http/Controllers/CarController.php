@@ -18,6 +18,11 @@ class CarController extends Controller
         return response()->json($cars);
     }
 
+    public function myCars(Request $request)
+    {
+        return response()->json($request->user()->cars);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -25,7 +30,7 @@ class CarController extends Controller
             'type' => 'required|string|max:100',
             'year_of_manufacture' => 'required|digits:4|integer|min:1900|max:' . date('Y'),
             'daily_price' => 'required|numeric|min:0',
-            'photos.*' => 'required|image|max:2048',
+            'photos.*' => 'nullable|image|max:2048',
             'availability_dates' => 'nullable|array',
             'rental_rules' => 'nullable|string',
             'deposit' => 'nullable|numeric|min:0',
@@ -113,5 +118,21 @@ class CarController extends Controller
         $car->delete();
 
         return response()->json(['message' => 'Car deleted successfully']);
+    }
+
+    public function removePhoto(Car $car, Request $request)
+    {
+        $this->authorize('update', $car);
+
+        $request->validate(['path' => 'required|string']);
+
+        $photos = $car->photos ?? [];
+        $photos = array_filter($photos, fn($p) => $p !== $request->path);
+
+        Storage::disk('public')->delete($request->path);
+
+        $car->update(['photos' => array_values($photos)]);
+
+        return response()->json(['message' => 'Photo removed successfully']);
     }
 }
