@@ -111,6 +111,27 @@ class CarController extends Controller
         ]);
     }
 
+    public function show(Car $car)
+    {
+        // $car->load('owner');
+
+        return response()->json([
+            'id' => $car->id,
+            'owner_id' => $car->owner_id,
+            'model' => $car->model,
+            'type' => $car->type,
+            'year_of_manufacture' => $car->year_of_manufacture,
+            'daily_price' => $car->daily_price,
+            'photos' => $car->photos ?? [],
+            'availability_dates' => $car->availability_dates ?? [],
+            'rental_rules' => $car->rental_rules,
+            'deposit' => $car->deposit,
+            'deposit_percentage' => $car->deposit_percentage,
+            'cutoff_hours' => $car->cutoff_hours,
+            'created_at' => $car->created_at,
+            'updated_at' => $car->updated_at,
+        ]);
+    }
 
     public function destroy(Car $car)
     {
