@@ -5,22 +5,24 @@ import BusinessSignUpForm from "./../components/auth/businessSignUpForm";
 import VerifyEmail from "./../components/auth/verifyEmail";
 
 const Signup = () => {
-  const [currentStep, setCurrentStep] = useState(1)
-  const [userType, setUserType] = useState<string>("")
+  const [currentStep, setCurrentStep] = useState(1);
+  const [userType, setUserType] = useState<string>("");
+  const [userEmail, setUserEmail] = useState<string>("");
 
   const handleUserTypeNext = (selectedUserType: string) => {
     setUserType(selectedUserType)
     setCurrentStep(2)
   }
 
-  const handleBusinessSignupNext = () => {
-    setCurrentStep(3)
-    console.log("Business signup completed, moving to next step")
+  const handleBusinessSignupNext = (email: string) => {
+    setUserEmail(email);
+    setCurrentStep(3);
+    console.log("Business signup completed, moving to next step");
   }
 
   const handleVerifyEmailNext = () => {
-    console.log("Business email verified, moving to next landing page")
-    alert("Business email verified, moving to next landing page")
+    console.log("Business email verified, moving next to landing page");
+    alert("Business email verified, moving next to landing page");
   }
   
   return (
@@ -33,7 +35,7 @@ const Signup = () => {
             <p className="text-gray-600">Customer signup form coming soon...</p>
           </div>
         )}
-        {currentStep === 3 && <VerifyEmail onNext={handleVerifyEmailNext} />}
+        {currentStep === 3 && <VerifyEmail email={userEmail} onNext={handleVerifyEmailNext} />}
       </AuthLayout>
   )
 }

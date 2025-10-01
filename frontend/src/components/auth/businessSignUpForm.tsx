@@ -3,13 +3,14 @@ import { PiEyeDuotone } from "react-icons/pi";
 import { PiEyeSlashDuotone } from "react-icons/pi";
 
 interface BusinessSignUpFormProps {
-  onNext?: () => void
+  onNext?: (email: string) => void
 }
 
 const BusinessSignUpForm = ({ onNext }: BusinessSignUpFormProps) => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [email, setEmail] = useState("");
 
   const handleNext = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -19,7 +20,7 @@ const BusinessSignUpForm = ({ onNext }: BusinessSignUpFormProps) => {
     setTimeout(() => {
       setLoading(false)
       if (onNext) {
-        onNext();
+        onNext(email);
       }
     }, 2000)
   };
@@ -41,7 +42,7 @@ const BusinessSignUpForm = ({ onNext }: BusinessSignUpFormProps) => {
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">Email</label>
-          <input type="email" placeholder='Enter email' required className="bg-[#E9ECF2] text-[#5C5C5C] text-sm border border-gray-300 p-2 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
+          <input type="email" placeholder='Enter email' value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-[#E9ECF2] text-[#5C5C5C] text-sm border border-gray-300 p-2 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">Password</label>
