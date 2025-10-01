@@ -12,7 +12,7 @@ Route::get('/', function () {
 
 // routes/api.php
 
-Route::post('/register/customer', [AuthController::class, 'registerCustomer']);
+Route::post('/register/customer', [AuthController::class, 'registerCustomer'])->name('api.register.customer');
 Route::post('/register/business', [AuthController::class, 'registerBusinessOwner']);
 Route::post('/login', [AuthController::class, 'login']);
 

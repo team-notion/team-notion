@@ -6,7 +6,7 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 
-Route::post('/register/customer', [AuthController::class, 'registerCustomer']);
+Route::post('/register/customer', [AuthController::class, 'registerCustomer'])->name('api.register.customer');
 Route::post('/register/business', [AuthController::class, 'registerBusinessOwner']);
 Route::post('/login', [AuthController::class, 'login']);
 

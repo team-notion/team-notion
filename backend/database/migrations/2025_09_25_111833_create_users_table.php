@@ -19,6 +19,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('phone')->unique();
             $table->foreignId('user_type')->constrained('user_types')->cascadeOnDelete();
+            $table->string('username')->nullable();
+            $table->string('business_name')->nullable();
             $table->string('driver_license')->nullable();
             $table->timestamps();
         });
