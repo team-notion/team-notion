@@ -1,14 +1,17 @@
 import { useState, useEffect } from 'react';
 import EmailIcon from '../../assets/Email Icon.svg';
-import { VerificationInput } from '../ui/VerificationInput';
+import { useNavigate } from 'react-router';
+// import { VerificationInput } from '../ui/VerificationInput';
 
 interface EmailVerificationProps {
+  email: string
   onNext?: () => void
 }
 
-const VerifyEmail = ({ onNext }: EmailVerificationProps) => {
+const VerifyEmail = ({ email, onNext }: EmailVerificationProps) => {
   const [timeLeft, setTimeLeft] = useState(60) // 2 minutes
-  const [code, setCode] = useState("")
+  // const [code, setCode] = useState("")
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (timeLeft <= 0) return
@@ -22,7 +25,7 @@ const VerifyEmail = ({ onNext }: EmailVerificationProps) => {
 
   const handleNext = () => {
     if (onNext) {
-      onNext();
+      navigate('/login')
     }
   };
 
@@ -38,15 +41,15 @@ const VerifyEmail = ({ onNext }: EmailVerificationProps) => {
 
       <div className="text-center mb-8">
         <h1 className="text-2xl font-semibold text-[#000000] mb-4">
-          Verify your email
+          Email verification
         </h1>
         <p className="text-gray-600 text-sm md:text-base leading-snug lg:w-[65%] mx-auto">
-          A 4 digit OTP has been sent to your mail.
+          We sent a mail to {email} Please follow the instructions in the mail to verify your email
         </p>
       </div>
 
       <div className="space-y-4 mx-auto">
-        <VerificationInput onChange={setCode} />
+        {/* <VerificationInput onChange={setCode} /> */}
 
         <p className="text-sm text-center text-gray-500">
           {
@@ -60,14 +63,17 @@ const VerifyEmail = ({ onNext }: EmailVerificationProps) => {
                 <>
                   Didn't get a code? <span className="text-[#175CD3] cursor-pointer hover:underline">Click to resend</span>
                 </>
+              // <button type="button" onClick={handleNext} className="px-8 py-2 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
+              //   Resend mail
+              // </button>
               )
           }
         </p>
       </div>
 
       <div className="flex justify-center mt-4">
-        <button type="button" disabled={code.length !== 4} onClick={handleNext} className="px-8 py-2 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
-          Verify
+        <button type="button" onClick={handleNext} className="px-8 py-2 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
+          Go to Login
         </button>
       </div>
     </>
