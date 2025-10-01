@@ -5,20 +5,18 @@
 
 ## API Endpoints
 
-1...POST /api/register
-{
-  "email": "john@example.com",
-  "phone_number": "256700123456",
-  "password": "secret123",
-  "password_confirmation": "secret123"
-}
+1...Authentication
+  POST /api/register/customer → Register a new customer
+  POST /api/register/business → Register a new business owner
+  POST /api/login → Login with email/phone + password
+  POST /api/logout → Logout
 
-2...POST /api/login
-{
-  "login": "john@example.com",   // OR "256700123456"
-  "password": "secret123"
-}
+2...Profile Management 
+  GET /api/profile → Get user profile
+  PUT /api/profile → Update user profile
 
-3...POST /api/logout
-
+3...Email Verification
+  GET /api/email/verify 
+  GET /api/email/verify/{id}/{hash} → Verify a user’s email
+  POST /api/email/verification-notification → Resend verification link
 
