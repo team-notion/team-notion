@@ -6,11 +6,16 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
+use App\Http\Controllers\CarController;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
 Route::post('/register/customer', [AuthController::class, 'registerCustomer'])->name('api.register.customer');
 Route::post('/register/business', [AuthController::class, 'registerBusinessOwner']);
 Route::post('/login', [AuthController::class, 'login']);
+
+Route::get('/cars', [CarController::class, 'index']);
+Route::get('/cars/{car}', [CarController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
