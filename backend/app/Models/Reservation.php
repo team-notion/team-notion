@@ -11,8 +11,8 @@ class Reservation extends Model
         'user_id',
         'guest_email',
         'status',
-        'reservation_from',
-        'reservation_till'
+        'reserved_from',
+        'reserved_till'
     ];
 
     public function car()

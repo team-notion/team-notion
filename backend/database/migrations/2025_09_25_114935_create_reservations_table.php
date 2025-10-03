@@ -16,9 +16,9 @@ return new class extends Migration
             $table->foreignId('car_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->nullable()->constrained()->cascadeOnDelete();
             $table->string('guest_email')->nullable();
-            $table->enum('status', ['soft_reserve', 'firm_reserve', 'cancelled']);
-            $table->date('reservation_from');
-            $table->date('reservation_till');
+            $table->enum('status', ['pending', 'soft_reserve', 'firm_reserve', 'cancelled']);
+            $table->date('reserved_from');
+            $table->date('reserved_till');
             $table->timestamps();
         });
     }
