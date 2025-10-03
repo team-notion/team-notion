@@ -28,6 +28,7 @@ class CarController extends Controller
         $request->validate([
             'model' => 'required|string|max:255',
             'type' => 'required|string|max:100',
+            'license' => 'required|string|max:50|unique:cars,license',
             'year_of_manufacture' => 'required|digits:4|integer|min:1900|max:' . date('Y'),
             'daily_price' => 'required|numeric|min:0',
             'photos.*' => 'nullable|image|max:2048',

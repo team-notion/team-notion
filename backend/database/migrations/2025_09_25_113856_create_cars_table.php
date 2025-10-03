@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('owner_id')->constrained('users')->cascadeOnDelete();
             $table->string('model');
             $table->string('type');
+            $table->string('license')->unique();
             $table->year('year_of_manufacture');
             $table->decimal('daily_price', 10, 2);
             $table->json('photos');

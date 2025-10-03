@@ -10,6 +10,7 @@ class Car extends Model
         'owner_id',
         'model',
         'type',
+        'license',
         'year_of_manufacture',
         'daily_price',
         'photos',
