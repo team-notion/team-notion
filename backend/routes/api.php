@@ -1,5 +1,7 @@
 <?php
 
+use App\Http\Controllers\CustomerReservationController;
+use App\Http\Controllers\ReservationController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
@@ -14,6 +16,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::prefix('owner')->group(function () {
+        Route::get('/reservations', [ReservationController::class, 'index']);
+        Route::post('/reservations', [ReservationController::class, 'createReservation']);
+        Route::put('/reservations/{reservation}/dates', [ReservationController::class, 'updateReservationDates']);
+        Route::put('/reservations/{reservation}/reassign', [ReservationController::class, 'reassignReservation']);
+        Route::put('/reservations/{reservation}/cancel', [ReservationController::class, 'cancelReservation']);
+    });
 });
 
 Route::get('/email/verify', function () {
@@ -31,3 +41,10 @@ Route::post('/email/verification-notification', function (Request $request) {
 
     return back()->with('message', 'Verification link sent!');
 })->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+
+Route::prefix('customer')->group(function () {
+    Route::middleware('auth:sanctum')->post('/reservations', [CustomerReservationController::class, 'firmReserve']);
+    Route::post('/reservations/guest', [CustomerReservationController::class, 'softReserve']);
+    Route::middleware('auth:sanctum')->put('/reservations/{reservation}', [CustomerReservationController::class, 'modifyReservation']);
+    Route::middleware('auth:sanctum')->put('/reservations/{reservation}/cancel', [CustomerReservationController::class, 'cancelReservation']);
+});
