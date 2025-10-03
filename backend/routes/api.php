@@ -14,6 +14,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::prefix('owner')->group(function () {
+        Route::get('/reservations', [ReservationController::class, 'index']);
+        Route::post('/reservations', [ReservationController::class, 'createReservation']);
+        Route::put('/reservations/{reservation}/dates', [ReservationController::class, 'updateReservationDates']);
+        Route::put('/reservations/{reservation}/reassign', [ReservationController::class, 'reassignReservation']);
+        Route::put('/reservations/{reservation}/cancel', [ReservationController::class, 'cancelReservation']);
+    })
 });
 
 Route::get('/email/verify', function () {
