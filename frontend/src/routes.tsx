@@ -4,6 +4,7 @@ import Signup from "./pages/signup";
 import Login from "./pages/login";
 import BusinessDashboard from "./pages/businessDashboard";
 import BusinessDashboardLayout from "./components/layout/businessDashboardLayout";
+import LandingPage from "./pages/LandingPage";
 
 const routes = createBrowserRouter([
   {
@@ -17,6 +18,10 @@ const routes = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+      path: "/landing",
+      element: <LandingPage />
   },
   {
     path: "/business-dashboard",
