@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useNavigate } from "react-router";
 import { PiEyeSlashDuotone, PiEyeDuotone } from 'react-icons/pi';
 import CustomCheckbox from "../ui/Checkbox";
 import { useForm } from "react-hook-form"
 import ErrorHandler from "../ErrorHandler/ErrorHandler";
 
 const UserLogin = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const { register, handleSubmit, formState: { errors } } = useForm<({
@@ -22,6 +24,7 @@ const UserLogin = () => {
 
     setTimeout(() => {
       setLoading(false)
+        navigate('/business-dashboard');
         console.log("Login successful!", data)
         alert("Login successful!")
     }, 2000)
@@ -75,7 +78,7 @@ const UserLogin = () => {
             </button>
           </div>
           <div className=" text-center">
-            <p className="text-xs md:text-sm text-gray-500">Don't have an account? <a href="#" className="text-[#001EB4] font-medium hover:underline">Sign up</a></p>
+            <p className="text-xs md:text-sm text-gray-500">Don't have an account? <a href="/business-signup" className="text-[#001EB4] font-medium hover:underline">Sign up</a></p>
           </div>
         </div>
 
