@@ -4,6 +4,7 @@ import BusinessDashboardActionCard from '../components/BusinessDashboardActionCa
 import { TbEdit } from "react-icons/tb";
 import { ColumnDef } from '@tanstack/react-table';
 import TransactionTable from './../components/ui/TransactionTable';
+import AddCarModal from '../components/AddCarModal';
 
 interface Booking {
   id: string
@@ -155,8 +156,8 @@ const BusinessDashboard = () => {
         id: "action",
         header: "ACTION",
         cell: () => (
-          <button className="text-[#667085] hover:text-[#344054]">
-            <TbEdit className="h-4 w-4" />
+          <button className="text-[#667085] hover:text-[#344054] cursor-pointer">
+            <TbEdit className="size-5" />
           </button>
         ),
       },
@@ -211,11 +212,16 @@ const BusinessDashboard = () => {
             },
           }}
         />
-        <BusinessDashboardActionCard type="fleet" fleetCount={30} onClick={() => setIsManageCarsModalOpen(true)} />
-        <BusinessDashboardActionCard type="add-car" onClick={() => setIsAddCarModalOpen(true)} />
+        <BusinessDashboardActionCard type="fleet" fleetCount={30} onClick={() => { setIsManageCarsModalOpen(true); console.log("Manage Cars Clicked"); }} />
+        <BusinessDashboardActionCard type="add-car" onClick={() => { setIsAddCarModalOpen(true); console.log("Add Car Clicked"); }} />
       </div>
 
       <TransactionTable columns={columns} data={sampleBookings} pageCount={pageCount} pageSize={pagination.pageSize} pageIndex={pagination.pageIndex} isLoading={false} onPaginationChange={setPagination} totalItems={sampleBookings.length} />
+
+      <AddCarModal 
+        isOpen={isAddCarModalOpen} 
+        onClose={() => setIsAddCarModalOpen(false)} 
+      />
     </div>
   )
 }

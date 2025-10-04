@@ -2,7 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import Home from "./pages/home";
 import Signup from "./pages/signup";
 import Login from "./pages/login";
-import BusinessDashboard from "./pages/BusinessDashboard";
+import BusinessDashboard from "./pages/businessDashboard";
 import BusinessDashboardLayout from "./components/layout/businessDashboardLayout";
 
 const routes = createBrowserRouter([
@@ -11,7 +11,7 @@ const routes = createBrowserRouter([
     element: <Home />,
   },
   {
-    path: "/signup",
+    path: "/business-signup",
     element: <Signup />,
   },
   {
@@ -22,6 +22,10 @@ const routes = createBrowserRouter([
     path: "/business-dashboard",
     element: <BusinessDashboardLayout />,
     children: [
+      {
+        path: "",
+        element: <BusinessDashboard />,
+      },
       {
         path: "",
         element: <BusinessDashboard />,

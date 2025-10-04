@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { PiEyeDuotone } from "react-icons/pi";
 import { PiEyeSlashDuotone } from "react-icons/pi";
+import PhoneNumberInput from "../ui/PhoneNumberInput";
 
 interface BusinessSignUpFormProps {
   onNext?: (email: string) => void
@@ -11,6 +12,7 @@ const BusinessSignUpForm = ({ onNext }: BusinessSignUpFormProps) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [email, setEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
   const handleNext = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -43,6 +45,11 @@ const BusinessSignUpForm = ({ onNext }: BusinessSignUpFormProps) => {
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">Email</label>
           <input type="email" placeholder='Enter email' value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-[#E9ECF2] text-[#5C5C5C] text-sm border border-gray-300 p-2 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
+        </div>
+        <div className="mb-4">
+          <label className="block text-sm font-medium mb-2">Phone Number</label>
+          <PhoneNumberInput value={phoneNumber} onValueChange={setPhoneNumber} hasError={false} />
+          {/* <input type="tel" placeholder='Enter phone number' value={phoneNumber} onChange={(e) => setPhoneNumber(e.target.value)} required className="bg-[#E9ECF2] text-[#5C5C5C] text-sm border border-gray-300 p-2 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" /> */}
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">Password</label>

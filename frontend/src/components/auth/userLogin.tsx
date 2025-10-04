@@ -75,7 +75,7 @@ const UserLogin = () => {
             </button>
           </div>
           <div className=" text-center">
-            <p className="text-xs md:text-sm text-gray-500">Don't have an account? <a href="#" className="text-[#001EB4] font-medium hover:underline">Sign up</a></p>
+            <p className="text-xs md:text-sm text-gray-500">Don't have an account? <a href="/business-signup" className="text-[#001EB4] font-medium hover:underline">Sign up</a></p>
           </div>
         </div>
 
