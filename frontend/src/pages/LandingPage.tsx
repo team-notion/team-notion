@@ -8,10 +8,8 @@ import BMW from "../assets/bmw.svg";
 import Venz from "../assets/venz.svg";
 import Porse from "../assets/porse.svg";
 import Rita from "../assets/rita.svg";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Navigation } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/navigation";
+import { CarouselSpacing } from "@/components/CarouselSpacing";
+
 
 const LandingPage = () => {
   const [open, setOpen] = useState(false);
@@ -22,53 +20,7 @@ const LandingPage = () => {
     { value: "90%", label: "Customer repeat" },
   ];
 
-  const cars = [
-    {
-      id: 1,
-      name: "Porsche 719 Cayman",
-      price: "49,000",
-      image: "/venz.svg",
-      transmission: "Manual",
-      rating: 4.5,
-      tank: "Full",
-    },
-    {
-      id: 2,
-      name: "Range Rover SUV",
-      price: "75,000",
-      image: "/range.svg",
-      transmission: "Automatic",
-      rating: 4.8,
-      tank: "Half",
-    },
-    {
-      id: 3,
-      name: "Mini Cooper",
-      price: "68,000",
-      image: "/mini.svg",
-      transmission: "Manual",
-      rating: 4.7,
-      tank: "Full",
-    },
-     {
-      id: 4,
-      name: "Range Rover SUV",
-      price: "75,000",
-      image: "/range.svg",
-      transmission: "Automatic",
-      rating: 4.8,
-      tank: "Half",
-    },
-     {
-      id: 5,
-      name: "Mini Cooper",
-      price: "68,000",
-      image: "/mini.svg",
-      transmission: "Manual",
-      rating: 4.7,
-      tank: "Full",
-    },
-  ];
+  
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -175,8 +127,8 @@ const LandingPage = () => {
       </section>
 
       {/* About Section */}
-      <section className="py-16 bg-white">
-        <div className="container mx-auto flex flex-col md:flex-row items-center shadow-lg rounded-2xl bg-[#FBFCFF] overflow-hidden">
+      <section className="py-16 relative">
+        <div className="container mx-auto flex flex-col md:flex-row items-center shadow-lg rounded-2xl overflow-hidden bg-gradient-to-r from-[#FBFCFF] to-[#001EB4]">
           <div className="w-full md:w-1/2 px-8 py-10">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6 leading-snug">
               About Us
@@ -191,7 +143,7 @@ const LandingPage = () => {
               Book a Car
             </button>
           </div>
-          <div className="w-full md:w-1/2">
+          <div className=" md:w-1/2 absolute right-0">
             <img src={BMW} alt="BMW" className="w-full h-auto object-cover" />
           </div>
         </div>
@@ -219,45 +171,9 @@ const LandingPage = () => {
           <h2 className="text-3xl font-semibold text-[#0D183A] mb-12 text-center">
             Recommended picks
           </h2>
-          <Swiper
-            modules={[Navigation]}
-            spaceBetween={20}
-            slidesPerView={1}
-            navigation
-            breakpoints={{
-              640: { slidesPerView: 2 },
-              1024: { slidesPerView: 3 },
-            }}
-          >
-            {cars.map((car) => (
-              <SwiperSlide key={car.id}>
-                <div className="bg-white border border-[#1B357E] rounded-xl shadow-lg mb-10 p-6">
-                  <img
-                    src={car.image}
-                    alt="Car"
-                    className="rounded-md mb-4 w-full h-48 object-cover"
-                  />
-                  <h3 className="text-xl text-[#0D183A] font-bold">
-                    {car.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Transmission: {car.transmission} | Tank: {car.tank}
-                  </p>
-                  <p className="text-[#0D183A] text-base font-semibold">
-                    {car.rating} ⭐
-                  </p>
-                  <div className="flex items-center justify-between mt-4">
-                    <h2 className="text-xl text-black font-bold">
-                      {car.price}/day
-                    </h2>
-                    <button className="bg-[#F97316] text-white px-4 py-2 rounded-md hover:bg-orange-600">
-                      Rent now
-                    </button>
-                  </div>
-                </div>
-              </SwiperSlide>
-            ))}
-          </Swiper>
+          <div className="flex flex-row items-center justify-center gap-3">
+            <CarouselSpacing />
+          </div>
         </div>
       </section>
 
