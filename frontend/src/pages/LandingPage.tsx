@@ -5,7 +5,6 @@ import Ips from "../assets/ips.svg";
 import Ipsm from "../assets/ipsm.svg";
 import Ipsu from "../assets/ipsu.svg";
 import BMW from "../assets/bmw.svg";
-import Venz from "../assets/venz.svg";
 import Porse from "../assets/porse.svg";
 import Rita from "../assets/rita.svg";
 import { CarouselSpacing } from "@/components/CarouselSpacing";
