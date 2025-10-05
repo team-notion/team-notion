@@ -1,11 +1,11 @@
-import { Card, CardContent } from "./ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import {
   Carousel,
   CarouselContent,
   CarouselItem,
   CarouselNext,
   CarouselPrevious,
-} from "./ui/carousel"
+} from "@/components/ui/carousel"
 
 const cars = [
     {
