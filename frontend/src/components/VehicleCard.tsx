@@ -29,7 +29,7 @@ const VehicleCard = ({ title, price, images, licensePlate, duration, availabilit
     <Card className="w-full max-w-sm pt-0 hover:shadow-md hover:scale-[1.02] transition-transform duration-200 ease-in-out">
       <div className="relative overflow-hidden rounded-t-md">
         <div className="relative aspect-auto bg-gray-200 overflow-hidden">
-          <img src={images[currentImageIndex] || "/placeholder.svg"} alt={title} className="w-full h-full object-cover" />
+          <img src={images[currentImageIndex] || "/placeholder.svg"} alt={title} className="w-full h-full object-cover" loading="lazy" />
         </div>
 
         <div className="absolute top-4 right-4">
@@ -42,8 +42,8 @@ const VehicleCard = ({ title, price, images, licensePlate, duration, availabilit
           ))}
         </div>
       </div>
-      <CardHeader>
-        <div className="flex items-start justify-between">
+      <CardHeader className="px-3 lg:px-5">
+        <div className="flex flex-col lg:flex-row items-start justify-between">
           <CardTitle className="text-xl font-medium">{title}</CardTitle>
           <div className="text-right">
             <span className="text-xl font-medium text-blue-600">${price}</span>
@@ -51,7 +51,7 @@ const VehicleCard = ({ title, price, images, licensePlate, duration, availabilit
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-3 lg:px-5">
         <div className="flex justify-between items-center">
           <span className="text-md">License Plate</span>
           <span className="text-md font-medium">{licensePlate}</span>
@@ -65,7 +65,7 @@ const VehicleCard = ({ title, price, images, licensePlate, duration, availabilit
           <span className="text-md font-medium">{availability}</span>
         </div>
       </CardContent>
-      <CardFooter className="flex justify-between gap-4 pt-0">
+      <CardFooter className="flex justify-between gap-2 lg:gap-4 pt-0">
         <Button onClick={onEdit} className="bg-orange-500 hover:bg-orange-600 text-white h-12 w-[6.5rem] text-lg rounded-2xl cursor-pointer">
           <FiEdit className="h-6 w-6" />
           Edit

@@ -1,11 +1,18 @@
 import { BMW_1, BMW_2, BMW_3, Honda_Civic_1, Honda_Civic_2, Honda_Civic_3, Tesla_1, Tesla_2, Tesla_3, Toyota_Corolla_1, Toyota_Corolla_2, Toyota_Corolla_3 } from "@/assets";
+import ActionModal from "@/components/ActionModal";
+import AddCarModal from "@/components/AddCarModal";
 import CarInventoryCard from "@/components/carInventoryCard";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import VehicleCard from "@/components/VehicleCard";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import { ChevronDownIcon, Plus, SearchIcon } from 'lucide-react';
+import { useState } from "react";
 
 const CarInventory = () => {
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false);
+  const [selectedCarId, setSelectedCarId] = useState<number | null>(null);
+
   const vehicles = [
     {
       id: 1,
@@ -54,11 +61,18 @@ const CarInventory = () => {
   };
 
   const handleDelete = (id: number) => {
+    setSelectedCarId(id);
+    setDeleteModalOpen(true);
     console.log("Delete vehicle:", id)
   };
 
+  const handleDeleteConfirm = () => {
+    console.log("Delete vehicle:", selectedCarId);
+    setSelectedCarId(null);
+  }
+
   return (
-    <div className="space-y-6 px-2 lg:px-4">
+    <div className="space-y-6 px-0 lg:px-4">
       <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3'>  
         <div>
             <h1 className="text-2xl font-semibold text-black leading-9">
@@ -68,7 +82,7 @@ const CarInventory = () => {
               Easily manage your fleet add, edit, or track cars all in one place.
             </p>
         </div>
-        <button type="submit" className="flex items-center px-4 py-3 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-normal rounded-xl transition-colors duration-200 cursor-pointer" >
+        <button type="button" onClick={() => { setIsAddCarModalOpen(true); console.log("Add Car Clicked"); }} className="flex items-center px-4 py-3 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-normal rounded-xl transition-colors duration-200 cursor-pointer" >
           <Plus className="inline mr-2 size-5" />
           Add New Car
         </button>
@@ -93,7 +107,7 @@ const CarInventory = () => {
                   Sort by <ChevronDownIcon className="size-3" />
                 </InputGroupButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="[--radius:0.95rem] bg-white shadow-md p-1 rounded-sm">
+              <DropdownMenuContent align="end" className="[--radius:0.95rem] bg-white shadow-md p-1 rounded-sm z-10">
                 <DropdownMenuItem className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Make</DropdownMenuItem>
                 <DropdownMenuItem className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Model</DropdownMenuItem>
                 <DropdownMenuItem className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Year</DropdownMenuItem>
@@ -108,6 +122,13 @@ const CarInventory = () => {
           <VehicleCard key={vehicle.id} title={vehicle.title} price={vehicle.price} images={vehicle.images} licensePlate={vehicle.licensePlate} duration={vehicle.duration} availability={vehicle.availability} status={vehicle.status} onEdit={() => handleEdit(vehicle.id)} onDelete={() => handleDelete(vehicle.id)} />
         ))}
       </div>
+
+      <AddCarModal 
+        isOpen={isAddCarModalOpen} 
+        onClose={() => setIsAddCarModalOpen(false)} 
+      />
+
+      <ActionModal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Are you sure you want to delete this car?" onConfirm={handleDeleteConfirm} confirmText="Delete" cancelText="Cancel" confirmVariant="danger" />
     </div>
   );
 };
