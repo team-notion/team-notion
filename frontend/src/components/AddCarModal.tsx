@@ -3,10 +3,12 @@ import { IoIosClose } from "react-icons/io";
 import { AiOutlineCar } from "react-icons/ai"
 import { IoImageOutline } from "react-icons/io5";
 import { PiMoneyWavy } from "react-icons/pi";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 
 interface AddCarModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onConfirm: () => void;
 }
 
 interface FormData {
@@ -26,7 +28,7 @@ interface FormData {
   photos: File[];
 }
 
-const AddCarModal = ({ isOpen, onClose }: AddCarModalProps) => {
+const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     make: '',
@@ -105,7 +107,7 @@ const AddCarModal = ({ isOpen, onClose }: AddCarModalProps) => {
     <>
       <dialog open={true} className="modal">
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 lg:p-4">
-          <div className="bg-white rounded-lg w-full max-w-4xl">
+          <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto trick">
             {/* Header */}
             <div className="sticky top-0 bg-[#F3F4F6] px-6 py-4 flex items-center justify-between">
               <div>
@@ -118,7 +120,7 @@ const AddCarModal = ({ isOpen, onClose }: AddCarModalProps) => {
             </div>
 
             {/* Progress Steps */}
-            <div className="px-2 lg:px-6 py-8 max-h-[80vh] overflow-y-auto trick">
+            <div className="px-2 lg:px-6 py-8">
               <div className="flex items-center justify-center mb-8">
                 <div className="flex items-center">
                   <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-semibold ${ currentStep >= 1 ? 'bg-[#1E3A8A] text-white' : 'bg-gray-200 text-gray-500' }`}>
@@ -240,10 +242,10 @@ const AddCarModal = ({ isOpen, onClose }: AddCarModalProps) => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {[1, 2, 3].map((index) => (
-                        <label key={index}  htmlFor={`photo-${index}`} className="aspect-square border-2 border-[#1E3A8A] rounded-xl flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors" >
-                          <input type="file" id={`photo-${index}`} accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files?.[0]; if (file) { console.log(`Photo ${index} selected:`, file.name); } }} />
+                        <label key={index}  htmlFor={`photo-${index}`} className="aspect-video lg:aspect-square border-2 border-[#1E3A8A] rounded-xl flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors" >
+                          <input type="file" id={`photo-${index}`} accept="image/*" className="hidden object-cover" onChange={(e) => { const file = e.target.files?.[0]; if (file) { console.log(`Photo ${index} selected:`, file.name); } }} />
                           <IoImageOutline className="w-16 h-16 text-gray-400" />
                         </label>
                     ))}
@@ -278,7 +280,7 @@ const AddCarModal = ({ isOpen, onClose }: AddCarModalProps) => {
         </div>
       </dialog>
     </>
- );
+  );
 };
 
 export default AddCarModal;

@@ -56,6 +56,11 @@ const CarInventory = () => {
     },
   ];
 
+  const handleAddCarConfirm = () => {
+    console.log("Add new car:");
+    setIsAddCarModalOpen(false);
+  }
+
   const handleEdit = (id: number) => {
     console.log("Edit vehicle:", id)
   };
@@ -82,7 +87,7 @@ const CarInventory = () => {
               Easily manage your fleet add, edit, or track cars all in one place.
             </p>
         </div>
-        <button type="button" onClick={() => { setIsAddCarModalOpen(true); console.log("Add Car Clicked"); }} className="flex items-center px-4 py-3 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-normal rounded-xl transition-colors duration-200 cursor-pointer" >
+        <button type="button" onClick={() => { setIsAddCarModalOpen(true); console.log("Add Car Clicked"); }} className="w-[10.5rem] flex items-center px-4 py-3 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-normal rounded-xl transition-colors duration-200 cursor-pointer" >
           <Plus className="inline mr-2 size-5" />
           Add New Car
         </button>
@@ -123,10 +128,7 @@ const CarInventory = () => {
         ))}
       </div>
 
-      <AddCarModal 
-        isOpen={isAddCarModalOpen} 
-        onClose={() => setIsAddCarModalOpen(false)} 
-      />
+      <AddCarModal isOpen={isAddCarModalOpen} onClose={() => setIsAddCarModalOpen(false)} onConfirm={handleAddCarConfirm} />
 
       <ActionModal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Are you sure you want to delete this car?" onConfirm={handleDeleteConfirm} confirmText="Delete" cancelText="Cancel" confirmVariant="danger" />
     </div>

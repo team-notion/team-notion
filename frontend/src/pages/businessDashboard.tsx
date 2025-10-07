@@ -95,6 +95,11 @@ const BusinessDashboard = () => {
     pageSize: 10,
   })
 
+  const handleAddCarConfirm = () => {
+    console.log("Add new car:");
+    setIsAddCarModalOpen(false);
+  }
+
   const columns = useMemo<ColumnDef<Booking>[]>(
     () => [
       {
@@ -219,10 +224,7 @@ const BusinessDashboard = () => {
 
       <TransactionTable columns={columns} data={sampleBookings} pageCount={pageCount} pageSize={pagination.pageSize} pageIndex={pagination.pageIndex} isLoading={false} onPaginationChange={setPagination} totalItems={sampleBookings.length} />
 
-      <AddCarModal 
-        isOpen={isAddCarModalOpen} 
-        onClose={() => setIsAddCarModalOpen(false)} 
-      />
+      <AddCarModal isOpen={isAddCarModalOpen} onClose={() => setIsAddCarModalOpen(false)} onConfirm={handleAddCarConfirm} />
     </div>
   )
 }
