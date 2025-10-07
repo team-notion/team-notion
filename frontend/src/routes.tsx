@@ -5,6 +5,7 @@ import Login from "./pages/login";
 import BusinessDashboard from "./pages/businessDashboard";
 import BusinessDashboardLayout from "./components/layout/businessDashboardLayout";
 import LandingPage from "./pages/LandingPage";
+import CarInventory from "./pages/carInventory";
 
 const routes = createBrowserRouter([
   {
@@ -24,16 +25,16 @@ const routes = createBrowserRouter([
       element: <LandingPage />
   },
   {
-    path: "/business-dashboard",
+    path: "/",
     element: <BusinessDashboardLayout />,
     children: [
       {
-        path: "",
+        path: "business-dashboard",
         element: <BusinessDashboard />,
       },
       {
-        path: "",
-        element: <BusinessDashboard />,
+        path: "car-inventory",
+        element: <CarInventory />,
       },
     ],
   },
