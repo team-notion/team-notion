@@ -6,6 +6,9 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../components/ui/carousel"
+import { IoPersonOutline } from "react-icons/io5";
+import { BsFillFuelPumpFill } from "react-icons/bs";
+import { FaCarRear } from "react-icons/fa6";
 
 const cars = [
     {
@@ -13,18 +16,19 @@ const cars = [
       name: "Porsche 719 Cayman",
       price: "49,000",
       image: "/venz.svg",
-      transmission: "Manual",
+      icon: FaCarRear ,
+      transmission: "Automatic",
       rating: 4.5,
-      tank: "Full",
+      tank: "100L",
     },
     {
       id: 2,
-      name: "Range Rover SUV",
+      name: "BMW X1 xDrive28i",
       price: "75,000",
-      image: "/range.svg",
+      image: "/bmx.svg",
       transmission: "Automatic",
       rating: 4.8,
-      tank: "Half",
+      tank: "100L",
     },
     {
       id: 3,
@@ -33,7 +37,7 @@ const cars = [
       image: "/mini.svg",
       transmission: "Manual",
       rating: 4.7,
-      tank: "Full",
+      tank: "100L",
     },
      {
       id: 4,
@@ -42,16 +46,25 @@ const cars = [
       image: "/range.svg",
       transmission: "Automatic",
       rating: 4.8,
-      tank: "Half",
+      tank: "100L",
     },
      {
       id: 5,
-      name: "Mini Cooper",
+      name: "2026 Audi RS e-tron® GT",
       price: "68,000",
-      image: "/mini.svg",
+      image: "/audi.svg",
       transmission: "Manual",
       rating: 4.7,
-      tank: "Full",
+      tank: "100L",
+    },
+     {
+      id: 6,
+      name: "BMW X1 xDrive28i",
+      price: "75,000",
+      image: "/bmx.svg",
+      transmission: "Automatic",
+      rating: 4.8,
+      tank: "100L",
     },
   ];
 
@@ -70,12 +83,14 @@ export function CarouselSpacing() {
                     alt="Car"
                     className="rounded-md mb-4 w-full h-48 object-cover"
                   />
-                  <h3 className="text-xl text-[#0D183A] font-bold">
+                  <h3 className="text-xl text-[#0D183A] font-bold mb-3">
                     {car.name}
                   </h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Transmission: {car.transmission} | Tank: {car.tank}
+                  <div className="mb-3">
+                  <p className="text-sm text-black mt-1 flex items-center gap-2">
+                    <IoPersonOutline /> 4  <FaCarRear />{car.transmission}  <BsFillFuelPumpFill /> {car.tank}
                   </p>
+                  </div>
                   <p className="text-[#0D183A] text-base font-semibold">
                     {car.rating} ⭐
                   </p>
@@ -83,7 +98,7 @@ export function CarouselSpacing() {
                     <h2 className="text-xl text-black font-bold">
                       {car.price}/day
                     </h2>
-                    <button className="bg-[#F97316] text-white px-4 py-2 rounded-md hover:bg-orange-600">
+                    <button className="bg-[#F97316] text-white px-4 py-2 rounded-md cursor-pointer hover:bg-orange-600">
                       Rent now
                     </button>
                   </div>
