@@ -80,14 +80,14 @@ const CarInventory = () => {
     <div className="space-y-6 px-0 lg:px-4">
       <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3'>  
         <div>
-            <h1 className="text-2xl font-semibold text-black leading-9">
+            <h1 className="text-xl lg:text-2xl font-semibold text-black leading-9">
               Car Inventory
             </h1>
-            <p className="text-neutral-600 mt-1">
+            <p className="text-sm text-neutral-600 mt-1">
               Easily manage your fleet add, edit, or track cars all in one place.
             </p>
         </div>
-        <button type="button" onClick={() => { setIsAddCarModalOpen(true); console.log("Add Car Clicked"); }} className="w-[10.5rem] flex items-center px-4 py-3 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-normal rounded-xl transition-colors duration-200 cursor-pointer" >
+        <button type="button" onClick={() => { setIsAddCarModalOpen(true); console.log("Add Car Clicked"); }} className="w-[9.5rem] text-sm flex items-center px-4 py-3 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-normal rounded-xl transition-colors duration-200 cursor-pointer" >
           <Plus className="inline mr-2 size-5" />
           Add New Car
         </button>

@@ -158,15 +158,15 @@ const BusinessDashboard = () => {
           return <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status]}`}>{status}</span>
         },
       },
-      {
-        id: "action",
-        header: "ACTION",
-        cell: () => (
-          <button className="text-[#667085] hover:text-[#344054] cursor-pointer">
-            <TbEdit className="size-5" />
-          </button>
-        ),
-      },
+      // {
+      //   id: "action",
+      //   header: "ACTION",
+      //   cell: () => (
+      //     <button className="text-[#667085] hover:text-[#344054] cursor-pointer">
+      //       <TbEdit className="size-5" />
+      //     </button>
+      //   ),
+      // },
     ],
     [],
   )
@@ -222,7 +222,7 @@ const BusinessDashboard = () => {
         <BusinessDashboardActionCard type="add-car" onClick={() => { setIsAddCarModalOpen(true); console.log("Add Car Clicked"); }} />
       </div>
 
-      <TransactionTable columns={columns} data={sampleBookings} pageCount={pageCount} pageSize={pagination.pageSize} pageIndex={pagination.pageIndex} isLoading={false} onPaginationChange={setPagination} totalItems={sampleBookings.length} />
+      <TransactionTable title='Recent Bookings' showButton={true} buttonText="View all booking" columns={columns} data={sampleBookings} pageCount={pageCount} pageSize={pagination.pageSize} pageIndex={pagination.pageIndex} isLoading={false} onPaginationChange={setPagination} totalItems={sampleBookings.length} onButtonClick={() => navigate('/reservation-management')} />
 
       <AddCarModal isOpen={isAddCarModalOpen} onClose={() => setIsAddCarModalOpen(false)} onConfirm={handleAddCarConfirm} />
     </div>
