@@ -3,6 +3,7 @@ import UserTypeSelection from "./../components/auth/userTypeSelection";
 import AuthLayout from './../components/layout/authlayout';
 import BusinessSignUpForm from "./../components/auth/businessSignUpForm";
 import VerifyEmail from "./../components/auth/verifyEmail";
+import CustomerSignUpForm from "./../components/auth/customerSignUpForm";
 
 const Signup = () => {
   const [currentStep, setCurrentStep] = useState(1);
@@ -20,23 +21,26 @@ const Signup = () => {
     console.log("Business signup completed, moving to next step");
   }
 
+  const handleCustomerSignupNext = (email: string) => {
+    setUserEmail(email);
+    setCurrentStep(3);
+    console.log("Customer signup completed, moving to next step");
+  }
+
   const handleVerifyEmailNext = () => {
-    console.log("Business email verified, moving next to landing page");
-    alert("Business email verified, moving next to landing page");
+    const userRole = userType === "owner" ? "Business" : "Customer";
+    const message = `${userRole} email verified, moving next to landing page`;
+    console.log(message);
+    alert(message);
   }
   
   return (
-      <AuthLayout>
-        {currentStep === 1 && <UserTypeSelection onNext={handleUserTypeNext} />}
-        {currentStep === 2 && userType === "owner" && <BusinessSignUpForm onNext={handleBusinessSignupNext} />}
-        {currentStep === 2 && userType === "customer" && (
-          <div className="text-center">
-            <h2 className="text-2xl font-semibold mb-4">Customer Signup</h2>
-            <p className="text-gray-600">Customer signup form coming soon...</p>
-          </div>
-        )}
-        {currentStep === 3 && <VerifyEmail email={userEmail} onNext={handleVerifyEmailNext} />}
-      </AuthLayout>
+    <AuthLayout>
+      {currentStep === 1 && <UserTypeSelection onNext={handleUserTypeNext} />}
+      {currentStep === 2 && userType === "owner" && <BusinessSignUpForm onNext={handleBusinessSignupNext} />}
+      {currentStep === 2 && userType === "customer" && <CustomerSignUpForm onNext={handleCustomerSignupNext} />}
+      {currentStep === 3 && <VerifyEmail email={userEmail} onNext={handleVerifyEmailNext} />}
+    </AuthLayout>
   )
 }
 
