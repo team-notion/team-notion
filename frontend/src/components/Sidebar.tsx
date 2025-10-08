@@ -3,10 +3,10 @@ import { Link, useLocation } from "react-router"
 import { DashboardLogo } from "../assets"
 import { FiCalendar, FiHome, FiSettings } from "react-icons/fi"
 import { HiOutlineLogout } from "react-icons/hi";
-import { MdKeyboardArrowRight, MdKeyboardArrowLeft } from "react-icons/md";
 import { AiOutlineCar } from "react-icons/ai"
 import { TfiBarChartAlt } from "react-icons/tfi";
 import { GoPeople } from "react-icons/go";
+import { Menu, X } from 'lucide-react';
 
 const menuItems = [
     { name: "Dashboard", icon: FiHome, path: "/business-dashboard" },
@@ -44,7 +44,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       )}
 
       <button className={`fixed p-2 cursor-pointer rounded-md shadow-xs top-4 left-4 z-50 lg:hidden`} onClick={() => setIsOpen(!isOpen)}>
-        <MdKeyboardArrowRight className='size-5 text-neutral-700' />
+        <Menu className='size-5 text-neutral-700' />
       </button>
 
       <div
@@ -57,7 +57,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
             <img src={DashboardLogo} alt="Notion Rides" className="size-20 lg:size-24 ml-2" />
 
             <button className={`p-2 cursor-pointer rounded-md shadow-xs top-4 lg:hidden`} onClick={() => setIsOpen(!isOpen)}>
-              <MdKeyboardArrowLeft className='size-5 text-neutral-700' />
+              <X className='size-5 text-neutral-700' />
             </button>
           </div>
 

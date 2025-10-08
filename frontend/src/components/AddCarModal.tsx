@@ -4,6 +4,7 @@ import { AiOutlineCar } from "react-icons/ai"
 import { IoImageOutline } from "react-icons/io5";
 import { PiMoneyWavy } from "react-icons/pi";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { PencilIcon } from "lucide-react";
 
 interface AddCarModalProps {
   isOpen: boolean;
@@ -30,6 +31,9 @@ interface FormData {
 
 const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [mainImage, setMainImage] = useState<string | null>(null);
+  const [thumbnails, setThumbnails] = useState<(string | null)[]>([null, null, null]);
+
   const [formData, setFormData] = useState<FormData>({
     make: '',
     yearOfManufacture: '',
@@ -68,7 +72,7 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
   };
 
   const handleNext = () => {
-    if (currentStep < 3) {
+    if (currentStep < 4) {
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -100,6 +104,26 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
     onClose();
   };
 
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>, index: number | 'main') => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const imageUrl = reader.result as string;
+        if (index === 'main') {
+          setMainImage(imageUrl);
+        } else {
+          setThumbnails(prev => {
+            const newThumbnails = [...prev];
+            newThumbnails[index] = imageUrl;
+            return newThumbnails;
+          });
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   if (!isOpen) return null;
 
 
@@ -109,10 +133,10 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 lg:p-4">
           <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto trick">
             {/* Header */}
-            <div className="sticky top-0 bg-[#F3F4F6] px-6 py-4 flex items-center justify-between">
+            <div className="sticky top-0 bg-[#F3F4F6] px-6 py-4 flex items-center justify-between z-20">
               <div>
                 <h2 className="text-xl font-semibold text-black">Add new car</h2>
-                <p className="text-sm text-gray-600 mt-1">Step {currentStep} of 3</p>
+                <p className="text-sm text-gray-600 mt-1">Step {currentStep} of 4</p>
               </div>
               <button onClick={handleCancel} className="text-red-500 hover:text-red-700 transition-colors cursor-pointer" >
                 <IoIosClose size={30} />
@@ -123,16 +147,20 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
             <div className="px-2 lg:px-6 py-8">
               <div className="flex items-center justify-center mb-8">
                 <div className="flex items-center">
-                  <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-semibold ${ currentStep >= 1 ? 'bg-[#1E3A8A] text-white' : 'bg-gray-200 text-gray-500' }`}>
+                  <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-semibold ${ currentStep >= 1 ? 'bg-[#1E3A8A] text-white' : 'bg-gray-200 text-gray-500' }`}>
                     1
                   </div>
-                  <div className={`w-10 lg:w-24 h-0.5 mx-2 ${ currentStep >= 2 ? 'bg-[#1E3A8A]' : 'bg-gray-300' }`} />
-                  <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-semibold ${ currentStep >= 2 ? 'bg-[#1E3A8A] text-white' : 'bg-gray-200 text-gray-500' }`}>
+                  <div className={`w-9 lg9 md:w-10 md:h-10-24 h-0.5 mx-2 ${ currentStep >= 2 ? 'bg-[#1E3A8A]' : 'bg-gray-300' }`} />
+                  <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-semibold ${ currentStep >= 2 ? 'bg-[#1E3A8A] text-white' : 'bg-gray-200 text-gray-500' }`}>
                     2
                   </div>
-                  <div className={`w-10 lg:w-24 h-0.5 mx-2 ${ currentStep >= 3 ? 'bg-[#1E3A8A]' : 'bg-gray-300' }`} />
-                  <div className={`w-10 h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-semibold ${ currentStep >= 3 ? 'bg-[#1E3A8A] text-white' : 'bg-gray-200 text-gray-500' }`}>
+                  <div className={`w-9 lg9 md:w-10 md:h-10-24 h-0.5 mx-2 ${ currentStep >= 3 ? 'bg-[#1E3A8A]' : 'bg-gray-300' }`} />
+                  <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-semibold ${ currentStep >= 3 ? 'bg-[#1E3A8A] text-white' : 'bg-gray-200 text-gray-500' }`}>
                     3
+                  </div>
+                  <div className={`w-9 lg9 md:w-10 md:h-10-24 h-0.5 ${ currentStep >= 4 ? 'bg-[#1E3A8A]' : 'bg-gray-300' }`} />
+                  <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-semibold ${ currentStep >= 4 ? 'bg-[#1E3A8A] text-white' : 'bg-gray-200 text-gray-500' }`}>
+                    4
                   </div>
                 </div>
               </div>
@@ -235,20 +263,209 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
               {currentStep === 3 && (
                 <div>
                   <div className="flex items-start gap-3 mb-6">
-                    <IoImageOutline className="size-11 text-[#1E3A8A] mt-1" />
+                    <IoImageOutline className="size-11 lg:size-6 text-[#1E3A8A] mt-1" />
                     <div>
                       <h3 className="text-lg lg:text-xl font-semibold text-black mb-1">Upload Car Photo</h3>
                       <p className="text-sm text-gray-600">Put a face to your car, upload your photo and start earning with confidence.</p>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[1, 2, 3].map((index) => (
-                        <label key={index}  htmlFor={`photo-${index}`} className="aspect-video lg:aspect-square border-2 border-[#1E3A8A] rounded-xl flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors" >
-                          <input type="file" id={`photo-${index}`} accept="image/*" className="hidden object-cover" onChange={(e) => { const file = e.target.files?.[0]; if (file) { console.log(`Photo ${index} selected:`, file.name); } }} />
-                          <IoImageOutline className="w-16 h-16 text-gray-400" />
-                        </label>
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {[1, 2, 3, 4, 5].map((index) => (
+                      <label key={index}  htmlFor={`photo-${index}`} className="aspect-video lg:aspect-square border border-gray-300 rounded-xl flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors" >
+                        <input type="file" id={`photo-${index}`} accept="image/*" className="hidden object-cover" onChange={(e) => { const file = e.target.files?.[0]; if (file) { console.log(`Photo ${index} selected:`, file.name); } }} />
+                        <IoImageOutline className="w-16 h-16 text-gray-400" />
+                      </label>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Review Details */}
+              {currentStep === 4 && (
+                <div>
+                  <div className="space-y-6">
+                    <div className='relative'>
+                      <button type='button' onClick={() => setCurrentStep(3)} className="absolute z-10 bg-white -top-1 -right-0 lg:-right-2 lg:top-1 p-2.5 rounded-2xl flex items-center justify-center shadow-md border border-orange-500 hover:bg-orange-50 cursor-pointer transition-colors">
+                        <PencilIcon className="w-4 h-4 text-orange-500" />
+                      </button>
+
+                      <div className='grid grid-cols-1 lg:grid-cols-3 gap-4'>
+                        {/* Main large image */}
+                        <div className="lg:col-span-2">
+                          <div className="aspect-video lg:aspect-[16/10] border border-gray-300 rounded-xl flex items-center justify-center bg-gray-100 overflow-hidden">
+                            {mainImage ? (
+                              <img src={mainImage} alt="Main car" className="w-full h-full object-cover"/>
+                            ) : (
+                              <IoImageOutline className="w-20 h-20 text-gray-400" />
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Side thumbnails */}
+                        <div className="grid grid-cols-1 gap-4">
+                          {[1, 2, 3, 4].map((index) => (
+                            <div key={index} className="relative aspect-video lg:aspect-7/2 border border-gray-300 rounded-xl flex items-center justify-center bg-gray-100 overflow-hidden">
+                              {thumbnails[index - 1] ? (
+                                <img src={thumbnails[index - 1]!} alt={`Thumbnail ${index}`} className="w-full h-full object-cover"/>
+                              ) : (
+                                <IoImageOutline className="w-12 h-12 text-gray-400" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        {/* Edit icon overlay */}
+                      </div>
+                    </div>
+
+                    <h3 className="text-lg font-medium text-black mb-2">Toyota Camry 2025</h3>
+                  </div>
+
+                  <div className='mt-6 divide-y divide-y-neutral-200'>
+                    <div className='flex items-center justify-between'>
+                      <h6 className="text-base font-medium text-black mb-1">Vehicle information</h6>
+                      <button type='button' onClick={() => setCurrentStep(1)} className="bg-white p-2.5 rounded-2xl flex items-center justify-center shadow-md border border-orange-500 hover:bg-orange-50 cursor-pointer transition-colors mb-2">
+                        <PencilIcon className="w-4 h-4 text-orange-500" />
+                      </button>
+                    </div>
+                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 mt-2'>
+                      <div className='space-y-4'>
+                        <div className='flex gap-1'>
+                          <p className="text-xs font-semibold text-black">Make: </p>
+                          <p className="text-xs text-gray-600">Toyota</p>
+                        </div>
+                        <div className='flex gap-1'>
+                          <p className="text-xs font-semibold text-black">Model: </p>
+                          <p className="text-xs text-gray-600">Camry</p>
+                        </div>
+                        <div className='flex gap-1'>
+                          <p className="text-xs font-semibold text-black">Color: </p>
+                          <p className="text-xs text-gray-600">white</p>
+                        </div>
+                        <div className='flex gap-1'>
+                          <p className="text-xs font-semibold text-black">Location: </p>
+                          <p className="text-xs text-gray-600">123 Naija Street, fremont, Ikeja</p>
+                        </div>
+                      </div>
+
+                      <div className='space-y-4'>
+                        <div className='flex gap-1 items-center'>
+                          <p className="text-xs font-semibold text-black">License Plate: </p>
+                          <p className="text-xs text-gray-600">fbbdvlkf</p>
+                        </div>
+                        <div className='flex gap-1 items-center'>
+                          <p className="text-xs font-semibold text-black">Mileage: </p>
+                          <p className="text-xs text-gray-600">20,000</p>
+                        </div>
+                        <div className='flex gap-1 items-center'>
+                          <p className="text-xs font-semibold text-black">Year of manufacture: </p>
+                          <p className="text-xs text-gray-600">2025</p>
+                        </div>
+                        <div className='flex gap-1 items-center'>
+                          <p className="text-xs font-semibold text-black">Available Dates: </p>
+                          <p className="text-xs text-gray-600">Monday - Friday</p>
+                        </div>
+                      </div>
+
+                      <div className='space-y-4'>
+                        <div className='flex gap-1 items-center'>
+                          <p className="text-xs font-semibold text-black">Reservation duration for Guest: </p>
+                          <p className="text-xs text-gray-600">24 hrs</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='mt-6 divide-y divide-y-neutral-200'>
+                    <div className='flex items-center justify-between'>
+                      <h6 className="text-base font-medium text-black mb-1">Price and deposit</h6>
+                      <button type='button' onClick={() => setCurrentStep(2)} className="bg-white p-2.5 rounded-2xl flex items-center justify-center shadow-md border border-orange-500 hover:bg-orange-50 cursor-pointer transition-colors mb-2">
+                        <PencilIcon className="w-4 h-4 text-orange-500" />
+                      </button>
+                    </div>
+                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 mt-2'>
+                      <div className='space-y-4'>
+                        <div className='flex gap-1'>
+                          <p className="text-xs font-semibold text-black">Price: </p>
+                          <p className="text-xs text-gray-600">₦ 49,000/day</p>
+                        </div>
+                        <div className='flex gap-1'>
+                          <p className="text-xs font-semibold text-black">Deposit: </p>
+                          <p className="text-xs text-gray-600">₦ 10,000</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='mt-6 divide-y divide-y-neutral-200'>
+                    <div className='flex items-center justify-between'>
+                      <h6 className="text-base font-medium text-black mb-1">Features</h6>
+                      <button type='button' onClick={() => setCurrentStep(2)} className="bg-white p-2.5 rounded-2xl flex items-center justify-center shadow-md border border-orange-500 hover:bg-orange-50 cursor-pointer transition-colors mb-2">
+                        <PencilIcon className="w-4 h-4 text-orange-500" />
+                      </button>
+                    </div>
+                    <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5 mt-2'>
+                      <div className='space-y-2'>
+                        <div className='flex items-center gap-2'>
+                          <span className='w-1 h-1 bg-black rounded-full'></span>
+                          <p className="text-xs text-gray-600">Bluetooth</p>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <span className='w-1 h-1 bg-black rounded-full'></span>
+                          <p className="text-xs text-gray-600">Gps Navigation</p>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <span className='w-1 h-1 bg-black rounded-full'></span>
+                          <p className="text-xs text-gray-600">Leather Seats</p>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <span className='w-1 h-1 bg-black rounded-full'></span>
+                          <p className="text-xs text-gray-600">Apple carplay</p>
+                        </div>
+                      </div>
+        
+                      <div className='space-y-2'>
+                        <div className='flex items-center gap-2'>
+                          <span className='w-1 h-1 bg-black rounded-full'></span>
+                          <p className="text-xs text-gray-600">USB charging</p>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <span className='w-1 h-1 bg-black rounded-full'></span>
+                          <p className="text-xs text-gray-600">Heated seats</p>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <span className='w-1 h-1 bg-black rounded-full'></span>
+                          <p className="text-xs text-gray-600">Cruise Control</p>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <span className='w-1 h-1 bg-black rounded-full'></span>
+                          <p className="text-xs text-gray-600">Back up Camera</p>
+                        </div>
+                      </div>
+        
+                      <div className='space-y-2'>
+                        <div className='flex items-center gap-2'>
+                          <span className='w-1 h-1 bg-black rounded-full'></span>
+                          <p className="text-xs text-gray-600">Keyless entry</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className='mt-6 divide-y divide-y-neutral-200'>
+                    <div className='flex items-center justify-between'>
+                      <h6 className="text-base font-medium text-black mb-1">Rental Agreement</h6>
+                      <button type='button' onClick={() => setCurrentStep(2)} className="bg-white p-2.5 rounded-2xl flex items-center justify-center shadow-md border border-orange-500 hover:bg-orange-50 cursor-pointer transition-colors mb-2">
+                        <PencilIcon className="w-4 h-4 text-orange-500" />
+                      </button>
+                    </div>
+                    <div className='space-y-2 gap-2 mt-4'>
+                      <p className="text-xs text-gray-600">Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
+                      <p className="text-xs text-gray-600">Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
+                      <p className="text-xs text-gray-600">Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
+                      <p className="text-xs text-gray-600">Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
+                      <p className="text-xs text-gray-600">Lorem ipsum dolor sit amet consectetur adipiscing elit. Quisque faucibus ex sapien vitae pellentesque sem placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam urna tempor. Pulvinar vivamus fringilla lacus nec metus bibendum egestas. Iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.</p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -258,20 +475,20 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
             <div className="sticky bg-white bottom-0 px-6 py-4 flex items-center justify-end gap-4">
               {currentStep === 1 ? (
                 <>
-                  <button onClick={handleCancel} className="px-8 py-3 border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer" >
+                  <button onClick={handleCancel} className="px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer" >
                     Cancel
                   </button>
-                  <button onClick={handleNext} className="px-8 py-3 bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
+                  <button onClick={handleNext} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
                     Next
                   </button>
                 </>
               ) : (
                 <>
-                  <button onClick={handleBack} className="px-8 py-3 border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer" >
+                  <button onClick={handleBack} className={`${currentStep === 4 ? 'hidden' : 'flex'} px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer`} >
                     Back
                   </button>
-                  <button onClick={currentStep === 3 ? handleCancel : handleNext} className="px-8 py-3 bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
-                    {currentStep === 3 ? 'Submit' : 'Next'}
+                  <button onClick={currentStep === 4 ? handleCancel : handleNext} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
+                    {currentStep === 4 ? 'Finish' : 'Next'}
                   </button>
                 </>
               )}

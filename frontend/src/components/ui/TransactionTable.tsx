@@ -13,6 +13,11 @@ export type TransactionTableProps<T extends object> = {
   onPaginationChange: OnChangeFn<PaginationState>;
   onSortingChange?: (sorting: SortingState) => void;
   totalItems: number;
+  title?: string;
+  showButton?: boolean;
+  buttonText?: string;
+  buttonVariant?: 'primary' | 'secondary' | 'danger';
+  onButtonClick?: () => void;
 };
 
 export function TransactionTable<T extends object>({
@@ -24,7 +29,12 @@ export function TransactionTable<T extends object>({
   isLoading,
   onPaginationChange,
   onSortingChange,
-  totalItems, 
+  totalItems,
+  title = "Transactions history",
+  showButton = false,
+  buttonText = "Action",
+  buttonVariant = 'secondary',
+  onButtonClick,
 }: TransactionTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -53,9 +63,22 @@ export function TransactionTable<T extends object>({
     manualSorting: true,
   });
 
+  const buttonStyles = {
+    primary: "px-5 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer",
+    secondary: "px-5 py-3 text-sm border border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer",
+    danger: "px-5 py-3 text-sm border border-red-500 text-red-500 rounded-lg hover:bg-red-50 transition-colors font-medium cursor-pointer",
+  };
+
   return (
     <div className="bg-white rounded-lg border border-[#EAECF0] mt-8 w-full overflow-hidden">
-      <h2 className="text-lg font-medium p-6 text-[#344054] leading-6 font-[Inter]">Transactions history</h2>
+      <div className='flex items-center justify-between p-6'>
+        <h2 className="text-lg font-medium text-[#344054] leading-6 font-[Inter]">{title}</h2>
+        {showButton && (
+          <button onClick={onButtonClick} className={buttonStyles[buttonVariant]} >
+            {buttonText}
+          </button>
+        )}
+      </div>
       <div className="overflow-x-auto w-full">
         <div className="min-w-[1000px]">
           {isLoading ? (
