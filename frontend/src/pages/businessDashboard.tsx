@@ -174,7 +174,7 @@ const BusinessDashboard = () => {
   const pageCount = Math.ceil(sampleBookings.length / pagination.pageSize)
   
   return (
-    <div className='space-y-6 px-2 lg:px-4'>
+    <div className='space-y-6 px-0 lg:px-4'>
       <div>
         <h1 className='text-2xl font-semibold text-black leading-9'>Dashboard</h1>
         <p className='text-neutral-600 mt-1'>Welcome back, Favour</p>

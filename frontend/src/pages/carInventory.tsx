@@ -78,12 +78,12 @@ const CarInventory = () => {
 
   return (
     <div className="space-y-6 px-0 lg:px-4">
-      <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3'>  
+      <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3'>
         <div>
             <h1 className="text-xl lg:text-2xl font-semibold text-black leading-9">
               Car Inventory
             </h1>
-            <p className="text-sm text-neutral-600 mt-1">
+            <p className="text-sm text-[#667085] mt-1">
               Easily manage your fleet add, edit, or track cars all in one place.
             </p>
         </div>

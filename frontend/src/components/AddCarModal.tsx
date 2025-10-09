@@ -3,7 +3,6 @@ import { IoIosClose } from "react-icons/io";
 import { AiOutlineCar } from "react-icons/ai"
 import { IoImageOutline } from "react-icons/io5";
 import { PiMoneyWavy } from "react-icons/pi";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { PencilIcon } from "lucide-react";
 
 interface AddCarModalProps {
@@ -135,7 +134,7 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
             {/* Header */}
             <div className="sticky top-0 bg-[#F3F4F6] px-6 py-4 flex items-center justify-between z-20">
               <div>
-                <h2 className="text-xl font-semibold text-black">Add new car</h2>
+                <h2 className="text-xl font-medium text-black">Add new car</h2>
                 <p className="text-sm text-gray-600 mt-1">Step {currentStep} of 4</p>
               </div>
               <button onClick={handleCancel} className="text-red-500 hover:text-red-700 transition-colors cursor-pointer" >

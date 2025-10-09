@@ -9,11 +9,11 @@ import { GoPeople } from "react-icons/go";
 import { Menu, X } from 'lucide-react';
 
 const menuItems = [
-    { name: "Dashboard", icon: FiHome, path: "/business-dashboard" },
-    { name: "Car Inventory", icon: AiOutlineCar, path: "/car-inventory" },
-    { name: "Reservation Management", icon: FiCalendar, path: "/reservation-management" },
-    { name: "Analytics Dashboard", icon: TfiBarChartAlt, path: "/analytics" },
-    { name: "Customers", icon: GoPeople, path: "/customers" },
+  { name: "Dashboard", icon: FiHome, path: "/business-dashboard" },
+  { name: "Car Inventory", icon: AiOutlineCar, path: "/car-inventory" },
+  { name: "Reservation Management", icon: FiCalendar, path: "/reservation-management" },
+  { name: "Analytics Dashboard", icon: TfiBarChartAlt, path: "/analytics" },
+  { name: "Customers", icon: GoPeople, path: "/customers" },
 ]
 
 
@@ -28,7 +28,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth < 1024) // lg breakpoint
+      setIsMobile(window.innerWidth < 1024);
     }
 
     handleResize()
@@ -83,10 +83,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           </nav>
 
           <div className="px-1 py-4 space-y-3">
-            <Link
-              to="/settings"
-              className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-neutral-200 transition-colors"
-            >
+            <Link to="/settings" className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-neutral-200 transition-colors" >
               <FiSettings className="size-5 shrink-0" />
               <span>Settings</span>
             </Link>

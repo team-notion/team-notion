@@ -71,7 +71,7 @@ export function TransactionTable<T extends object>({
 
   return (
     <div className="bg-white rounded-lg border border-[#EAECF0] mt-8 w-full overflow-hidden">
-      <div className='flex items-center justify-between p-6'>
+      <div className='flex flex-col lg:flex-row items-start lg:items-center justify-between p-6 gap-4'>
         <h2 className="text-lg font-medium text-[#344054] leading-6 font-[Inter]">{title}</h2>
         {showButton && (
           <button onClick={onButtonClick} className={buttonStyles[buttonVariant]} >

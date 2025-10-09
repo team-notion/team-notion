@@ -8,11 +8,11 @@ const BusinessDashboardCards: React.FC<{ data: any }> = ({ data }) => {
   const renderIcon = () => {
     switch (data.type) {
       case "revenue":
-        return <FaArrowTrendUp className="size-5 text-[#10B981]" />;
+        return <FaArrowTrendUp className="size-4.5 lg:size-5 text-[#10B981]" />;
       case "rented cars":
-        return <AiOutlineCar className="size-5 text-[#31488A]" />;
+        return <AiOutlineCar className="size-4.5 lg:size-5 text-[#31488A]" />;
       case "available cars":
-        return <HiOutlineKey className="size-5 text-[#31488A]" />;
+        return <HiOutlineKey className="size-4.5 lg:size-5 text-[#31488A]" />;
       default:
         return null;
     }
@@ -22,7 +22,7 @@ const BusinessDashboardCards: React.FC<{ data: any }> = ({ data }) => {
     <div className="bg-white flex flex-row items-center justify-between rounded-lg hover:shadow-sm border border-[#EAECF0] px-5 py-6 h-full w-auto">
       <div className="flex flex-col gap-3 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs lg:text-sm text-[#667085] font-medium tracking-wide leading-5">
+          <span className="text-sm text-[#667085] font-medium tracking-wide leading-5">
             {data.title}
           </span>
           {renderIcon()}
