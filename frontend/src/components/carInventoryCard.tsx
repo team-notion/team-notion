@@ -1,5 +1,7 @@
+import { Calendar, CalendarCheck2, Clock } from "lucide-react";
 import React from "react";
 import { AiOutlineCar } from "react-icons/ai";
+import { FaArrowTrendUp } from "react-icons/fa6";
 import { HiOutlineKey } from "react-icons/hi";
 
 const CarInventoryCard: React.FC<{ data: any }> = ({ data }) => {
@@ -8,15 +10,23 @@ const CarInventoryCard: React.FC<{ data: any }> = ({ data }) => {
       case "total fleet":
         return (
           <div className="flex gap-0">
-            <AiOutlineCar className="size-6 text-blue-300" />
-            <AiOutlineCar className="size-6 text-blue-500" />
-            <AiOutlineCar className="size-6 text-blue-300" />
+            <AiOutlineCar className="size-4.5 lg:size-5 text-blue-300" />
+            <AiOutlineCar className="size-4.5 lg:size-5 text-blue-500" />
+            <AiOutlineCar className="size-4.5 lg:size-5 text-blue-300" />
           </div>
         );
       case "rented cars":
-        return <AiOutlineCar className="size-6 text-[#31488A]" />;
+        return <AiOutlineCar className="size-4.5 lg:size-5 text-[#31488A]" />;
       case "available cars":
-        return <HiOutlineKey className="size-6 text-[#31488A]" />;
+        return <HiOutlineKey className="size-4.5 lg:size-5 text-[#31488A]" />;
+      case "revenue":
+        return <FaArrowTrendUp className="size-4.5 lg:size-5 text-[#10B981]" />;
+      case "total reservations":
+        return <Calendar className="size-4.5 lg:size-5 text-[#1E3A8A]" />;
+      case "confirmed bookings":
+        return <CalendarCheck2 className="size-4.5 lg:size-5 text-[#10B981]" />;
+      case "pending bookings":
+        return <Clock className="size-4.5 lg:size-5 text-[#FCC757]" />;
       default:
         return null;
     }

@@ -25,8 +25,7 @@ const UserLogin = () => {
     setTimeout(() => {
       setLoading(false)
         navigate('/business-dashboard');
-        console.log("Login successful!", data)
-        alert("Login successful!")
+        console.log("Login successful!", data);
     }, 2000)
   };
 

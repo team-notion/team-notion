@@ -6,6 +6,7 @@ import BusinessDashboard from "./pages/businessDashboard";
 import BusinessDashboardLayout from "./components/layout/businessDashboardLayout";
 import LandingPage from "./pages/LandingPage";
 import CarInventory from "./pages/carInventory";
+import ReservationManagement from "./pages/reservationManagement";
 
 const routes = createBrowserRouter([
   {
@@ -35,6 +36,10 @@ const routes = createBrowserRouter([
       {
         path: "car-inventory",
         element: <CarInventory />,
+      },
+      {
+        path: "reservation-management",
+        element: <ReservationManagement />,
       },
     ],
   },
