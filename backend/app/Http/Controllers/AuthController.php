@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
+
 class AuthController extends Controller
 {
     // Customer Signup
@@ -15,15 +16,15 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => 'required|email|unique:users,email',
-            'phone_number' => 'required|string|unique:users,phone_number',
+            'phone' => 'required|string|unique:users,phone',
             'password' => 'required|string|min:6',
             'username' => 'required|string|max:255|unique:users,username',
         ]);
 
         $user = User::create([
             'email' => $request->email,
-            'phone' => $request->phone_number,
-            'password' => Hash::make($request->password),
+            'phone' => $request->phone,
+            'password' => $request->password,
             'username' => $request->username,
             'user_type' => 'customer',
         ]);
@@ -39,15 +40,15 @@ class AuthController extends Controller
     {
         $request->validate([
             'email' => 'required|email|unique:users,email',
-            'phone_number' => 'required|string|unique:users,phone_number',
+            'phone' => 'required|string|unique:users,phone',
             'password' => 'required|string|min:6',
             'business_name' => 'required|string|max:255|unique:users,business_name',
         ]);
 
         $user = User::create([
             'email' => $request->email,
-            'phone' => $request->phone_number,
-            'password' => Hash::make($request->password),
+            'phone' => $request->phone,
+            'password' => $request->password,
             'business_name' => $request->business_name,
             'user_type' => 'business_owner',
         ]);
@@ -58,29 +59,65 @@ class AuthController extends Controller
         ], 201);
     }
 
+    // public function login(Request $request)
+    // {
+    //     $request->validate([
+    //         'login' => 'required',
+    //         'password' => 'required',
+    //     ]);
+
+    //     $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
+
+    //     if (!Auth::attempt([$loginType => $request->login, 'password' => $request->password])) {
+    //         throw ValidationException::withMessages([
+    //             'login' => ['Invalid credentials'],
+    //         ]);
+    //     }
+
+    //     $user = Auth::user();
+    //     $token = $user->createToken('auth_token')->plainTextToken;
+
+    //     return response()->json([
+    //         'message' => 'Login successful',
+    //         'user' => $user,
+    //         'token' => $token,
+    //     ]);
+    // }
+
     public function login(Request $request)
     {
         $request->validate([
-            'login' => 'required',
+            'login' => 'required', // can be phone or email
             'password' => 'required',
         ]);
 
+        // Determine whether login is by email or phone
         $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
 
-        if (!Auth::attempt([$loginType => $request->login, 'password' => $request->password])) {
+        // Find the user by email or phone
+        $user = User::where($loginType, $request->login)->first();
+
+        if (!$user) {
             throw ValidationException::withMessages([
-                'login' => ['Invalid credentials'],
+                'login' => ['No account found with that ' . $loginType],
             ]);
         }
 
-        $user = Auth::user();
+        // Check the password
+        if (!Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'login' => ['Invalid credentials.'],
+            ]);
+        }
+
+        // Create an access token for the user
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Login successful',
             'user' => $user,
             'token' => $token,
-        ]);
+        ], 200);
     }
 
     // Logout

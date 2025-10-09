@@ -18,10 +18,11 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('phone')->unique();
-            $table->foreignId('user_type')->constrained('user_types')->cascadeOnDelete();
+            $table->foreignId('user_type')->nullable()->constrained('user_types')->onDelete('set null');
             $table->string('username')->nullable();
             $table->string('business_name')->nullable();
             $table->string('driver_license')->nullable();
+            $table->string('password');
             $table->timestamps();
         });
     }
