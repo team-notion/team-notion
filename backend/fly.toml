@@ -1,0 +1,36 @@
+app = "notionrides-backend"  # Change to your Fly app name
+
+# Set the build context to your backend folder
+[build]
+  dockerfile = "backend/Dockerfile"
+
+# Environment variables
+[env]
+  APP_ENV = "production"
+  APP_KEY = base64:2/mU80m+L6Rnb8iuL6xQP4IHiYgwfQBu9lGc1/LUf3c=
+  APP_DEBUG = "false"
+  APP_URL = "https://notionrides-backend.fly.dev"
+
+  # Database
+  DB_CONNECTION = "pgsql"
+  DB_HOST = "your-db-host"
+  DB_PORT = "5432"
+  DB_DATABASE = "your-db-name"
+  DB_USERNAME = "your-db-user"
+  DB_PASSWORD = "your-db-password"
+  DATABASE_URL = "postgresql://fly-user:DLrTRfZMxilVvNpophRTOhbJ@direct.nvwq9oz7nd103kl1.flympg.net/fly-db"
+
+  # Mail
+  MAIL_MAILER = "smtp"
+  MAIL_HOST = "smtp.gmail.com"
+  MAIL_PORT = "465"
+  MAIL_USERNAME = "your-email@gmail.com"
+  MAIL_PASSWORD = "your-email-password"
+  MAIL_ENCRYPTION = "tls"
+  MAIL_FROM_ADDRESS = "rides@notion.com"
+  MAIL_FROM_NAME = "NotionRides"
+
+# Mounts (optional, for persistent storage)
+[mounts]
+  source="storage"
+  destination="/app/storage"
