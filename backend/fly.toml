@@ -9,7 +9,7 @@ app = "notionrides-backend"  # Change to your Fly app name
   APP_ENV = "production"
   APP_KEY = base64:2/mU80m+L6Rnb8iuL6xQP4IHiYgwfQBu9lGc1/LUf3c=
   APP_DEBUG = "false"
-  APP_URL = "https://notionrides-backend.fly.dev"
+  APP_URL = "https://team-notion.fly.dev/"
 
   # Database
   DB_CONNECTION = "pgsql"
