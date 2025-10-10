@@ -18,7 +18,7 @@ RUN apt-get update && apt-get install -y \
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # 5. Copy only the backend folder into the container
-COPY ..
+COPY . .
 
 # 6. Install PHP dependencies
 RUN composer install --no-dev --optimize-autoloader
