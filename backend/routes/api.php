@@ -7,7 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use App\Http\Controllers\CarController;
-use Illuminate\Support\Facades\Route;
+// use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 
 Route::post('/register/customer', [AuthController::class, 'registerCustomer'])->name('api.register.customer');
@@ -21,6 +21,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::get('/my-cars', [CarController::class, 'index']);
+    Route::post('/cars', [CarController::class, 'store']);
+    Route::put('/cars/{car}', [CarController::class, 'update']);
+    Route::delete('/cars/{car}', [CarController::class, 'destroy']);
+    Route::delete('/cars/{car}/photo', [CarController::class, 'removePhoto']);
 
     Route::prefix('owner')->group(function () {
         Route::get('/reservations', [ReservationController::class, 'index']);

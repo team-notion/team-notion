@@ -50,6 +50,7 @@ class CarController extends Controller
             'owner_id' => $request->user()->id,
             'model' => $request->model,
             'type' => $request->type,
+            'license' => $request->license,
             'year_of_manufacture' => $request->year_of_manufacture,
             'daily_price' => $request->daily_price,
             'photos' => $photos,

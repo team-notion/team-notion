@@ -68,7 +68,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function cars()
     {
-        return $this->hasMany(Car::class,);
+        return $this->hasMany(Car::class, 'owner_id');
     }
 
     public function notifications()
