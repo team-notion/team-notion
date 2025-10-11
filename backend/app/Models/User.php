@@ -25,6 +25,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'phone',
         'user_type_id',
         'password',
+        'username',
+        'business_name',
         'driver_license'
     ];
 
@@ -53,7 +55,7 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function userType()
     {
-        return $this->belongsTo(UserType::class);
+        return $this->belongsTo(UserType::class, 'user_type_id');
     }
 
     public function paymentMethods()
