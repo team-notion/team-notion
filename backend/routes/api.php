@@ -14,7 +14,7 @@ Route::post('/register/customer', [AuthController::class, 'registerCustomer'])->
 Route::post('/register/business', [AuthController::class, 'registerBusinessOwner']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::get('/cars', [CarController::class, 'index']);
+Route::get('/cars', [CarController::class, 'publicIndex']);
 Route::get('/cars/{car}', [CarController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -41,21 +41,43 @@ Route::get('/ping', function () {
     return response()->json(['message' => 'API is working']);
 });
 
-Route::get('/email/verify', function () {
-    return view('auth.verify-email');
-})->middleware('auth')->name('verification.notice');
+Route::middleware('auth:sanctum')->get('/email/verify', function (Request $request) {
+    $user = $request->user();
 
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    if ($user->hasVerifiedEmail()) {
+        return response()->json(['message' => 'Email already verified.'], 200);
+    }
+
+    return response()->json([
+        'message' => 'Email not verified. You can request a verification link using POST /email/verification-notification'
+    ], 200);
+})->name('verification.notice');
+
+// Verify email via signed URL
+Route::middleware(['auth:sanctum', 'signed'])->get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $user = $request->user();
+
+    if ($user->hasVerifiedEmail()) {
+        return response()->json(['message' => 'Email already verified.'], 200);
+    }
+
     $request->fulfill();
 
-    return redirect('/home');
-})->middleware(['auth', 'signed'])->name('verification.verify');
+    return response()->json(['message' => 'Email verified successfully!'], 200);
+})->name('verification.verify');
 
-Route::post('/email/verification-notification', function (Request $request) {
-    $request->user()->sendEmailVerificationNotification();
+// Send new verification link
+Route::middleware(['auth:sanctum', 'throttle:6,1'])->post('/email/verification-notification', function (Request $request) {
+    $user = $request->user();
 
-    return back()->with('message', 'Verification link sent!');
-})->middleware(['auth', 'throttle:6,1'])->name('verification.send');
+    if ($user->hasVerifiedEmail()) {
+        return response()->json(['message' => 'Email already verified.'], 200);
+    }
+
+    $user->sendEmailVerificationNotification();
+
+    return response()->json(['message' => 'Verification link sent successfully!'], 200);
+})->name('verification.send');
 
 Route::prefix('customer')->group(function () {
     Route::middleware('auth:sanctum')->post('/reservations', [CustomerReservationController::class, 'firmReserve']);

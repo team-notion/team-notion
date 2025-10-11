@@ -18,6 +18,13 @@ class CarController extends Controller
         return response()->json($cars);
     }
 
+    public function publicIndex()
+    {
+        $cars = Car::all(); // or you can filter only available cars if needed
+        return response()->json($cars);
+    }
+
+
     public function myCars(Request $request)
     {
         return response()->json($request->user()->cars);
