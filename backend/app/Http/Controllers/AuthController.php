@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -29,8 +30,10 @@ class AuthController extends Controller
             'user_type' => 'customer',
         ]);
 
+        event(new Registered($user));
+
         return response()->json([
-            'message' => 'Customer registered successfully',
+            'message' => 'Customer registered successfully. Please verify your email before logging in.',
             'user' => $user,
         ], 201);
     }
@@ -53,8 +56,10 @@ class AuthController extends Controller
             'user_type' => 'business_owner',
         ]);
 
+        event(new Registered($user));
+
         return response()->json([
-            'message' => 'Business owner registered successfully',
+            'message' => 'Business owner registered successfully. Please verify your email before logging in.',
             'user' => $user,
         ], 201);
     }
@@ -91,10 +96,8 @@ class AuthController extends Controller
             'password' => 'required',
         ]);
 
-        // Determine whether login is by email or phone
         $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
 
-        // Find the user by email or phone
         $user = User::where($loginType, $request->login)->first();
 
         if (!$user) {
@@ -103,14 +106,21 @@ class AuthController extends Controller
             ]);
         }
 
-        // Check the password
+        // Check password
         if (!Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'login' => ['Invalid credentials.'],
             ]);
         }
 
-        // Create an access token for the user
+        // Check if email is verified
+        if (!$user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Please verify your email before logging in.'
+            ], 403);
+        }
+
+        // Create access token
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
