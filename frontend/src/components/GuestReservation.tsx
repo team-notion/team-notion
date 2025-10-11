@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { ChevronLeft, ChevronRight, CircleUser, Fuel, CarFront } from "lucide-react" 
 import { WarningModal, ReservationModal, SuccessModal } from "./GuestReservationModal";

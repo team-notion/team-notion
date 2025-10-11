@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"

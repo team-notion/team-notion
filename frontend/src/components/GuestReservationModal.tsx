@@ -1,5 +1,3 @@
-"use client"
-
 import { X, AlertCircle, CheckCircle2, Users, Calendar } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
