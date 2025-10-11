@@ -9,33 +9,52 @@ use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Public routes
+// Public Routes 
 Route::post('/register/customer', [AuthController::class, 'registerCustomer'])->name('api.register.customer');
 Route::post('/register/business', [AuthController::class, 'registerBusinessOwner']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::get('/cars', [CarController::class, 'publicIndex']);
 Route::get('/cars/{car}', [CarController::class, 'show']);
+Route::post('/customer/reservations/guest', [CustomerReservationController::class, 'softReserve']);
 
-Route::get('/ping', function () {
-    return response()->json(['message' => 'API is working']);
-});
+Route::get('/ping', fn() => response()->json(['message' => 'API is working']));
 
-// Authenticated routes
+//  Email Verification (no login required for link)
+Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+    $user = \App\Models\User::findOrFail($request->route('id'));
+
+    // Validate hash
+    if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
+        return response()->json(['message' => 'Invalid or expired verification link.'], 400);
+    }
+
+    // Already verified
+    if ($user->hasVerifiedEmail()) {
+        return response()->json(['message' => 'Email already verified.'], 200);
+    }
+
+    // Mark verified
+    $user->markEmailAsVerified();
+
+    return response()->json(['message' => 'Email verified successfully! You can now log in.'], 200);
+})->middleware(['signed'])->name('verification.verify');
+
+
+//  Authenticated Routes
+
 Route::middleware('auth:sanctum')->group(function () {
-    // Profile
+
+
+    // Profile Management
+
     Route::get('/profile', [ProfileController::class, 'show']);
     Route::put('/profile', [ProfileController::class, 'update']);
     Route::post('/logout', [AuthController::class, 'logout']);
 
-    // Car management (only business owners can add/edit/delete)
-    Route::get('/my-cars', [CarController::class, 'index']);
-    Route::post('/cars', [CarController::class, 'store']);
-    Route::put('/cars/{car}', [CarController::class, 'update']);
-    Route::delete('/cars/{car}', [CarController::class, 'destroy']);
-    Route::delete('/cars/{car}/photo', [CarController::class, 'removePhoto']);
 
-    // Email verification notice
+    // Email Verification Helper Routes
+
     Route::get('/email/verify', function (Request $request) {
         $user = $request->user();
 
@@ -48,7 +67,6 @@ Route::middleware('auth:sanctum')->group(function () {
         ], 200);
     })->name('verification.notice');
 
-    // Send verification link
     Route::post('/email/verification-notification', function (Request $request) {
         $user = $request->user();
 
@@ -61,8 +79,18 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json(['message' => 'Verification link sent successfully!'], 200);
     })->middleware('throttle:6,1')->name('verification.send');
 
-    // Business owner reservation management
-    Route::prefix('owner')->group(function () {
+
+    // Business Owner Routes (Cars + Reservations)
+
+    Route::prefix('owner')->middleware('verified')->group(function () {
+        // Car management
+        Route::get('/my-cars', [CarController::class, 'index']);
+        Route::post('/cars', [CarController::class, 'store']);
+        Route::put('/cars/{car}', [CarController::class, 'update']);
+        Route::delete('/cars/{car}', [CarController::class, 'destroy']);
+        Route::delete('/cars/{car}/photo', [CarController::class, 'removePhoto']);
+
+        // Reservation management
         Route::get('/reservations', [ReservationController::class, 'index']);
         Route::post('/reservations', [ReservationController::class, 'createReservation']);
         Route::put('/reservations/{reservation}/dates', [ReservationController::class, 'updateReservationDates']);
@@ -70,26 +98,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/reservations/{reservation}/cancel', [ReservationController::class, 'cancelReservation']);
     });
 
-    // Customer reservation routes
-    Route::prefix('customer')->group(function () {
+    // Customer 
+    Route::prefix('customer')->middleware('verified')->group(function () {
         Route::post('/reservations', [CustomerReservationController::class, 'firmReserve']);
         Route::put('/reservations/{reservation}', [CustomerReservationController::class, 'modifyReservation']);
         Route::put('/reservations/{reservation}/cancel', [CustomerReservationController::class, 'cancelReservation']);
     });
 });
-
-// Guest routes for soft reservation
-Route::post('/customer/reservations/guest', [CustomerReservationController::class, 'softReserve']);
-
-// Verify email via signed URL (requires auth token + signed URL)
-Route::middleware(['auth:sanctum', 'signed'])->get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $user = $request->user();
-
-    if ($user->hasVerifiedEmail()) {
-        return response()->json(['message' => 'Email already verified.'], 200);
-    }
-
-    $request->fulfill();
-
-    return response()->json(['message' => 'Email verified successfully!'], 200);
-})->name('verification.verify');
