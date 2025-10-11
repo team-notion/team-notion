@@ -103,5 +103,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/reservations', [CustomerReservationController::class, 'firmReserve']);
         Route::put('/reservations/{reservation}', [CustomerReservationController::class, 'modifyReservation']);
         Route::put('/reservations/{reservation}/cancel', [CustomerReservationController::class, 'cancelReservation']);
+        Route::get('/bookings', [CustomerReservationController::class, 'myBookings']);
     });
 });

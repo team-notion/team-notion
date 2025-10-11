@@ -163,4 +163,21 @@ class CustomerReservationController extends Controller
 
         return !$overlap;
     }
+
+    // Fetches bookings for logged-in user
+    public function myBookings(Request $request)
+    {
+        $user = $request->user();
+
+        // Fetch reservations where user_id matches the logged-in user
+        $reservations = Reservation::with('car')
+            ->where('user_id', $user->id)
+            ->orderBy('reserved_from', 'desc')
+            ->get();
+
+        return response()->json([
+            'message' => 'Your bookings fetched successfully',
+            'bookings' => $reservations
+        ]);
+    }
 }
