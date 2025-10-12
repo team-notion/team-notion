@@ -1,7 +1,6 @@
 import { X, AlertCircle, CheckCircle2, Users, Calendar } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-// Types
 export interface ReservationFormData {
   customerName: string
   phoneNumber: string

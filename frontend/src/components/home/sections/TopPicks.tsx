@@ -3,6 +3,7 @@ import { IoPersonOutline } from "react-icons/io5";
 import { BsFillFuelPumpFill } from "react-icons/bs";
 import { FaCarRear } from "react-icons/fa6";
 import Porse from "../../../assets/porse.svg";
+import { Link } from 'react-router';
 
 const TopPicks = () => {
   return (
@@ -18,7 +19,7 @@ const TopPicks = () => {
                 <span className="text-sm font-bold text-black flex items-center gap-1"><FaCarRear /> Manual</span>
                 <span className="text-sm font-bold text-black flex items-center gap-1"><BsFillFuelPumpFill /> 100lv</span>
               </div>
-              <button className="px-6 py-3 bg-[#F97316] text-white text-base font-bold rounded-xl hover:bg-orange-60 cursor-pointer">Rent now</button>
+              <Link to="/reservation" className="px-6 py-3 bg-[#F97316] text-white text-base font-bold rounded-xl hover:bg-orange-60 cursor-pointer">Rent now</Link>
             </div>
 
             <div className="absolute right-0 top-0 bottom-0 w-full md:w-1/2 "> 

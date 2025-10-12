@@ -5,6 +5,7 @@ import NavLogo from "../assets/logo.png";
 import { AvailabilitySection, RentalTermsSection, ReviewsSection } from "./AvailabilitySection";
 import { Picks } from "./home/sections/Picks";
 import Footer from "./home/Footer";
+import Navbar from "./home/Navbar";
 
 export default function GuestReservation() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
@@ -106,43 +107,12 @@ export default function GuestReservation() {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA}">
+    <div className="min-h-screen bg-[#F5F5F5]">
       {/* Header */}
-      <header className="bg-white">
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="">
-              <img src={NavLogo} className="h-10" alt="Notion rides" />
-            </div>
-
-            <nav className="hidden md:flex space-x-8">
-              <a href="#" className="text-black text-base font-normal hover:text-gray-600">
-                Home
-              </a>
-              <a href="#" className="text-black text-base font-normal hover:text-gray-600">
-                Vehicles
-              </a>
-              <a href="#" className="text-black text-base font-normal hover:text-gray-600">
-                About us
-              </a>
-              <a href="#" className="text-black text-base font-normal hover:text-gray-600">
-                Open a business account
-              </a>
-            </nav>
-
-            {/* User Profile */}
-            <div className="flex items-center space-x-3 cursor-pointer">
-              <div className="w-10 h-10 rounded-full  flex items-center justify-center"> 
-                <CircleUser size={100} className="w-10 h-10 text-black" />
-              </div>
-              <span className="text-sm font-semibold text-black">Ikemsinachi Ogbuefi</span>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Navbar />
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 ">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left Column - Vehicle Details */}
           <div className="lg:col-span-2 space-y-6">

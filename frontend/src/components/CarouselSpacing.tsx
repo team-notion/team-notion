@@ -9,6 +9,7 @@ import {
 import { IoPersonOutline } from "react-icons/io5";
 import { BsFillFuelPumpFill } from "react-icons/bs";
 import { FaCarRear } from "react-icons/fa6";
+import { Link } from "react-router";
 
 const cars = [
     {
@@ -98,9 +99,9 @@ export function CarouselSpacing() {
                     <h2 className="text-xl text-black font-bold">
                       {car.price}/day
                     </h2>
-                    <button className="bg-[#F97316] text-white px-4 py-2 rounded-md cursor-pointer hover:bg-orange-600">
+                    <Link to="/reservation" className="bg-[#F97316] text-white px-4 py-2 rounded-md cursor-pointer hover:bg-orange-600">
                       Rent now
-                    </button>
+                    </Link>
                   </div>
 
                 </CardContent>
