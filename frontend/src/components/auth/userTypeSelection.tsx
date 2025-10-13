@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { Dispatch, SetStateAction, useState } from "react";
 
 interface UserTypeSelectionProps {
+  setCurrentStep: Dispatch<SetStateAction<number>>;
+  currentStep: any;
+  details: any;
+  setDetails: Dispatch<SetStateAction<any>>;
   onNext?: (userType: string) => void
 }
 
-const UserTypeSelection = ({ onNext }: UserTypeSelectionProps) => {
-  const [selectedOption, setSelectedOption] = useState<string>("");
+const UserTypeSelection = ({ details, setDetails, currentStep, setCurrentStep, onNext }: UserTypeSelectionProps) => {
+  const [selectedOption, setSelectedOption] = useState<string>(details.userType || "");
 
   const handleNext = () => {
     if (selectedOption && onNext) {

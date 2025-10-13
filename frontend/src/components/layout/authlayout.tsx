@@ -3,7 +3,7 @@ import BackgroundImage from "../../assets/logo background.png";
 
 const AuthLayout = ({ children }) => {
   return (
-    <div className="bg-[#F3F4F6] min-h-screen overflow-hidden relative flex flex-col">
+    <div className="bg-[#F3F4F6] min-h-screen overflow-hidden relative flex justify-center flex-col">
       <header className="relative z-10 p-6">
         <div className="flex items-center">
           <img src={Logo} alt="Notion Rides Logo" />
@@ -16,7 +16,7 @@ const AuthLayout = ({ children }) => {
         </div>
       </div>
 
-      <main className="relative z-10 flex-1 flex items-center justify-center px-4 md:px-6 py-12">
+      <main className="relative z-10 flex-1 flex items-center justify-center px-4 md:px-6">
         <div className="w-full max-w-3xl">
           <div className="bg-white rounded-2xl shadow-sm shadow-[#0D183A] border border-gray-200 p-5 md:p-12">
             {children}
