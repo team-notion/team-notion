@@ -15,7 +15,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
   logout: () => void;
-  login: (userData: User, token: string, refreshToken: string) => void;
+  login: (userData: User, token: string, rememberMe?: boolean) => void;
   checkSession: () => boolean;
 }
 
@@ -29,9 +29,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [sessionTimeoutId, setSessionTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  const [rememberMe, setRememberMe] = useState<boolean>(false);
 
-  // Check if token is expired
+
+  const getStorage = useCallback((key: string): string | null => {
+    const localValue = localStorage.getItem(key);
+    if (localValue) return localValue;
+    return sessionStorage.getItem(key);
+  }, []);
+
+
+  const setStorage = useCallback((key: string, value: string, rememberMe: boolean = true) => {
+    if (rememberMe) {
+      localStorage.setItem(key, value);
+      sessionStorage.removeItem(key);
+    } else {
+      sessionStorage.setItem(key, value);
+      localStorage.removeItem(key);
+    }
+  }, []);
+
+
+  const removeStorage = useCallback((key: string) => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  }, []);
+
+
+
   const isTokenExpired = useCallback((token: string): boolean => {
     try {
       const decoded = decodeJWT(token);
@@ -59,26 +83,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   
   const handleSessionExpired = useCallback(() => {
-      if (sessionTimeoutId) {
+    if (sessionTimeoutId) {
       clearTimeout(sessionTimeoutId);
       setSessionTimeoutId(null);
     }
 
-    localStorage.removeItem(LOCAL_STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
-    localStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
-    localStorage.removeItem(LOCAL_STORAGE_KEYS.IS_USER_EXIST);
-    localStorage.removeItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID);
-    localStorage.removeItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN_USER_ID);
+    removeStorage(LOCAL_STORAGE_KEYS.TOKEN);
+    removeStorage(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
+    removeStorage(LOCAL_STORAGE_KEYS.USER);
+    removeStorage(LOCAL_STORAGE_KEYS.IS_USER_EXIST);
+    removeStorage(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID);
+    removeStorage(LOCAL_STORAGE_KEYS.REFRESH_TOKEN_USER_ID);
+    removeStorage(LOCAL_STORAGE_KEYS.REMEMBER_ME);
     
     setIsAuthenticated(false);
     setUser(null);
-  }, [sessionTimeoutId]);
+
+    window.location.href = '/login';
+  }, [sessionTimeoutId, removeStorage]);
 
 
 
   const checkSession = useCallback((): boolean => {
-    const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+    const token = getStorage(LOCAL_STORAGE_KEYS.TOKEN);
     if (!token) return false;
 
     const expired = isTokenExpired(token);
@@ -89,7 +116,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     return true;
-  }, [isTokenExpired, handleSessionExpired]);
+  }, [isTokenExpired, handleSessionExpired, getStorage]);
 
 
 
@@ -110,8 +137,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
+    const warningTime = Math.max(0, (timeToExpire - 300) * 1000);
+
+    if (warningTime > 0) {
+      setTimeout(() => {
+        toast.warning('Your session will expire in 5 minutes.');
+      }, warningTime);
+    }
+
     const expirationTimeout = setTimeout(() => {
-      toast.warning('Your session is about to expire. Please log in again.');
+      toast.error('Your session has expired. Please log in again.');
       handleSessionExpired();
     }, timeToExpire * 1000);
 
@@ -119,9 +154,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [handleSessionExpired, getTokenExpirationTime, sessionTimeoutId]);
 
 
-  const login = useCallback((userData: any, token: string, refreshToken: string) => {
-    localStorage.setItem(LOCAL_STORAGE_KEYS.TOKEN, token);
-    localStorage.setItem(LOCAL_STORAGE_KEYS.IS_USER_EXIST, "true");
+  const login = useCallback((userData: any, token: string, rememberMe: boolean = false) => {
+    setStorage(LOCAL_STORAGE_KEYS.TOKEN, token, rememberMe);
+    setStorage(LOCAL_STORAGE_KEYS.IS_USER_EXIST, "true", rememberMe);
+    setStorage(LOCAL_STORAGE_KEYS.REMEMBER_ME, rememberMe.toString(), rememberMe);
 
     const safeUserData = {
       id: userData.id,
@@ -130,23 +166,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
       name: userData.name || '',
     }
 
-    localStorage.setItem(LOCAL_STORAGE_KEYS.USER, JSON.stringify(safeUserData));
+    setStorage(LOCAL_STORAGE_KEYS.USER, JSON.stringify(safeUserData), rememberMe);
 
     try {
       const decoded = decodeJWT(token);
       if (decoded.sub) {
-        localStorage.setItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID, decoded.sub);
+        setStorage(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID, decoded.sub, rememberMe);
       }
     }
     catch (err) {
-        console.error("Error decoding token:", err);
+      console.error("Error decoding token:", err);
     }
 
     setUser(safeUserData);
     setIsAuthenticated(true);
 
     setupSessionTimeout(token);
-  }, [setupSessionTimeout]);
+
+    toast.success(`Welcome back${userData.name ? ', ' + userData.name : ''}!`);
+  }, [setupSessionTimeout, setStorage]);
 
 
 
@@ -156,29 +194,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setSessionTimeoutId(null);
     }
 
-    localStorage.removeItem(LOCAL_STORAGE_KEYS.TOKEN);
-    localStorage.removeItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
-    localStorage.removeItem(LOCAL_STORAGE_KEYS.USER);
-    localStorage.removeItem(LOCAL_STORAGE_KEYS.IS_USER_EXIST);
-    localStorage.removeItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID);
-    localStorage.removeItem(LOCAL_STORAGE_KEYS.REFRESH_TOKEN_USER_ID);
+    removeStorage(LOCAL_STORAGE_KEYS.TOKEN);
+    removeStorage(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
+    removeStorage(LOCAL_STORAGE_KEYS.USER);
+    removeStorage(LOCAL_STORAGE_KEYS.IS_USER_EXIST);
+    removeStorage(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID);
+    removeStorage(LOCAL_STORAGE_KEYS.REFRESH_TOKEN_USER_ID);
+    removeStorage(LOCAL_STORAGE_KEYS.REMEMBER_ME);
 
     setIsAuthenticated(false);
     setUser(null);
 
     toast.success('Logged out successfully');
-  }, [sessionTimeoutId]);
+  }, [sessionTimeoutId, removeStorage]);
+
 
 
   useEffect(() => {
     // Check if user is authenticated on mount
-    const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
-    const userDataStr = localStorage.getItem(LOCAL_STORAGE_KEYS.USER);
+    const token = getStorage(LOCAL_STORAGE_KEYS.TOKEN);
+    const userDataStr = getStorage(LOCAL_STORAGE_KEYS.USER);
+    const rememberMeStr = getStorage(LOCAL_STORAGE_KEYS.REMEMBER_ME);
 
     if (token && userDataStr) {
       try {
         const expired = isTokenExpired(token);
         const userData = JSON.parse(userDataStr);
+        const isRemembered = rememberMeStr === 'true';
 
         if (!expired) {
           setUser(userData);
