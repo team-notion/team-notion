@@ -11,7 +11,7 @@ import ReservationPage from "./pages/reservation";
 
 const routes = createBrowserRouter([
   {
-    path: "/",
+    path: "/home",
     element: <Home />,
   },
   {
@@ -23,7 +23,7 @@ const routes = createBrowserRouter([
     element: <Login />,
   },
   {
-      path: "/landing",
+      path: "/",
       element: <LandingPage />
   },
   {
