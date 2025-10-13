@@ -5,6 +5,8 @@ use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CarController;
+use App\Models\User;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -19,27 +21,6 @@ Route::get('/cars/{car}', [CarController::class, 'show']);
 Route::post('/customer/reservations/guest', [CustomerReservationController::class, 'softReserve']);
 
 Route::get('/ping', fn() => response()->json(['message' => 'API is working']));
-
-//  Email Verification (no login required for link)
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $user = \App\Models\User::findOrFail($request->route('id'));
-
-    // Validate hash
-    if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
-        return response()->json(['message' => 'Invalid or expired verification link.'], 400);
-    }
-
-    // Already verified
-    if ($user->hasVerifiedEmail()) {
-        return response()->json(['message' => 'Email already verified.'], 200);
-    }
-
-    // Mark verified
-    $user->markEmailAsVerified();
-
-    return response()->json(['message' => 'Email verified successfully! You can now log in.'], 200);
-})->middleware(['signed'])->name('verification.verify');
-
 
 //  Authenticated Routes
 
@@ -67,18 +48,48 @@ Route::middleware('auth:sanctum')->group(function () {
         ], 200);
     })->name('verification.notice');
 
-    Route::post('/email/verification-notification', function (Request $request) {
-        $user = $request->user();
+    Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
+        $user = User::findOrFail($request->route('id'));
 
+        // Validate hash
+        if (! hash_equals((string) $request->route('hash'), sha1($user->getEmailForVerification()))) {
+            return response()->json(['message' => 'Invalid or expired verification link.'], 400);
+        }
+
+        // Already verified
         if ($user->hasVerifiedEmail()) {
             return response()->json(['message' => 'Email already verified.'], 200);
         }
 
+        // Mark verified
+        $user->markEmailAsVerified();
+
+        return response()->json(['message' => 'Email verified successfully! You can now log in.'], 200);
+    })->middleware(['signed'])->name('verification.verify');
+
+    Route::post('/email/verification-notification', function (Request $request) {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user->hasVerifiedEmail()) {
+            return response()->json([
+                'message' => 'Email already verified.'
+            ], 200);
+        }
+
+        // Trigger Laravel's default verification notification
         $user->sendEmailVerificationNotification();
 
-        return response()->json(['message' => 'Verification link sent successfully!'], 200);
-    })->middleware('throttle:6,1')->name('verification.send');
+        // Optional: Fire the Registered event so listeners can handle it
+        event(new Registered($user));
 
+        return response()->json([
+            'message' => 'Verification link sent successfully!'
+        ], 200);
+    })->middleware('throttle:6,1')->name('verification.send');
 
     // Business Owner Routes (Cars + Reservations)
 
