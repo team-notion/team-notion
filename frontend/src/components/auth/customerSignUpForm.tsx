@@ -55,20 +55,21 @@ const CustomerSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
     setLoading(true);
 
     try {
-      const UserData = {
+      const userData = {
         ...data,
-        userType: "business"
+        userType: "customer"
       }
-      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.USER_SIGNUP}`, UserData);
+      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.USER_SIGNUP}`, userData);
 
       if (resp.status === 201) {
         toast.success(resp?.data?.message);
 
         setDetails((prev: any) => ({
           ...prev,
-          userName: data.userName,
+          username: data.userName,
           email: data.email,
-          phoneNumber: data.phoneNumber,
+          phone: data.phoneNumber,
+          password: data.password,
           userType: "customer"
         }));
 

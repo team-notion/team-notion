@@ -54,20 +54,21 @@ const BusinessSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
     setLoading(true);
 
     try {
-      const UserData = {
+      const userData = {
         ...data,
         userType: "business"
       }
-      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.BUSINESS_SIGNUP}`, UserData);
+      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.BUSINESS_SIGNUP}`, userData);
 
       if (resp.status === 201) {
         toast.success(resp?.data?.message);
 
         setDetails((prev: any) => ({
           ...prev,
-          businessName: data.businessName,
+          business_name: data.businessName,
           email: data.email,
-          phoneNumber: data.phoneNumber,
+          phone: data.phoneNumber,
+          password: data.password,
           userType: "business"
         }));
 
