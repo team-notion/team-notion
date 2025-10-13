@@ -1,10 +1,11 @@
 import React from 'react'
 import { useState } from 'react';
-import { Link } from 'react-router';
+import { useNavigate, Link } from 'react-router';
 import NavLogo from "../../assets/logo.png";
 
 const Navbar = () => {
     const [open, setOpen] = useState(false);
+    const navigate = useNavigate();
 
   return (
     <div className="bg-[#F5F5F5] border-b border-gray-200">
@@ -34,6 +35,31 @@ const Navbar = () => {
                 </button>
             </div>
         </div>
+
+        {open && (
+          <div className="md:hidden px-6 pb-4 space-y-4">
+            <a href="#" className="block">
+              Home
+            </a>
+            <a href="#" className="block">
+              Catalog
+            </a>
+            <a href="#" className="block">
+              Reservations
+            </a>
+            <a href="#" className="block">
+              About us
+            </a>
+            <a href="#" className="block">
+              Business Account
+            </a>
+            <button className=" px-6 py-2 bg-[#F97316] text-white rounded-md cursor-pointer hover:bg-orange-600 transition w-full"
+            onClick={() => navigate("/business-signup")}
+            >
+            Sign Up
+          </button>
+          </div>
+        )}
     </div>
   )
 }

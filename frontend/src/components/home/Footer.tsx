@@ -17,7 +17,7 @@ const Footer = () => {
 
   return (
     <div>
-        <footer className="text-white py-12 bg-[#B9C2DB] mt-20">
+        <footer className="text-white py-12 bg-[#B9C2DB]/50 mt-20">
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-start md:items-end md:justify-end gap-10 md:gap-30">
           {footerLinks.map((group, idx) => (
             <div key={idx} className="flex flex-col space-y-2">
