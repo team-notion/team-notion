@@ -7,7 +7,6 @@ const About = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-12 items-center">
           
-          {/* Text Section */}
           <div className="space-y-5 md:space-y-6 text-center lg:text-left relative z-10">
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-semibold text-[#0D183A]">About us</h2>
             <p className="text-sm sm:text-base text-black leading-relaxed px-2 md:px-0">
@@ -22,7 +21,6 @@ const About = () => {
             </div>
           </div>
 
-          {/* Image Section */}
           <div className="relative lg:absolute lg:right-0 lg:top-0 lg:bottom-0 w-full lg:w-1/2 mt-8 lg:mt-0">
             <img
               src={BMW}

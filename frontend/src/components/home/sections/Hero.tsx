@@ -20,7 +20,6 @@ const Hero = () => {
             <p className="text-xs sm:text-sm text-gray-500">Reliability. Safety. Comfort.</p>
           </div>
 
-          {/* Right Image Section */}
           <div className="relative lg:absolute lg:right-0 lg:top-0 lg:bottom-0 w-full lg:w-1/2 mt-6 lg:mt-0">
             <img
               src={AMG}
@@ -31,7 +30,6 @@ const Hero = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
       <div className="relative z-20 flex items-center justify-center space-x-2 py-10 pt-4 bg-white/70 backdrop-blur-sm p-2 rounded-lg shadow-md w-full">
         <input
           type="text"
