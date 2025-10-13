@@ -97,10 +97,10 @@ export function FilterModal({ open, onOpenChange }: FilterModalProps) {
             <button
               key={item}
               onClick={() => toggleSelection(item, activeSection)}
-              className={`px-6 py-2.5 rounded-md text-sm font-medium transition-colors ${
+              className={`px-6 py-2.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                 isSelected(item, activeSection)
                   ? "bg-[#4A5FD9] text-white"
-                  : "bg-white text-[#0D183A] border border-gray-300 hover:border-gray-400"
+                  : "bg-white text-[#0D183A] border border-[#0D183A] hover:border-gray-400"
               }`}
             >
               {item}
@@ -144,7 +144,7 @@ export function FilterModal({ open, onOpenChange }: FilterModalProps) {
               <button
                 key={section}
                 onClick={() => setActiveSection(section)}
-                className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors relative ${
+                className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors relative cursor-pointer ${
                   activeSection === section ? "bg-white text-[#0D183A]" : "text-[#0D183A]"
                 }`}
               >
