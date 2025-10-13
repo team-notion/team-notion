@@ -99,7 +99,7 @@ export function CarouselSpacing() {
                     <h2 className="text-xl text-black font-bold">
                       {car.price}/day
                     </h2>
-                    <Link to="/reservation" className="bg-[#F97316] text-white px-4 py-2 rounded-md cursor-pointer hover:bg-orange-600">
+                    <Link to="/reservation" className="bg-[#F97316] text-white px-6 py-5  rounded-xl cursor-pointer hover:bg-orange-600">
                       Rent now
                     </Link>
                   </div>

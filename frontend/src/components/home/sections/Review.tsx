@@ -3,10 +3,10 @@ import Rita from "../../../assets/rita.svg";
 
 const Review = () => {
   return (
-    <section className="bg-[#B9C2DB] py-20 mt-20">
+    <section className="bg-[#B9C2DB]/50 py-20 mt-20 rounded-xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className=" mb-8">
-            <h2 className="text-3xl md:text-5xl font-medium text-[#0D183A]">Customer reviews</h2>
+            <h2 className="text-3xl lg:text-5xl font-medium text-[#0D183A]">Customer reviews</h2>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-center">
