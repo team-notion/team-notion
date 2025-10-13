@@ -97,30 +97,14 @@ class AuthController extends Controller
         ]);
 
         $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
-
         $user = User::where($loginType, $request->login)->first();
 
-        if (!$user) {
-            throw ValidationException::withMessages([
-                'login' => ['No account found with that ' . $loginType],
-            ]);
-        }
-
-        // Check password
-        if (!Hash::check($request->password, $user->password)) {
+        if (!$user || !Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
                 'login' => ['Invalid credentials.'],
             ]);
         }
 
-        // Check if email is verified
-        if (!$user->hasVerifiedEmail()) {
-            return response()->json([
-                'message' => 'Please verify your email before logging in.'
-            ], 403);
-        }
-
-        // Create access token
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
