@@ -2,31 +2,87 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { PiEyeSlashDuotone, PiEyeDuotone } from 'react-icons/pi';
 import CustomCheckbox from "../ui/Checkbox";
-import { useForm } from "react-hook-form"
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { postData } from "../lib/apiMethods";
+import CONFIG from "../utils/config";
+import { apiEndpoints } from "../lib/apiEndpoints";
+import { toast } from "sonner";
+import { decodeJWT } from "../utils/decoder";
+import { useAuth } from "../lib/authContext";
 import ErrorHandler from "../ErrorHandler/ErrorHandler";
+
+const loginSchema = z.object({
+  email: z.string().email("Please enter a valid email address"),
+  password: z.string().min(1, "Password is required"),
+  rememberMe: z.boolean().optional(),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
 
 const UserLogin = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { register, handleSubmit, formState: { errors } } = useForm<({
-    email: string;
-    password: string;
-  })>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
       password: '',
+      rememberMe: false,
     }
   });
 
-  const handleNext = (data: { email: string; password: string }) => {
+  const rememberMe = watch("rememberMe");
+
+  const handleNext =  async (data: LoginFormData) => {
     setLoading(true)
 
-    setTimeout(() => {
-      setLoading(false)
-        navigate('/business-dashboard');
-        console.log("Login successful!", data);
-    }, 2000)
+    try {
+      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.LOGIN}`, {
+        login: data.email,
+        password: data.password,
+      });
+
+      if (resp.status === 200 || resp.statusCode === 200) {
+        const successMessage = resp.data?.message || resp.message?.message || "Login successful!";
+        toast.success(successMessage);
+
+        const token = resp.data?.token;
+        
+        // if (!token) {
+        //   throw new Error("No token received from server");
+        // }
+
+        const decoded = decodeJWT(token);
+
+        const userData = {
+          id: decoded.sub,
+          email: decoded.email || data.email,
+          userType: decoded.role || decoded.userType,
+          name: decoded.name,
+        };
+
+        login(userData, token, data.rememberMe || false);
+
+        if (userData.userType === "business" || userData.userType === "owner") {
+          navigate("/business-dashboard");
+        } else {
+          navigate("/landing");
+        }
+      } else {
+        toast.error(resp.data?.message || resp.message?.message || "Login failed");
+      }
+    }
+    catch (err: any) {
+      console.error("Login error:", err);
+      toast.error(err.message);
+    }
+    finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -65,7 +121,7 @@ const UserLogin = () => {
 
         <div className="mb-4 w-full flex justify-between items-center">
           <div className="flex items-center gap-x-1 text-xs md:text-sm">
-            <CustomCheckbox name='rememberMe' /> Remember me
+            <CustomCheckbox {...register('rememberMe')} name='rememberMe' /> Remember me
           </div>
           <a href="#" className="text-xs md:text-sm text-[#001EB4] font-medium hover:underline">Forgot password?</a>
         </div>
@@ -77,7 +133,7 @@ const UserLogin = () => {
             </button>
           </div>
           <div className=" text-center">
-            <p className="text-xs md:text-sm text-gray-500">Don't have an account? <a href="/business-signup" className="text-[#001EB4] font-medium hover:underline">Sign up</a></p>
+            <p className="text-xs md:text-sm text-gray-500">Don't have an account? <a href="/signup" className="text-[#001EB4] font-medium hover:underline">Sign up</a></p>
           </div>
         </div>
 
