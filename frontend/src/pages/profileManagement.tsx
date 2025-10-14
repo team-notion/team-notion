@@ -8,6 +8,8 @@ import { Logo } from "@/assets";
 import SelectDate from "@/components/SelectDate";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Footer from "@/components/home/Footer";
+import ActionModal from "@/components/ActionModal";
+import AddCardModal from "@/components/AddCardModal";
 
 interface Card {
   id: number;
@@ -46,6 +48,10 @@ const ProfileManagement = () => {
     countryOrRegion: "",
   });
 
+  const [isAddCardModalOpen, setIsAddCardModalOpen] = useState(false);
+  const [isDeleteCardModalOpen, setIsDeleteCardModalOpen] = useState(false);
+  const [cardToDelete, setCardToDelete] = useState<Card | null>(null);
+
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [cards, setCards] = useState<Card[]>(DUMMY_CARDS);
   const currentCard = cards[currentCardIndex];
@@ -61,6 +67,28 @@ const ProfileManagement = () => {
 
   const handleInputChange = (field: string, value: string | Date | undefined) => {
     setProfileData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAddCardConfirm = () => {
+    setIsAddCardModalOpen(false);
+  };
+
+  const handleDeleteCardClick = (card: Card) => {
+    setCardToDelete(card);
+    setIsDeleteCardModalOpen(true);
+  };
+
+  const handleDeleteCardConfirm = () => {
+    if (cardToDelete) {
+    setCards(cards.filter(c => c.id !== cardToDelete.id));
+
+    if (currentCardIndex >= cards.length - 1) {
+      setCurrentCardIndex(Math.max(0, cards.length - 2));
+    }
+
+    setCardToDelete(null);
+    }
+    setIsDeleteCardModalOpen(false);
   };
 
   const handlePrevCard = () => {
@@ -189,14 +217,14 @@ const ProfileManagement = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Name
                 </label>
-                <input type="text" placeholder="John Doe" disabled={!isEditingLicense} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                <input type="text" placeholder="John Doe" disabled={!isEditingLicense} onChange={(e) => handleInputChange("name", e.target.value)} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   License Number
                 </label>
-                <input type="text" placeholder="XXXXXXXXX" disabled={!isEditingLicense} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                <input type="text" placeholder="XXXXXXXXX" disabled={!isEditingLicense} onChange={(e) => handleInputChange("licenseNumber", e.target.value)} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
               </div>
 
               <div>
@@ -227,7 +255,7 @@ const ProfileManagement = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Issuing country
                 </label>
-                <input type="text" placeholder="Please issuing country" disabled={!isEditingLicense} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                <input type="text" placeholder="Please issuing country" disabled={!isEditingLicense} onChange={(e) => handleInputChange("issuingCountry", e.target.value)} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
               </div>
 
               <div>
@@ -246,14 +274,14 @@ const ProfileManagement = () => {
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Issuing Authority
                 </label>
-                <input type="text" placeholder="Your issuing Authority" disabled={!isEditingLicense} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                <input type="text" placeholder="Your issuing Authority" disabled={!isEditingLicense} onChange={(e) => handleInputChange("issuingAuthority", e.target.value)} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Driver's license class
                 </label>
-                <input type="text" placeholder="(e.g. A, B, C, or A1)" disabled={!isEditingLicense} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                <input type="text" placeholder="(e.g. A, B, C, or A1)" disabled={!isEditingLicense} onChange={(e) => handleInputChange("driverLicenseClass", e.target.value)} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
               </div>
             </div>
           </div>
@@ -276,7 +304,7 @@ const ProfileManagement = () => {
             <div className="flex flex-col lg:flex-row items-center justify-between gap-8">
               <div className="flex flex-col items-start space-y-4 w-full md:max-w-[27rem]">
                 <div className="flex justify-start items-center mb-3 lg:mb-6">
-                  <button className="p-2 hover:bg-[#FE130A] text-[#FE130A] hover:text-white border border-[#FE130A] rounded-lg transition cursor-pointer">
+                  <button onClick={() => currentCard && handleDeleteCardClick(currentCard)} disabled={cards.length === 0} className="p-2 hover:bg-[#FE130A] text-[#FE130A] hover:text-white border border-[#FE130A] rounded-lg transition cursor-pointer">
                     <Trash2 className="w-5 h-5" />
                   </button>
                 </div>    
@@ -309,7 +337,7 @@ const ProfileManagement = () => {
                   </div>
                 </Carousel>
 
-                <button className="px-6 py-2 border border-[#F97316] text-[#F97316] rounded-lg hover:bg-orange-50 transition font-medium">
+                <button onClick={() => setIsAddCardModalOpen(true)} className="px-6 py-2 border border-[#F97316] text-[#F97316] rounded-lg hover:bg-orange-50 transition font-medium">
                   Add card
                 </button>
             </div>
@@ -319,14 +347,14 @@ const ProfileManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Name on the card
                   </label>
-                  <input type="text" placeholder='John Doe' disabled={!isEditingBillingInfo} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                  <input type="text" placeholder='John Doe' disabled={!isEditingBillingInfo} onChange={(e) => handleInputChange("cardName", e.target.value)} className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Card number
                   </label>
-                  <input type="text" placeholder="0000 0000 0000 0000" disabled={!isEditingBillingInfo} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                  <input type="text" placeholder="0000 0000 0000 0000" disabled={!isEditingBillingInfo} onChange={(e) => handleInputChange("cardNumber", e.target.value)} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -345,7 +373,7 @@ const ProfileManagement = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Security code
                     </label>
-                    <input type="text" placeholder="CVV" disabled={!isEditingBillingInfo} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                    <input type="text" placeholder="CVV" disabled={!isEditingBillingInfo} onChange={(e) => handleInputChange("securityCode", e.target.value)} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
                   </div>
                 </div>
 
@@ -353,7 +381,7 @@ const ProfileManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Country or region
                   </label>
-                  <input type="text" placeholder="Please enter your country" disabled={!isEditingBillingInfo} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                  <input type="text" placeholder="Please enter your country" disabled={!isEditingBillingInfo} onChange={(e) => handleInputChange("countryOrRegion", e.target.value)} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
                 </div>
               </div>
             </div>
@@ -362,6 +390,12 @@ const ProfileManagement = () => {
       </div>
 
       <Footer />
+
+      <AddCardModal isOpen={isAddCardModalOpen} onClose={() => setIsAddCardModalOpen(false)} onConfirm={handleAddCardConfirm} />
+
+      {isDeleteCardModalOpen && cardToDelete && (
+        <ActionModal isOpen={isDeleteCardModalOpen} onClose={() => setIsDeleteCardModalOpen(false)} title="Delete Card" description="Are you sure you want to delete this card?" onConfirm={handleDeleteCardConfirm} cancelText="Cancel" confirmVariant='danger' />
+      )}
     </div>
   );
 };
