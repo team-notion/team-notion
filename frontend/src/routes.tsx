@@ -8,6 +8,7 @@ import LandingPage from "./pages/LandingPage";
 import CarInventory from "./pages/carInventory";
 import ReservationManagement from "./pages/reservationManagement";
 import ReservationPage from "./pages/reservation";
+import ProfileManagement from "./pages/profileManagement";
 
 const routes = createBrowserRouter([
   {
@@ -29,6 +30,10 @@ const routes = createBrowserRouter([
   {
     path: "/reservation",
     element: <ReservationPage />
+  },
+  {
+    path: "/profile",
+    element: <ProfileManagement />
   },
   {
     path: "/",
