@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ChevronLeft, ChevronRight, ChevronDown } from "lucide-react"
+import { ChevronLeft, ChevronRight, ChevronDown, Star } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
 
@@ -215,10 +215,16 @@ export function ReviewsSection() {
         {reviews.map((review, index) => (
           <div key={index} className="space-y-3">
             <h4 className="font-mediun text-xl text-black">{review.name}</h4>
-            <div className="flex text-orange-400">
+                <div className="flex items-center gap-1">
               {Array.from({ length: 5 }).map((_, i) => (
-                <span key={i}>{i < review.rating ? "⭐" : "☆"}</span>
-                
+                <Star
+                  key={i}
+                  className={`h-5 w-5 ${
+                    i < review.rating
+                      ? "fill-[#F97316] text-[#F97316]"
+                      : "fill-gray-300 text-gray-300"
+                  }`}
+                />
               ))}
             </div>
             <p className="text-sm text-black font-medium leading-relaxed">{review.text}</p>  
