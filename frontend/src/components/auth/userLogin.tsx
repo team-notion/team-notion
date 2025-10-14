@@ -63,6 +63,7 @@ const UserLogin = () => {
           email: decoded.email || data.email,
           userType: decoded.role || decoded.userType,
           name: decoded.name,
+          avatar: resp.data?.user?.avatar || decoded.avatar,
         };
 
         login(userData, token, data.rememberMe || false);

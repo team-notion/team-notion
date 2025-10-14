@@ -9,6 +9,7 @@ interface User {
   email: string;
   name?: string;
   userType?: string;
+  avatar?: string;
 }
 
 interface AuthContextType {
@@ -163,7 +164,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       id: userData.id,
       email: userData.email,
       userType: userData.userType,
-      name: userData.name || '',
+      name: userData.name,
     }
 
     setStorage(LOCAL_STORAGE_KEYS.USER, JSON.stringify(safeUserData), rememberMe);
