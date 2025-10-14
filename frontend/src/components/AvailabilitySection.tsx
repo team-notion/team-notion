@@ -218,15 +218,17 @@ export function ReviewsSection() {
             <div className="flex text-orange-400">
               {Array.from({ length: 5 }).map((_, i) => (
                 <span key={i}>{i < review.rating ? "⭐" : "☆"}</span>
+                
               ))}
             </div>
-            <p className="text-sm text-black font-medium leading-relaxed">{review.text}</p>
+            <p className="text-sm text-black font-medium leading-relaxed">{review.text}</p>  
           </div>
         ))}
       </div>
     </div>
   )
 }
+
 
 
 

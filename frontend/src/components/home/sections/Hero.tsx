@@ -1,5 +1,5 @@
 import { useState } from "react";
-import AMG from "../../../assets/amg.svg";
+import AMG from "../../../assets/benz.svg";
 import { FilterModal } from "@/components/FilterModal";
 
 const Hero = () => {
@@ -17,7 +17,7 @@ const Hero = () => {
             <p className="text-sm sm:text-base font-medium text-[#0D183A] px-2 md:px-0">
               Select from a wide range of quality vehicles and effortlessly book your ticket to a lovely driving experience
             </p>
-            <p className="text-xs sm:text-sm text-gray-500">Reliability. Safety. Comfort.</p>
+            {/* <p className="text-xs sm:text-sm text-gray-500">Reliability. Safety. Comfort.</p> */}
           </div>
 
           <div className="relative lg:absolute lg:right-0 lg:top-0 lg:bottom-0 w-full lg:w-1/2 mt-6 lg:mt-0">
