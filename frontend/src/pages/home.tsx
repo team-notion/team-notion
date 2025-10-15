@@ -1,9 +1,9 @@
-import Signup from "./signup";
+import LandingPage from "./LandingPage";
 
 const Home = () => {
   return (
     <div>
-      <Signup />
+      <LandingPage />
     </div>
   );
 };

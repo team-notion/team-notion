@@ -1,10 +1,15 @@
 import { RouterProvider } from "react-router";
+import { Toaster, toast } from 'sonner';
 import routes from "./routes";
+import { AuthProvider } from "./components/lib/authContext";
 
 const App = () => {
   return (
     <>
-      <RouterProvider router={routes} />
+      <AuthProvider>
+        <RouterProvider router={routes} />
+        <Toaster richColors position="top-right" visibleToasts={2} />
+      </AuthProvider>
     </>
   );
 };

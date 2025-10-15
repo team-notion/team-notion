@@ -8,4 +8,5 @@ export enum LOCAL_STORAGE_KEYS {
     INSURED_USER_BIO_DATA_ID = "insuredUserBiodataId",
     DETAILS = "details",
     IS_USER_EXIST = "isUserExist",
+    REMEMBER_ME = 'remember_me',
   }  
