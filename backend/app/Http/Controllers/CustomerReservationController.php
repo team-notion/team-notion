@@ -12,48 +12,63 @@ class CustomerReservationController extends Controller
 {
     use AuthorizesRequests;
 
-    // Firm reservation (account holder)
     public function firmReserve(Request $request)
     {
         $data = $request->validate([
             'car_id' => 'required|exists:cars,id',
             'reserved_from' => 'required|date',
             'reserved_till' => 'required|date|after_or_equal:reserved_from',
+            'payment_method' => 'sometimes|string',
         ]);
 
-        // Cancel any overlapping soft reservations
-        $softReservations = Reservation::where('car_id', $data['car_id'])
-            ->where('status', 'soft_reserve')
-            ->where(function ($q) use ($data) {
-                $q->whereBetween('reserved_from', [$data['reserved_from'], $data['reserved_till']])
-                    ->orWhereBetween('reserved_till', [$data['reserved_from'], $data['reserved_till']])
-                    ->orWhere(function ($q2) use ($data) {
-                        $q2->where('reserved_from', '<=', $data['reserved_from'])
-                            ->where('reserved_till', '>=', $data['reserved_till']);
-                    });
-            })
-            ->get();
+        $user = $request->user();
 
-        foreach ($softReservations as $soft) {
-            $soft->update(['status' => 'cancelled']);
-            $this->sendNotification($soft->guest_email, 'Soft reservation overridden', $soft);
+        if (!$this->isCarAvailable($data['car_id'], $data['reserved_from'], $data['reserved_till'])) {
+            return response()->json(['message' => 'Car is already reserved for these dates'], 422);
         }
 
-        // Proceed with firm reservation
-        $data['user_id'] = $request->user()->id;
+        $data['user_id'] = $user->id;
         $data['status'] = 'firm_reserve';
 
         $reservation = Reservation::create($data);
 
-        $this->sendNotification($request->user()->email, 'Reservation confirmed', $reservation);
+        $car = $reservation->car;
+        $days = Carbon::parse($data['reserved_from'])->diffInDays(Carbon::parse($data['reserved_till'])) + 1;
+        $amount = $car->daily_price * $days * 100;
+
+        try {
+            if (!$user->hasStripeId()) {
+                $user->createAsStripeCustomer();
+            }
+
+            $paymentMethod = $data['payment_method'] ?? $user->defaultPaymentMethod()?->id;
+
+            if (!$paymentMethod) {
+                return response()->json(['message' => 'No payment method available'], 422);
+            }
+
+            $paymentIntent = $user->charge($amount, $paymentMethod);
+
+            $reservation->payment()->create([
+                'payment_method_id' => $paymentMethod,
+                'amount' => $amount / 100,
+                'currency' => 'USD',
+                'status' => 'paid',
+                'transaction_reference' => $paymentIntent->id,
+            ]);
+        } catch (\Exception $e) {
+            $reservation->update(['status' => 'cancelled']);
+            return response()->json(['message' => 'Payment failed: ' . $e->getMessage()], 500);
+        }
+
+        $this->sendNotification($user->email, 'Reservation confirmed', $reservation);
 
         return response()->json([
-            'message' => 'Reservation confirmed! Any overlapping soft reservations were cancelled.',
+            'message' => 'Reservation confirmed and payment successful!',
             'reservation' => $reservation
         ], 201);
     }
 
-    // Soft reservation (guest)
     public function softReserve(Request $request)
     {
         $data = $request->validate([
@@ -80,7 +95,6 @@ class CustomerReservationController extends Controller
         ], 201);
     }
 
-    // Modify reservation
     public function modifyReservation(Request $request, Reservation $reservation)
     {
         $this->authorize('update', $reservation);
@@ -111,7 +125,6 @@ class CustomerReservationController extends Controller
         ]);
     }
 
-    // Cancel reservation
     public function cancelReservation(Reservation $reservation)
     {
         $this->authorize('update', $reservation);
@@ -133,7 +146,6 @@ class CustomerReservationController extends Controller
         ]);
     }
 
-    // Send email notification
     protected function sendNotification($email, $subject, $reservation, $additionalMessage = '')
     {
         Mail::raw("Reservation details: ID {$reservation->id}, Car ID {$reservation->car_id}. {$additionalMessage}", function ($message) use ($email, $subject) {
@@ -142,7 +154,6 @@ class CustomerReservationController extends Controller
         });
     }
 
-    // Check car availability
     private function isCarAvailable(int $carId, string $from, string $till, ?int $excludeReservationId = null): bool
     {
         $query = Reservation::where('car_id', $carId)
@@ -164,12 +175,10 @@ class CustomerReservationController extends Controller
         return !$overlap;
     }
 
-    // Fetches bookings for logged-in user
     public function myBookings(Request $request)
     {
         $user = $request->user();
 
-        // Fetch reservations where user_id matches the logged-in user
         $reservations = Reservation::with('car')
             ->where('user_id', $user->id)
             ->orderBy('reserved_from', 'desc')

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\CustomerReservationController;
+use App\Http\Controllers\PaymentMethodController;
 use App\Http\Controllers\ReservationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
@@ -85,4 +86,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('analytics')->group(function () {
         Route::get('/overview', [AnalyticsController::class, 'overview']);
     });
+
+    Route::post('/customer/payment-methods', [PaymentMethodController::class, 'addPaymentMethod']);
+    Route::get('/customer/payment-methods', [PaymentMethodController::class, 'listPaymentMethods']);
 });
