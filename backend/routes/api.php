@@ -7,6 +7,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\CarController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\StripeWebhookController;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Foundation\Auth\EmailVerificationRequest;
@@ -20,6 +21,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/cars', [CarController::class, 'publicIndex']);
 Route::get('/cars/{car}', [CarController::class, 'show']);
 Route::post('/customer/reservations/guest', [CustomerReservationController::class, 'softReserve']);
+
+Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
 
 Route::get('/ping', fn() => response()->json(['message' => 'API is working']));
 
