@@ -12,9 +12,9 @@ import { LOCAL_STORAGE_KEYS } from "../utils/localStorageKeys";
 import { toast } from "sonner";
 
 const businessSignUpSchema = z.object({
-  businessName: z.string().min(2, "Business name must be at least 2 characters"),
+  business_name: z.string().min(2, "Business name must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  phoneNumber: z.string().min(10, "Please enter a valid phone number"),
+  phone: z.string().min(10, "Please enter a valid phone number"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -35,23 +35,29 @@ const BusinessSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [backendErrors, setBackendErrors] = useState<{
+    email?: string[];
+    phone?: string[];
+    business_name?: string[];
+  }>({});
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isValid }, } = useForm<BusinessSignUpFormData>({
     resolver: zodResolver(businessSignUpSchema),
     mode: "onChange",
     defaultValues: {
-      businessName: details.businessName || "",
+      business_name: details.business_name || "",
       email: details.email || "",
-      phoneNumber: details.phoneNumber || "",
+      phone: details.phone || "",
       password: "",
       confirmPassword: "",
     },
   });
 
-  const phoneNumber = watch("phoneNumber");
+  const phone = watch("phone");
 
   const onSubmit = async (data: BusinessSignUpFormData) => {
     setLoading(true);
+    setBackendErrors({});
 
     try {
       const userData = {
@@ -60,14 +66,14 @@ const BusinessSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
       }
       const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.BUSINESS_SIGNUP}`, userData);
 
-      if (resp.status === 201) {
-        toast.success(resp?.data?.message);
+      if (resp.message === 'Business owner registered successfully.') {
+        toast.success(resp?.message);
 
         setDetails((prev: any) => ({
           ...prev,
-          business_name: data.businessName,
+          business_name: data.business_name,
           email: data.email,
-          phone: data.phoneNumber,
+          phone: data.phone,
           password: data.password,
           userType: "business"
         }));
@@ -77,17 +83,27 @@ const BusinessSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
         }
       }
       else {
-        toast.error(resp?.data?.message);
+        toast.error(resp?.message);
+
+        if (resp?.errors) {
+          setBackendErrors(resp.errors);
+        }
       }
     }
     catch (err: any) {
-      setLoading(false);
       toast.error(err?.response?.message);
-    }
 
-    if (data.password !== data.confirmPassword) {
-      alert("Passwords do not match!");
-      return;
+      if (err?.response?.errors) {
+        setBackendErrors(err.response.errors);
+      }
+
+      if (data.password !== data.confirmPassword) {
+        toast.error("Passwords do not match!");
+        return;
+      }
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -104,9 +120,12 @@ const BusinessSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
           <label className="block text-sm font-medium mb-2">
             Business Name
           </label>
-          <input type="text" {...register("businessName")} placeholder='Enter business name' required className="bg-[#E9ECF2] text-[#5C5C5C] text-sm border border-gray-300 p-2 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
-          {errors.businessName && (
-            <p className="text-red-500 text-xs mt-1">{errors.businessName.message}</p>
+          <input type="text" {...register("business_name")} placeholder='Enter business name' required className="bg-[#E9ECF2] text-[#5C5C5C] text-sm border border-gray-300 p-2 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
+          {errors.business_name && (
+            <p className="text-red-500 text-xs mt-1">{errors.business_name.message}</p>
+          )}
+          {backendErrors.business_name && (
+            <p className="text-red-500 text-xs mt-1">{backendErrors.business_name[0]}</p>
           )}
         </div>
         <div className="mb-4">
@@ -115,12 +134,18 @@ const BusinessSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
           {errors.email && (
             <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
           )}
+          {backendErrors.email && (
+            <p className="text-red-500 text-xs mt-1">{backendErrors.email[0]}</p>
+          )}
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">Phone Number</label>
-          <PhoneNumberInput value={phoneNumber} onValueChange={(value) => setValue("phoneNumber", value, { shouldValidate: true })} hasError={!!errors.phoneNumber} />
-          {errors.phoneNumber && (
+          <PhoneNumberInput value={phone} onValueChange={(value) => setValue("phone", value, { shouldValidate: true })}  />
+          {/* {errors.phoneNumber && (
             <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>
+          )} */}
+          {backendErrors.phone && (
+            <p className="text-red-500 text-xs mt-1">{backendErrors.phone[0]}</p>
           )}
         </div>
         <div className="mb-4">
