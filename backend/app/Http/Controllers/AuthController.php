@@ -35,7 +35,7 @@ class AuthController extends Controller
         // }
 
         return response()->json([
-            'message' => 'Customer registered successfully. Please verify your email before logging in.',
+            'message' => 'Customer registered successfully.',
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
@@ -70,7 +70,7 @@ class AuthController extends Controller
         // }
 
         return response()->json([
-            'message' => 'Business owner registered successfully. Please verify your email before logging in.',
+            'message' => 'Business owner registered successfully.',
             'user' => [
                 'id' => $user->id,
                 'email' => $user->email,
