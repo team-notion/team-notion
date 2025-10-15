@@ -8,10 +8,11 @@ import LandingPage from "./pages/LandingPage";
 import CarInventory from "./pages/carInventory";
 import ReservationManagement from "./pages/reservationManagement";
 import ReservationPage from "./pages/reservation";
+import ProfileManagement from "./pages/profileManagement";
 
 const routes = createBrowserRouter([
   {
-    path: "/",
+    path: "/home",
     element: <Home />,
   },
   {
@@ -23,12 +24,16 @@ const routes = createBrowserRouter([
     element: <Login />,
   },
   {
-      path: "/landing",
+      path: "/",
       element: <LandingPage />
   },
   {
     path: "/reservation",
     element: <ReservationPage />
+  },
+  {
+    path: "/profile",
+    element: <ProfileManagement />
   },
   {
     path: "/",

@@ -14,17 +14,37 @@ interface SelectDateProps {
   minDate?: Date
   maxDate?: Date
   disabled?: boolean
+  format?: 'full' | 'month-year' | 'short';
 }
 
-function formatDate(date: Date | undefined) {
+function formatDate(date: Date | undefined, format: 'full' | 'month-year' | 'short' = 'full') {
   if (!date) {
     return ""
   }
-  return date.toLocaleDateString("en-US", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-  })
+
+  switch (format) {
+    case 'month-year':
+      // Format: "January 2025" or "01/2025"
+      return date.toLocaleDateString("en-US", {
+        month: "2-digit",
+        year: "numeric",
+      })
+    case 'short':
+      // Format: "01/15/2025" (MM/DD/YYYY)
+      return date.toLocaleDateString("en-US", {
+        month: "2-digit",
+        day: "2-digit",
+        year: "numeric",
+      })
+    case 'full':
+    default:
+      // Format: "January 15, 2025"
+      return date.toLocaleDateString("en-US", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      })
+  }
 }
 function isValidDate(date: Date | undefined) {
   if (!date) {
@@ -33,14 +53,14 @@ function isValidDate(date: Date | undefined) {
   return !isNaN(date.getTime())
 }
 
-const SelectDate = ({ label, placeholder, value, onChange, minDate, maxDate, disabled = false }: SelectDateProps) => {
+const SelectDate = ({ label, placeholder, value, onChange, minDate, maxDate, disabled = false, format = 'full' }: SelectDateProps) => {
   const [open, setOpen] = useState(false)
   const [month, setMonth] = useState<Date | undefined>(value || new Date())
-  const [inputValue, setInputValue] = useState(formatDate(value));
+  const [inputValue, setInputValue] = useState(formatDate(value, format));
 
   const handleDateChange = (newDate: Date | undefined) => {
     onChange?.(newDate)
-    setInputValue(formatDate(newDate))
+    setInputValue(formatDate(newDate, format))
   }
 
   return (
@@ -81,6 +101,7 @@ const SelectDate = ({ label, placeholder, value, onChange, minDate, maxDate, dis
           </PopoverTrigger>
           <PopoverContent className="w-auto overflow-hidden p-0" align="end" alignOffset={-8} sideOffset={10} >
             <Calendar
+              className='text-sm'
               mode="single"
               selected={value}
               captionLayout="dropdown"
@@ -95,6 +116,8 @@ const SelectDate = ({ label, placeholder, value, onChange, minDate, maxDate, dis
                 if (maxDate && date > maxDate) return true
                 return false
               }}
+              fromYear={format === 'month-year' ? new Date().getFullYear() : 1900}
+              toYear={2100}
             />
           </PopoverContent>
         </Popover>

@@ -46,23 +46,26 @@ const UserLogin = () => {
         password: data.password,
       });
 
-      if (resp.status === 200 || resp.statusCode === 200) {
-        const successMessage = resp.data?.message || resp.message?.message || "Login successful!";
-        toast.success(successMessage);
+      if (resp.message === 'Login successful') {
 
-        const token = resp.data?.token;
+        const { user, token  } = resp;
         
-        // if (!token) {
-        //   throw new Error("No token received from server");
-        // }
+        if (!token) {
+          throw new Error("No token received from server");
+        }
 
-        const decoded = decodeJWT(token);
+        if (!user) {
+          throw new Error("No user data received from server");
+        }
+
+        // const decoded = decodeJWT(token);
 
         const userData = {
-          id: decoded.sub,
-          email: decoded.email || data.email,
-          userType: decoded.role || decoded.userType,
-          name: decoded.name,
+          id: user.id,
+          email: user.email,
+          userType: user.user_type,
+          name: user.username || user.business_name,
+          avatar: user.avatar,
         };
 
         login(userData, token, data.rememberMe || false);
@@ -70,7 +73,7 @@ const UserLogin = () => {
         if (userData.userType === "business" || userData.userType === "owner") {
           navigate("/business-dashboard");
         } else {
-          navigate("/landing");
+          navigate("/");
         }
       } else {
         toast.error(resp.data?.message || resp.message?.message || "Login failed");

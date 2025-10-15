@@ -128,7 +128,7 @@ export function FilterModal({ open, onOpenChange }: FilterModalProps) {
       onInteractOutside={(e) => e.preventDefault()} 
         onEscapeKeyDown={(e) => e.preventDefault()}
       className="max-w-2xl p-0 gap-0" showCloseButton={false}>
-        {/* Header */}
+  
         <div className="flex items-center justify-between p-6 border-b">
           <DialogTitle className="text-xl font-semibold text-[#0D183A]">Find whats best for you</DialogTitle>
           <button onClick={() => onOpenChange(false)} className="text-[#FE130A] border border-[#FE130A] bg-white rounded-2xl p-1 font-bold cursor-pointer hover:text-red-600 transition-colors">
@@ -136,7 +136,6 @@ export function FilterModal({ open, onOpenChange }: FilterModalProps) {
           </button>
         </div>
 
-        {/* Main Content */}
         <div className="flex min-h-[400px]">
           {/* Sidebar */}
           <div className="w-48 bg-[#E8E4F3] p-4 space-y-2">
@@ -156,7 +155,6 @@ export function FilterModal({ open, onOpenChange }: FilterModalProps) {
             ))}
           </div>
 
-          {/* Content Area */}
           {renderContent()}
         </div>
 

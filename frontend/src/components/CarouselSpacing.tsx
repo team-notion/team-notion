@@ -6,8 +6,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../components/ui/carousel"
-import { IoPersonOutline } from "react-icons/io5";
-import { BsFillFuelPumpFill } from "react-icons/bs";
 import { FaCarRear } from "react-icons/fa6";
 import { Link } from "react-router";
 
@@ -76,8 +74,8 @@ export function CarouselSpacing() {
         {cars.map((car) => (
           <CarouselItem key={car.id} className="pl-1 md:basis-1/2 lg:basis-1/3">
             <div className="p-1">
-              <Card>
-                <CardContent className="block aspect-square items-center justify-center p-6 mb-10  ">
+              <Card className="shadow-lg rounded-2xl overflow-hidden hover:shadow-xl transition-shadow duration-300">
+                <CardContent className=" flex flex-col justify-between h-full">
 
                   <img
                     src={car.image}
@@ -88,12 +86,12 @@ export function CarouselSpacing() {
                     {car.name}
                   </h3>
                   <div className="mb-3">
-                  <p className="text-sm text-black mt-1 flex items-center gap-2">
-                    <IoPersonOutline /> 4  <FaCarRear />{car.transmission}  <BsFillFuelPumpFill /> {car.tank}
+                  <p className="text-sm text-black mt-1 font-semibold">
+                    Mileage: 20,000 miles
                   </p>
                   </div>
                   <p className="text-[#0D183A] text-base font-semibold">
-                    {car.rating} ⭐
+                    {car.rating} 
                   </p>
                   <div className="flex items-center justify-between mt-4">
                     <h2 className="text-xl text-black font-bold">
