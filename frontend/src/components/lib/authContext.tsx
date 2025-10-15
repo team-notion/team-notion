@@ -165,13 +165,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       email: userData.email,
       userType: userData.userType,
       name: userData.name,
+      avatar: userData.avatar,
     }
 
     setStorage(LOCAL_STORAGE_KEYS.USER, JSON.stringify(safeUserData), rememberMe);
 
     try {
       const decoded = decodeJWT(token);
-      if (decoded.sub) {
+      if (decoded?.sub) {
         setStorage(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID, decoded.sub, rememberMe);
       }
     }
@@ -184,7 +185,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     setupSessionTimeout(token);
 
-    toast.success(`Welcome back${userData.name ? ', ' + userData.name : ''}!`);
+    toast.success(`Welcome ${safeUserData.name ? ', ' + safeUserData.name : ''}!`);
   }, [setupSessionTimeout, setStorage]);
 
 

@@ -13,7 +13,7 @@ const Clients = () => {
           <p className="text-center text-blackk text-2xl font-semibold mb-8">Trusted by multiple rental companies</p>
           <div className="flex justify-center items-center space-x-12 flex-wrap gap-8">
             {clientLogos.map((logo, index) => (
-              <div  className="w-34 h-22 rounded flex items-center justify-center">
+              <div key={index} className="w-34 h-22 rounded flex items-center justify-center">
                 <img key={index} src={logo} alt={`Client ${index + 1}`} className="" />
               </div>
             ))}
