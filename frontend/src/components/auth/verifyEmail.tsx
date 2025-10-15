@@ -1,14 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import EmailIcon from '../../assets/Email Icon.svg';
 import { useNavigate } from 'react-router';
 // import { VerificationInput } from '../ui/VerificationInput';
 
 interface EmailVerificationProps {
-  email: string
-  onNext?: () => void
+  email: string;
+  userType: string;
+  details: any;
+  setDetails: Dispatch<SetStateAction<any>>;
+  currentStep: number;
+  setCurrentStep: Dispatch<SetStateAction<number>>;
+  onNext?: () => void;
 }
 
-const VerifyEmail = ({ email, onNext }: EmailVerificationProps) => {
+const VerifyEmail = ({ email, userType, details, setDetails, currentStep, setCurrentStep, onNext }: EmailVerificationProps) => {
   const [timeLeft, setTimeLeft] = useState(60) // 2 minutes
   // const [code, setCode] = useState("")
   const navigate = useNavigate();
@@ -44,7 +49,7 @@ const VerifyEmail = ({ email, onNext }: EmailVerificationProps) => {
           Email verification
         </h1>
         <p className="text-gray-600 text-sm md:text-base leading-snug lg:w-[65%] mx-auto">
-          We sent a mail to {email} Please follow the instructions in the mail to verify your email
+          We sent a verification email to {details.email} Please follow the instructions in the mail to verify your email
         </p>
       </div>
 
