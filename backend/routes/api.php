@@ -19,6 +19,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/cars', [CarController::class, 'publicIndex']);
 Route::get('/cars/{car}', [CarController::class, 'show']);
 Route::post('/customer/reservations/guest', [CustomerReservationController::class, 'softReserve']);
+Route::get('/cars/filter', [CarController::class, 'filter']);
+
 
 Route::get('/ping', fn() => response()->json(['message' => 'API is working']));
 

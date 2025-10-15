@@ -20,8 +20,24 @@ class CarController extends Controller
 
     public function publicIndex()
     {
-        $cars = Car::all(); // or you can filter only available cars if needed
-        return response()->json($cars);
+        $today = Carbon::today()->toDateString();
+
+        $cars = Car::whereDoesntHave('reservations', function ($query) use ($today) {
+            $query->where('status', '!=', 'cancelled')
+                ->where(function ($q) use ($today) {
+                    $q->where('reserved_from', '<=', $today)
+                        ->where('reserved_till', '>=', $today);
+                });
+        })
+            ->with(['owner:id,name,email', 'reservations:id,car_id,status,reserved_from,reserved_till'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+
+        return response()->json([
+            'available_cars' => $cars->items(),
+            'total_available' => $cars->total(),
+            'current_date' => $today,
+        ]);
     }
 
 
@@ -139,6 +155,52 @@ class CarController extends Controller
             'cutoff_hours' => $car->cutoff_hours,
             'created_at' => $car->created_at,
             'updated_at' => $car->updated_at,
+        ]);
+    }
+
+    public function filter(Request $request)
+    {
+        $query = Car::query();
+
+        // Filter by car type
+        if ($request->filled('type')) {
+            $query->where('type', $request->type);
+        }
+
+        // Filter by model (search)
+        if ($request->filled('model')) {
+            $query->where('model', 'ILIKE', "%{$request->model}%");
+        }
+
+        // Filter by price range
+        if ($request->filled('min_price')) {
+            $query->where('daily_price', '>=', $request->min_price);
+        }
+
+        if ($request->filled('max_price')) {
+            $query->where('daily_price', '<=', $request->max_price);
+        }
+
+        if ($request->filled(['from', 'till'])) {
+            $query->whereDoesntHave('reservations', function ($q) use ($request) {
+                $q->where('status', '!=', 'cancelled')
+                    ->where(function ($q2) use ($request) {
+                        $q2->whereBetween('reserved_from', [$request->from, $request->till])
+                            ->orWhereBetween('reserved_till', [$request->from, $request->till])
+                            ->orWhere(function ($q3) use ($request) {
+                                $q3->where('reserved_from', '<=', $request->from)
+                                    ->where('reserved_till', '>=', $request->till);
+                            });
+                    });
+            });
+        }
+
+        $cars = $query->with('owner')->paginate(10);
+
+        return response()->json([
+            'filters_applied' => $request->only(['type', 'model', 'min_price', 'max_price', 'from', 'till']),
+            'total_results' => $cars->total(),
+            'cars' => $cars,
         ]);
     }
 
