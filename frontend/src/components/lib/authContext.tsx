@@ -56,23 +56,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
 
+  const isSanctumToken = useCallback((token: string): boolean => {
+    return token.includes('|');
+  }, []);
+
+
 
   const isTokenExpired = useCallback((token: string): boolean => {
+    if (isSanctumToken(token)) {
+      return false;
+    }
+
     try {
       const decoded = decodeJWT(token);
       if (decoded && decoded.exp) {
         const currentTime = Math.floor(Date.now() / 1000);
         return decoded.exp < currentTime;
       }
-      return true;
+      return false;
     }
     catch (err) {
       return false;
     }
-  }, [])
+  }, [isSanctumToken])
 
 
   const getTokenExpirationTime = useCallback((token: string): number | null => {
+    if (isSanctumToken(token)) {
+      return null;
+    }
+
     try {
       const decoded = decodeJWT(token);
       return decoded && decoded.exp ? decoded.exp : null;
@@ -80,7 +93,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     catch (err) {
       return null;
     }
-  }, []);
+  }, [isSanctumToken]);
   
   
   const handleSessionExpired = useCallback(() => {
@@ -124,6 +137,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const setupSessionTimeout = useCallback((token: string) => {
     if (sessionTimeoutId) {
       clearTimeout(sessionTimeoutId);
+    }
+
+    if (isSanctumToken(token)) {
+      return;
     }
 
     const expirationTime = getTokenExpirationTime(token);
@@ -170,14 +187,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     setStorage(LOCAL_STORAGE_KEYS.USER, JSON.stringify(safeUserData), rememberMe);
 
-    try {
-      const decoded = decodeJWT(token);
-      if (decoded?.sub) {
-        setStorage(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID, decoded.sub, rememberMe);
+    if (!isSanctumToken(token)) {
+      try {
+        const decoded = decodeJWT(token);
+        if (decoded?.sub) {
+          setStorage(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID, decoded.sub, rememberMe);
+        }
       }
-    }
-    catch (err) {
-      console.error("Error decoding token:", err);
+      catch (err) {
+        console.error("Error decoding token:", err);
+      }
     }
 
     setUser(safeUserData);
@@ -186,7 +205,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setupSessionTimeout(token);
 
     toast.success(`Welcome ${safeUserData.name ? ', ' + safeUserData.name : ''}!`);
-  }, [setupSessionTimeout, setStorage]);
+  }, [setupSessionTimeout, setStorage, isSanctumToken]);
 
 
 
