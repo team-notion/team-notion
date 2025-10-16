@@ -36,6 +36,10 @@
 | **PUT**     | `/api/owner/cars/{car}`       | Update an existing car listing. |
 | **DELETE**  | `/api/owner/cars/{car}`       | Delete a car listing. |
 | **DELETE**  | `/api/owner/cars/{car}/photo` | Remove a photo from a car listing. |
+| **GET**     |   `/api/cars`                         | Get a list of all publicly visible cars. |
+| **GET**     |   `/api/cars/filter`                  | Filter the list of publicly visible cars. |
+| **GET**     |   `/api/cars/{car}`                   | Show details of a specific car. |
+
 
 #### Reservation Management (Owner View)
 | **GET**   | `/api/owner/reservations`                         | Get a list of all reservations for the owner's cars. |
