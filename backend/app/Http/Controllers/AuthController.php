@@ -5,15 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\UserType;
 use Illuminate\Auth\Events\Registered;
+use Illuminate\Container\Attributes\Log;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
-
 class AuthController extends Controller
 {
-    // Customer Signup
     public function registerCustomer(Request $request)
     {
         $request->validate([
@@ -26,12 +24,16 @@ class AuthController extends Controller
         $user = User::create([
             'email' => $request->email,
             'phone' => $request->phone,
-            'password' => $request->password,
+            'password' => Hash::make($request->password),
             'username' => $request->username,
             'user_type_id' => UserType::CUSTOMER,
         ]);
 
-        event(new Registered($user));
+        // try {
+        //     event(new Registered($user));
+        // } catch (\Exception $e) {
+        //     Log::error('Failed to send verification email: ' . $e->getMessage());
+        // }
 
         return response()->json([
             'message' => 'Customer registered successfully.',
@@ -39,7 +41,6 @@ class AuthController extends Controller
         ], 201);
     }
 
-    // Business Owner Signup
     public function registerBusinessOwner(Request $request)
     {
         $request->validate([
@@ -52,12 +53,16 @@ class AuthController extends Controller
         $user = User::create([
             'email' => $request->email,
             'phone' => $request->phone,
-            'password' => $request->password,
+            'password' => Hash::make($request->password),
             'business_name' => $request->business_name,
             'user_type_id' => UserType::BUSINESS_OWNER,
         ]);
 
-        event(new Registered($user));
+        // try {
+        //     event(new Registered($user));
+        // } catch (\Exception $e) {
+        //     Log::error('Failed to send verification email: ' . $e->getMessage());
+        // }
 
         return response()->json([
             'message' => 'Business owner registered successfully.',
@@ -65,35 +70,10 @@ class AuthController extends Controller
         ], 201);
     }
 
-    // public function login(Request $request)
-    // {
-    //     $request->validate([
-    //         'login' => 'required',
-    //         'password' => 'required',
-    //     ]);
-
-    //     $loginType = filter_var($request->login, FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
-
-    //     if (!Auth::attempt([$loginType => $request->login, 'password' => $request->password])) {
-    //         throw ValidationException::withMessages([
-    //             'login' => ['Invalid credentials'],
-    //         ]);
-    //     }
-
-    //     $user = Auth::user();
-    //     $token = $user->createToken('auth_token')->plainTextToken;
-
-    //     return response()->json([
-    //         'message' => 'Login successful',
-    //         'user' => $user,
-    //         'token' => $token,
-    //     ]);
-    // }
-
     public function login(Request $request)
     {
         $request->validate([
-            'login' => 'required', // can be phone or email
+            'login' => 'required',
             'password' => 'required',
         ]);
 
@@ -110,12 +90,18 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Login successful',
-            'user' => $user,
+            'user' => [
+                'id' => $user->id,
+                'email' => $user->email,
+                'phone' => $user->phone,
+                'username' => $user->username,
+                'business_name' => $user->business_name,
+                'user_type' => $user->user_type,
+            ],
             'token' => $token,
         ], 200);
     }
 
-    // Logout
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();

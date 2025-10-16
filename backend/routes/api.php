@@ -21,6 +21,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::get('/cars', [CarController::class, 'publicIndex']);
 Route::get('/cars/{car}', [CarController::class, 'show']);
 Route::post('/customer/reservations/guest', [CustomerReservationController::class, 'softReserve']);
+Route::get('/cars/filter', [CarController::class, 'filter']);
+
 
 Route::post('/stripe/webhook', [StripeWebhookController::class, 'handleWebhook']);
 
