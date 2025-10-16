@@ -19,7 +19,7 @@ require 'vendor/autoload.php';
 use App\Models\UserType;
 if (UserType::count() === 0) {
     echo 'Seeding User Types...\n';
-    \$kernel->call('db:seed', ['--class' => 'UserTypesSeeder', '--force' => true]);
+    \$kernel->call('db:seed', ['--class' => 'UserTypeSeeder', '--force' => true]);
 } else {
     echo 'User Types already exist, skipping seeding.\n';
 }
