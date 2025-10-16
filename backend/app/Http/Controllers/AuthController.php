@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserType;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -27,14 +28,14 @@ class AuthController extends Controller
             'phone' => $request->phone,
             'password' => $request->password,
             'username' => $request->username,
-            'user_type' => 'customer',
+            'user_type_id' => UserType::CUSTOMER,
         ]);
 
         event(new Registered($user));
 
         return response()->json([
-            'message' => 'Customer registered successfully. Please verify your email before logging in.',
-            'user' => $user,
+            'message' => 'Customer registered successfully.',
+            'user' => $user->load('userType'),
         ], 201);
     }
 
@@ -53,14 +54,14 @@ class AuthController extends Controller
             'phone' => $request->phone,
             'password' => $request->password,
             'business_name' => $request->business_name,
-            'user_type' => 'business_owner',
+            'user_type_id' => UserType::BUSINESS_OWNER,
         ]);
 
         event(new Registered($user));
 
         return response()->json([
-            'message' => 'Business owner registered successfully. Please verify your email before logging in.',
-            'user' => $user,
+            'message' => 'Business owner registered successfully.',
+            'user' => $user->load('userType'),
         ], 201);
     }
 

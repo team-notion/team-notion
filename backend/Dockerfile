@@ -30,4 +30,10 @@ EXPOSE 8000
 CMD echo "Waiting for database..." && \
     sleep 10 && \
     php artisan migrate --force && \
+    if [ "$(php artisan tinker --execute='echo \App\\Models\\User::count();')" = "0" ]; then \
+        echo 'Seeding database...'; \
+        php artisan db:seed --force; \
+    else \
+        echo 'Skipping seeding — data already exists.'; \
+    fi && \
     php artisan serve --host=0.0.0.0 --port=$PORT
