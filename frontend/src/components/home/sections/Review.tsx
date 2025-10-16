@@ -1,10 +1,6 @@
-"use client"
-
 import { useState } from "react"
 import { ChevronLeft, ChevronRight, Star } from "lucide-react"
 import { Button } from "@/components/ui/button"
-// import Rita from "../../../assets/rita.svg";
-
 
 interface Review {
   id: number

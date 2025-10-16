@@ -148,3 +148,11 @@
 .trick:hover {
   scrollbar-color: #5C5470 #ffffff;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

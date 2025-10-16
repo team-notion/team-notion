@@ -9,6 +9,7 @@ import CarInventory from "./pages/carInventory";
 import ReservationManagement from "./pages/reservationManagement";
 import ReservationPage from "./pages/reservation";
 import ProfileManagement from "./pages/profileManagement";
+import VehiclePage from "./pages/vehiclePage";
 
 const routes = createBrowserRouter([
   {
@@ -30,6 +31,10 @@ const routes = createBrowserRouter([
   {
     path: "/reservation",
     element: <ReservationPage />
+  },
+  {
+    path: "/vehicle-page",
+    element: <VehiclePage />
   },
   {
     path: "/profile",
