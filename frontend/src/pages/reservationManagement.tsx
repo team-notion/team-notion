@@ -1,5 +1,6 @@
 import CarInventoryCard from '@/components/carInventoryCard'
 import CreateReservationModal from '@/components/CreateReservationModal'
+import RescheduleReservationModal from '@/components/RescheduleReservationModal'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@/components/ui/input-group'
 import TransactionTable from '@/components/ui/TransactionTable'
@@ -90,6 +91,7 @@ const sampleBookings: Booking[] = [
 
 const ReservationManagement = () => {
   const [isCreateReservationModalOpen, setIsCreateReservationModalOpen] = useState(false)
+  const [isRescheduleReservationModalOpen, setIsRescheduleReservationModalOpen] = useState(false)
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 10,
@@ -98,6 +100,11 @@ const ReservationManagement = () => {
   const handleCreateReservationConfirm = () => {
     console.log("Create new reservation:");
     setIsCreateReservationModalOpen(false);
+  }
+
+  const handleRescheduleReservationConfirm = () => {
+    console.log("Reschedule reservation:");
+    setIsRescheduleReservationModalOpen(false);
   }
 
   const columns = useMemo<ColumnDef<Booking>[]>(
@@ -163,13 +170,13 @@ const ReservationManagement = () => {
         header: "ACTION",
         cell: () => (
           <div className="flex items-center gap-3">
-            <button onClick={() => {console.log("Edit reservation"); alert("Edit reservation");}} className="text-[#667085] hover:text-[#344054] cursor-pointer">
+            <button type='button' onClick={() => {console.log("Edit reservation"); alert("Edit reservation");}} className="text-[#667085] hover:text-[#344054] cursor-pointer">
               <TbEdit className="size-5" />
             </button>
-            <button onClick={() => {console.log("Refresh reservation"); alert("Refresh reservation");}} className="text-[#9333EA] hover:text-[#61239AFF] cursor-pointer">
+            <button type='button' onClick={() => { setIsRescheduleReservationModalOpen(true) }} className="text-[#9333EA] hover:text-[#61239AFF] cursor-pointer">
               <RefreshCcw className="size-5" />
             </button>
-            <button onClick={() => {console.log("Delete reservation"); alert("Delete reservation");}} className="text-[#FE130A] hover:text-[#BC0D07FF] cursor-pointer">
+            <button type='button' onClick={() => {console.log("Delete reservation"); alert("Delete reservation");}} className="text-[#FE130A] hover:text-[#BC0D07FF] cursor-pointer">
               <Trash2 className="size-5" />
             </button>
           </div>
@@ -229,6 +236,7 @@ const ReservationManagement = () => {
       </div>
 
       <CreateReservationModal isOpen={isCreateReservationModalOpen} onClose={() => setIsCreateReservationModalOpen(false)} onConfirm={handleCreateReservationConfirm} />
+      <RescheduleReservationModal isOpen={isRescheduleReservationModalOpen} onClose={() => setIsRescheduleReservationModalOpen(false)} onConfirm={handleRescheduleReservationConfirm} />
     </div>
   )
 }

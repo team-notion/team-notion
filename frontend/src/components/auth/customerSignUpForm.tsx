@@ -13,9 +13,9 @@ import { toast } from "sonner";
 import { UserRound } from 'lucide-react';
 
 const customerSignUpSchema = z.object({
-  userName: z.string().min(2, "UserName must be at least 2 characters"),
+  username: z.string().min(2, "UserName must be at least 2 characters"),
   email: z.string().email("Please enter a valid email address"),
-  phoneNumber: z.string().min(10, "Please enter a valid phone number"),
+  phone: z.string().min(10, "Please enter a valid phone number"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -36,23 +36,29 @@ const CustomerSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [backendErrors, setBackendErrors] = useState<{
+    email?: string[];
+    phone?: string[];
+    username?: string[];
+  }>({});
 
   const { register, handleSubmit, setValue, watch, formState: { errors, isValid }, } = useForm<CustomerSignUpFormData>({
     resolver: zodResolver(customerSignUpSchema),
     mode: "onChange",
     defaultValues: {
-      userName: details.userName || "",
+      username: details.username || "",
       email: details.email || "",
-      phoneNumber: details.phoneNumber || "",
+      phone: details.phone || "",
       password: "",
       confirmPassword: "",
     },
   });
   
-  const phoneNumber = watch("phoneNumber");
+  const phone = watch("phone");
 
   const onSubmit = async (data: CustomerSignUpFormData) => {
     setLoading(true);
+    setBackendErrors({});
 
     try {
       const userData = {
@@ -61,14 +67,14 @@ const CustomerSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
       }
       const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.USER_SIGNUP}`, userData);
 
-      if (resp.status === 201) {
-        toast.success(resp?.data?.message);
+      if (resp.message === 'Customer registered successfully.') {
+        toast.success(resp?.message);
 
         setDetails((prev: any) => ({
           ...prev,
-          username: data.userName,
+          username: data.username,
           email: data.email,
-          phone: data.phoneNumber,
+          phone: data.phone,
           password: data.password,
           userType: "customer"
         }));
@@ -78,17 +84,27 @@ const CustomerSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
         }
       }
       else {
-        toast.error(resp?.data?.message);
+        toast.error(resp?.message);
+
+        if (resp?.errors) {
+          setBackendErrors(resp.errors);
+        }
       }
     }
     catch (err: any) {
-      setLoading(false);
       toast.error(err?.response?.message);
-    }
 
-    if (data.password !== data.confirmPassword) {
-      alert("Passwords do not match!");
-      return;
+      if (err?.response?.errors) {
+        setBackendErrors(err.response.errors);
+      }
+
+      if (data.password !== data.confirmPassword) {
+        alert("Passwords do not match!");
+        return;
+      }
+    }
+    finally {
+      setLoading(false);
     }
   };
 
@@ -105,9 +121,12 @@ const CustomerSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
           <label className="block text-sm font-medium mb-2">
             Name ( As written on driver’s license )
           </label>
-          <input type="text" {...register("userName")} placeholder="Enter name ( As written on driver’s license )" className="bg-[#E9ECF2] text-[#5C5C5C] text-sm border border-gray-300 p-2 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
-          {errors.userName && (
-            <p className="text-red-500 text-xs mt-1">{errors.userName.message}</p>
+          <input type="text" {...register("username")} placeholder="Enter name ( As written on driver’s license )" className="bg-[#E9ECF2] text-[#5C5C5C] text-sm border border-gray-300 p-2 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
+          {errors.username && (
+            <p className="text-red-500 text-xs mt-1">{errors.username.message}</p>
+          )}
+          {backendErrors.username && (
+            <p className="text-red-500 text-xs mt-1">{backendErrors.username[0]}</p>
           )}
         </div>
         <div className="mb-4">
@@ -116,12 +135,18 @@ const CustomerSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
           {errors.email && (
             <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
           )}
+          {backendErrors.email && (
+            <p className="text-red-500 text-xs mt-1">{backendErrors.email[0]}</p>
+          )}
         </div>
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">Phone Number</label>
-          <PhoneNumberInput value={phoneNumber} onValueChange={(value) => setValue("phoneNumber", value, { shouldValidate: true })} hasError={!!errors.phoneNumber} />
-          {errors.phoneNumber && (
-            <p className="text-red-500 text-xs mt-1">{errors.phoneNumber.message}</p>
+          <PhoneNumberInput value={phone} onValueChange={(value) => setValue("phone", value, { shouldValidate: true })} hasError={!!errors.phone} />
+          {errors.phone && (
+            <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
+          )}
+          {backendErrors.phone && (
+            <p className="text-red-500 text-xs mt-1">{backendErrors.phone[0]}</p>
           )}
         </div>
         <div className="mb-4">

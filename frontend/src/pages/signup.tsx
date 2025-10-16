@@ -4,6 +4,7 @@ import AuthLayout from './../components/layout/authlayout';
 import BusinessSignUpForm from "./../components/auth/businessSignUpForm";
 import VerifyEmail from "./../components/auth/verifyEmail";
 import CustomerSignUpForm from "./../components/auth/customerSignUpForm";
+import { useNavigate } from "react-router";
 
 interface SignupDetailsProps {
   userType?: string;
@@ -16,6 +17,7 @@ interface SignupDetailsProps {
 }
 
 const Signup = () => {
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [details, setDetails] = useState<SignupDetailsProps>({});
   const [userType, setUserType] = useState<string>("");
@@ -32,7 +34,8 @@ const Signup = () => {
       email,
       ...formData 
     }));
-    setCurrentStep(3);
+    // setCurrentStep(3);
+    navigate('/login');
     console.log("Business signup completed, moving to next step");
   }
 
@@ -42,7 +45,8 @@ const Signup = () => {
       email,
       ...formData 
     }));
-    setCurrentStep(3);
+    // setCurrentStep(3);
+    navigate('/login');
     console.log("Customer signup completed, moving to next step");
   }
 
