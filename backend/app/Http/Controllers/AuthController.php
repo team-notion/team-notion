@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\UserType;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Container\Attributes\Log;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ class AuthController extends Controller
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'username' => $request->username,
-            'user_type' => 'customer',
+            'user_type_id' => UserType::CUSTOMER,
         ]);
 
         // try {
@@ -36,13 +37,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Customer registered successfully.',
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'username' => $user->username,
-                'user_type' => $user->user_type,
-            ],
+            'user' => $user->load('userType'),
         ], 201);
     }
 
@@ -60,7 +55,7 @@ class AuthController extends Controller
             'phone' => $request->phone,
             'password' => Hash::make($request->password),
             'business_name' => $request->business_name,
-            'user_type' => 'business_owner',
+            'user_type_id' => UserType::BUSINESS_OWNER,
         ]);
 
         // try {
@@ -71,13 +66,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Business owner registered successfully.',
-            'user' => [
-                'id' => $user->id,
-                'email' => $user->email,
-                'phone' => $user->phone,
-                'business_name' => $user->business_name,
-                'user_type' => $user->user_type,
-            ],
+            'user' => $user->load('userType'),
         ], 201);
     }
 
