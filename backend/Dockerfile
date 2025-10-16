@@ -10,8 +10,13 @@ RUN apt-get update && apt-get install -y \
     unzip \
     libzip-dev \
     libpq-dev \
-    && docker-php-ext-install pdo pdo_pgsql \
-    && docker-php-ext-enable pdo_pgsql \
+    libonig-dev \
+    libxml2-dev \
+    libcurl4-openssl-dev \
+    pkg-config \
+    libssl-dev \
+    && docker-php-ext-install pdo pdo_pgsql zip bcmath opcache \
+    && docker-php-ext-enable pdo_pgsql zip bcmath opcache \
     && apt-get clean
 
 # 4. Install Composer
