@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
@@ -6,11 +8,17 @@ import { X } from "lucide-react"
 interface FilterModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  onApplyFilters: (filters: {
+    carTypes: string[]
+    models: string[]
+    priceRanges: string[]
+    months: string[]
+  }) => void
 }
 
 type FilterSection = "Car type" | "Model" | "Price range" | "Availability"
 
-export function FilterModal({ open, onOpenChange }: FilterModalProps) {
+export function FilterModal({ open, onOpenChange, onApplyFilters }: FilterModalProps) {
   const [activeSection, setActiveSection] = useState<FilterSection>("Car type")
   const [selectedCarTypes, setSelectedCarTypes] = useState<string[]>([])
   const [selectedModels, setSelectedModels] = useState<string[]>([])
@@ -18,7 +26,7 @@ export function FilterModal({ open, onOpenChange }: FilterModalProps) {
   const [selectedMonths, setSelectedMonths] = useState<string[]>([])
 
   const carTypes = ["SUV", "Pick up", "Sports car", "Sedan"]
-  const models = ["Camry", "Elantra", "Corolla", "Prius", "Crown"]
+  const models = ["Nissan", "Honda", "Elantra", "Corolla", "Infiniti", "Chevy", "BMw", "Mazda", "Cayman", "4MATIC"]
   const priceRanges = [
     "₦ 10,000 - ₦ 20,000/day",
     "₦ 20,000 - ₦ 40,000/day",
@@ -112,8 +120,7 @@ export function FilterModal({ open, onOpenChange }: FilterModalProps) {
   }
 
   const handleResults = () => {
-    // filter results logic
-    console.log("[v0] Filter selections:", {
+    onApplyFilters({
       carTypes: selectedCarTypes,
       models: selectedModels,
       priceRanges: selectedPriceRanges,
@@ -124,14 +131,18 @@ export function FilterModal({ open, onOpenChange }: FilterModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent 
-      onInteractOutside={(e) => e.preventDefault()} 
+      <DialogContent
+        onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
-      className="max-w-2xl p-0 gap-0" showCloseButton={false}>
-  
+        className="max-w-2xl p-0 gap-0"
+        showCloseButton={false}
+      >
         <div className="flex items-center justify-between p-6 border-b">
           <DialogTitle className="text-xl font-semibold text-[#0D183A]">Find whats best for you</DialogTitle>
-          <button onClick={() => onOpenChange(false)} className="text-[#FE130A] border border-[#FE130A] bg-white rounded-2xl p-1 font-bold cursor-pointer hover:text-red-600 transition-colors">
+          <button
+            onClick={() => onOpenChange(false)}
+            className="text-[#FE130A] border border-[#FE130A] bg-white rounded-2xl p-1 font-bold cursor-pointer hover:text-red-600 transition-colors"
+          >
             <X className="w-3 h-3" />
           </button>
         </div>

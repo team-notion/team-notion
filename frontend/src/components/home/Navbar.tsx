@@ -11,6 +11,29 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
 
+  const links = [
+  {
+    id: 1,
+    url: "/",
+    text: "Home",
+  },
+  {
+    id: 2,
+    url: "/vehicle-page",
+    text: "Vehicle",
+  },
+  {
+    id: 3,
+    url: "#",
+    text: "About Us",
+  },
+  {
+    id: 4,
+    url: "#",
+    text: "Business Account",
+  },
+];
+
   const getUserInitials = () => {
     if (!user) return 'U';
 
@@ -59,10 +82,10 @@ const Navbar = () => {
           </div>
   
           <nav className="hidden md:flex space-x-8">
-            {["Home", "Catalog", "Reservations", "About us", "Business Account"].map((item, idx) => (
-              <a key={idx} href="#" className="hover:text-[#F97316] transition text-base">
-                {item}
-              </a>
+            {links.map((links) => (
+              <Link to={links.url} key={links.id} className="hover:text-[#F97316] transition text-base"> 
+                {links.text} 
+              </Link>
             ))}
           </nav>
   
@@ -138,10 +161,7 @@ const Navbar = () => {
             Home
           </a>
           <a href="#" className="block hover:text-[#F97316] transition">
-            Catalog
-          </a>
-          <a href="#" className="block hover:text-[#F97316] transition">
-            Reservations
+            Vehicle
           </a>
           <a href="#" className="block hover:text-[#F97316] transition">
             About us
