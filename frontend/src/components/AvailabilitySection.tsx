@@ -30,10 +30,10 @@ export function AvailabilitySection() {
   const monthName = currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })
 
   return (
-    <Collapsible open={isOpen} onOpenChange={setIsOpen} className=" max-w-md">
-      <CollapsibleTrigger className="flex gap-40 p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-200 rounded-md ">
-        <h3 className="text-3xl font-mediun text-black">Availability</h3>
-        <ChevronDown className={`w-8 h-8 text-black transition-transform ${isOpen ? "rotate-180" : ""}`} />
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="max-w-md">
+      <CollapsibleTrigger className="flex items-center justify-between gap-10 lg:gap-40 p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-200 rounded-md w-full">
+        <h3 className="text-xl lg:text-2xl font-medium text-black">Availability</h3>
+        <ChevronDown className={`w-5 lg:w-8 h-5 lg:h-8 text-black transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="p-4 border-t-2 border-[#0066CC]">
@@ -98,9 +98,9 @@ export function RentalTermsSection() {
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="">
-      <CollapsibleTrigger className="flex gap-40 p-4 hover:bg-gray-50 cursor-pointer max-w-md border-b border-gray-200 rounded-md ">
-        <h3 className="text-3xl font-mediun text-black">Rental Terms</h3>
-        <ChevronDown className={`w-8 h-8 text-black transition-transform ${isOpen ? "rotate-180" : ""}`} />
+      <CollapsibleTrigger className="flex items-center justify-between gap-10 lg:gap-40 p-4 hover:bg-gray-50 cursor-pointer max-w-md border-b border-gray-200 rounded-md w-full">
+        <h3 className="text-xl lg:text-2xl font-medium text-black">Rental Terms</h3>
+        <ChevronDown className={`w-5 lg:w-8 h-5 lg:h-8 text-black transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="p-4 space-y-4 text-sm text-black leading-relaxed">
@@ -193,17 +193,17 @@ const ratingBreakdown = [
 export function ReviewsSection() {
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-mediun text-black">Reviews</h2>
+      <h2 className="text-xl lg:text-2xl font-medium text-black">Reviews</h2>
 
       {/* Rating Breakdown */}
       <div className="space-y-3">
         {ratingBreakdown.map((rating) => (
           <div key={rating.stars} className="flex items-center gap-4 max-w-xl">
-            <span className="text-base font-medium text-black w-16">{rating.stars} Stars</span>
+            <span className="text-sm lg:text-base font-medium text-black w-16">{rating.stars} Stars</span>
             <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
               <div className="h-full bg-[#10B981] rounded-full" style={{ width: `${rating.percentage}%` }} />
             </div>
-            <span className="text-base text-black w-20">
+            <span className="text-sm lg:text-base text-black w-20">
               {rating.count} {rating.count === 1 ? "review" : "reviews"}
             </span>
           </div>
@@ -214,7 +214,7 @@ export function ReviewsSection() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
         {reviews.map((review, index) => (
           <div key={index} className="space-y-3">
-            <h4 className="font-mediun text-xl text-black">{review.name}</h4>
+            <h4 className="font-medium text-lg text-black">{review.name}</h4>
                 <div className="flex items-center gap-1">
               {Array.from({ length: 5 }).map((_, i) => (
                 <Star
@@ -227,7 +227,7 @@ export function ReviewsSection() {
                 />
               ))}
             </div>
-            <p className="text-sm text-black font-medium leading-relaxed">{review.text}</p>  
+            <p className="text-sm text-black font-normal leading-relaxed">{review.text}</p>  
           </div>
         ))}
       </div>

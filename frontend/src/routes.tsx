@@ -33,7 +33,7 @@ const routes = createBrowserRouter([
     element: <ReservationPage />
   },
   {
-    path: "/vehicle-page",
+    path: "/vehicle-catalogue",
     element: <VehiclePage />
   },
   {

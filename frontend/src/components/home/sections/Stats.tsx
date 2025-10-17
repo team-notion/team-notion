@@ -9,14 +9,14 @@ const Stats = () => {
   
   return (
      <section className="bg-[#F5F5F5] py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-center">
-             {stats.map((stat, i) => (
-            <div key={i}>
-              <p className="text-3xl lg:text-7xl font-bold text-[#0D183A] mb-2">{stat.value}</p>
-              <p className="text-[#0D183A] text-base font-bold">{stat.label}</p>
-            </div>
-          ))}
+        <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-8 text-left lg:text-center">
+            {stats.map((stat, i) => (
+              <div key={i}>
+                <p className="text-xl lg:text-3xl font-semibold text-[#0D183A] mb-2">{stat.value}</p>
+                <p className="text-[#0D183A] text-base font-medium">{stat.label}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

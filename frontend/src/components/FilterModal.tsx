@@ -98,14 +98,14 @@ export function FilterModal({ open, onOpenChange, onApplyFilters }: FilterModalP
     }
 
     return (
-      <div className="flex-1 p-6">
+      <div className="flex-1 p-2 lg:p-6">
         <h3 className="text-xl font-semibold text-[#0D183A] mb-6">{activeSection}</h3>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 max-h-[45dvh] overflow-y-auto">
           {items.map((item) => (
             <button
               key={item}
               onClick={() => toggleSelection(item, activeSection)}
-              className={`px-6 py-2.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
+              className={`px-3 lg:px-6 py-1 lg:py-2.5 rounded-md text-sm font-medium transition-colors cursor-pointer ${
                 isSelected(item, activeSection)
                   ? "bg-[#4A5FD9] text-white"
                   : "bg-white text-[#0D183A] border border-[#0D183A] hover:border-gray-400"
@@ -134,11 +134,11 @@ export function FilterModal({ open, onOpenChange, onApplyFilters }: FilterModalP
       <DialogContent
         onInteractOutside={(e) => e.preventDefault()}
         onEscapeKeyDown={(e) => e.preventDefault()}
-        className="max-w-2xl p-0 gap-0"
+        className="max-w-[97%] lg:max-w-2xl max-h-[90dvh] p-0 gap-0 overflow-hidden"
         showCloseButton={false}
       >
-        <div className="flex items-center justify-between p-6 border-b">
-          <DialogTitle className="text-xl font-semibold text-[#0D183A]">Find whats best for you</DialogTitle>
+        <div className="flex items-center justify-between p-3 md:p-6 border-b">
+          <DialogTitle className="text-xl font-medium text-[#0D183A]">Find whats best for you</DialogTitle>
           <button
             onClick={() => onOpenChange(false)}
             className="text-[#FE130A] border border-[#FE130A] bg-white rounded-2xl p-1 font-bold cursor-pointer hover:text-red-600 transition-colors"
@@ -149,7 +149,7 @@ export function FilterModal({ open, onOpenChange, onApplyFilters }: FilterModalP
 
         <div className="flex min-h-[400px]">
           {/* Sidebar */}
-          <div className="w-48 bg-[#E8E4F3] p-4 space-y-2">
+          <div className="w-40 lg:w-48 bg-[#E8E4F3] p-2 md:p-4 space-y-1">
             {(["Car type", "Model", "Price range", "Availability"] as FilterSection[]).map((section) => (
               <button
                 key={section}
@@ -170,10 +170,10 @@ export function FilterModal({ open, onOpenChange, onApplyFilters }: FilterModalP
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end p-6 border-t">
+        <div className="flex justify-end p-3 border-t">
           <Button
             onClick={handleResults}
-            className="bg-[#F97316] hover:bg-orange-600 text-white px-10 py-6 rounded-md font-medium cursor-pointer"
+            className="bg-[#F97316] hover:bg-orange-600 text-white px-10 py-5 lg:py-6 rounded-md font-medium cursor-pointer"
           >
             Results
           </Button>

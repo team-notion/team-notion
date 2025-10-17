@@ -7,7 +7,7 @@ const Hero = () => {
 
   return (
     <section className="relative bg-[#F3F4F6] overflow-hidden py-10 md:py-30">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-15">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-10 md:py-15">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center">
           {/* Left Text Section */}
           <div className="space-y-4 md:space-y-6 text-center lg:text-left relative z-10">
@@ -72,8 +72,6 @@ const Hero = () => {
           </button>
         </div>
       </div>
-
-      <FilterModal open={filterModalOpen} onOpenChange={setFilterModalOpen} />
     </section>
   );
 };

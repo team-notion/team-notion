@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { decodeJWT } from "../utils/decoder";
 import { useAuth } from "../lib/authContext";
 import ErrorHandler from "../ErrorHandler/ErrorHandler";
+import Loader from "../ui/Loader/Loader";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -87,6 +88,12 @@ const UserLogin = () => {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return <div className="flex justify-center items-center h-64">
+      <Loader type="tailSpin" color="#175CD3" height={40} width={40} />
+    </div>;
+  }
 
   return (
     <div className="flex flex-col md:flex-row gap-6 md:gap-8 justify-between items-start h-full">
