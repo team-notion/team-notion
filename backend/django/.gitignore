@@ -1,0 +1,34 @@
+# Byte-code files
+*.pyc
+__pycache__/
+
+# Virtual environment
+env/
+venv/
+.venv/
+
+# Database files
+*.sqlite3
+db.sqlite3
+
+# Media and static files (often generated during deployment)
+/media/
+/static/
+
+# Environment variables and secrets
+.env
+*.env
+local_settings.py
+
+# IDE-specific files (e.g., for VS Code, PyCharm)
+.vscode/
+.idea/
+
+# Operating system specific files
+.DS_Store
+Thumbs.db
+
+# Pip and poetry related files
+pip-log.txt
+pip-delete-this-directory.txt
+poetry.lock  # Include if you manage dependencies with poetry and want to commit it
