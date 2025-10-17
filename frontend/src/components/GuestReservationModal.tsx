@@ -1,5 +1,12 @@
-import { X, AlertCircle, CheckCircle2, Users, Calendar } from "lucide-react"
+import { X, AlertCircle, CheckCircle2, Users, Calendar, UserRound } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useForm, Controller } from "react-hook-form"
+import SelectDate from "./SelectDate"
+import SelectDropdown from "./SelectDropdown"
+import { useState } from "react"
+import PhoneNumberInput from "./ui/PhoneNumberInput"
+import { z } from "zod"
+import { zodResolver } from "@hookform/resolvers/zod"
 
 export interface ReservationFormData {
   customerName: string
@@ -30,15 +37,15 @@ export function WarningModal({ isOpen, onClose, onSignUp, onContinue }: WarningM
         onInteractOutside={(e) => e.preventDefault()} 
         onEscapeKeyDown={(e) => e.preventDefault()}
         className="sm:max-w-3xl p-0 gap-0">
-        <div className="p-10 space-y-4">
+        <div className="px-2 py-4 lg:p-10 space-y-4">
           <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-full border-4 border-[#F97316] flex items-center justify-center">
-              <AlertCircle className="w-8 h-8 text-[#F97316]" />
+            <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-full border-4 border-[#F97316] flex items-center justify-center">
+              <AlertCircle className="size-8 text-[#F97316]" />
             </div>
           </div>
 
           <DialogHeader>
-            <DialogTitle className="text-3xl font-medium text-center text-[#0D183A]">Warning</DialogTitle>
+            <DialogTitle className="text-2xl lg:text-3xl font-medium text-center text-[#0D183A]">Warning</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3 text-sm text-gray-700">
@@ -59,13 +66,13 @@ export function WarningModal({ isOpen, onClose, onSignUp, onContinue }: WarningM
           <div className="flex gap-3 pt-4">
             <button
               onClick={onSignUp}
-              className="flex-1 px-6 py-3 border-2 border-[#F97316] text-[#F97316] rounded-lg hover:bg-orange-50 font-medium cursor-pointer"
+              className="flex-1 px-4 py-2 border-2 border-[#F97316] text-[#F97316] rounded-lg hover:bg-orange-50 font-medium cursor-pointer"
             >
               Sign up
             </button>
             <button
               onClick={onContinue}
-              className="flex-1 px-6 py-3 bg-[#F97316] text-white rounded-lg hover:bg-orange-600 font-medium cursor-pointer"
+              className="flex-1 px-4 py-2 bg-[#F97316] text-white rounded-lg hover:bg-orange-600 font-medium cursor-pointer"
             >
               Continue
             </button>
@@ -279,114 +286,166 @@ function DriverInfoForm({ formData, onFormChange }: DriverInfoFormProps) {
   )
 }
 
+
+
+
 // Reservation Modal (Multi-step)
 interface ReservationModalProps {
   isOpen: boolean
   onClose: () => void
-  currentStep: number
-  formData: ReservationFormData
-  onFormChange: (data: Partial<ReservationFormData>) => void
   onNext: () => void
   onBack: () => void
 }
 
+
+const reservationSchema = z.object({
+  customerName: z.string().min(2, "Customer name must be at least 2 characters"),
+  email: z.string().email("Please enter a valid email address"),
+  phone: z.string().min(10, "Please enter a valid phone number"),
+  pickupDate: z.date({ message: "Pickup date is required" }),
+  returnDate: z.date({ message: "Return date is required" }),
+  })
+  .refine((data) => data.returnDate > data.pickupDate, {
+    message: "Return date must be after pickup date",
+    path: ["returnDate"],
+});
+  
+  
 export function ReservationModal({
   isOpen,
   onClose,
-  currentStep,
-  formData,
-  onFormChange,
   onNext,
   onBack,
 }: ReservationModalProps) {
+  type ReservationFormData = z.infer<typeof reservationSchema>;
+
+  const { register, handleSubmit, watch, setValue, formState: { errors }, trigger } = useForm<ReservationFormData>({
+    resolver: zodResolver(reservationSchema),
+    mode: 'onChange',
+    defaultValues: {
+      customerName: '',
+      email: '',
+      phone: '',
+      pickupDate: undefined,
+      returnDate: undefined,
+    },
+  });
+
+  const pickupDate = watch('pickupDate');
+  const returnDate = watch('returnDate');
+
+  const onSubmit = async (data: ReservationFormData) => {
+    const isValid = await trigger();
+    if (isValid) {
+      onNext();
+    }
+  };
+
+  if (!isOpen) return null;
+  
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
-        className="sm:max-w-[700px] p-0 gap-0">
-            
-        {/* Header */}
-        <div className="border-b border-gray-200 p-4 bg-[#F3F4F6]">
-          <div className="flex justify-between items-center">
+    <dialog open={isOpen} className='modal'>
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 lg:p-4">
+        <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto trick">
+          {/* Header */}
+          <div className="sticky top-0 bg-[#F3F4F6] px-6 py-4 flex items-center justify-between z-20">
             <div>
-              <h2 className="text-xl font-bold text-[#0D183A]">Reservation</h2>
-              <p className="text-sm text-gray-600">Step {currentStep} of 2</p>
+              <h2 className="text-xl font-medium text-black">Reservation</h2>
             </div>
-            <button onClick={onClose} className="text-[#F97316] hover:text-orange-600 cursor-pointer">
-              <X className="w-5 h-5" />
+            <button onClick={onClose} className="text-red-500 hover:text-red-700 transition-colors cursor-pointer" >
+              <X size={20} />
             </button>
           </div>
-        </div>
 
-        {/* Progress Indicator */}
-        <div className="flex items-center justify-center gap-4 py-6">
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-              currentStep >= 1 ? "bg-[#0066CC] text-white" : "bg-gray-200 text-gray-500"
-            }`}
-          >
-            1
-          </div>
-          <div className="w-24 h-1 bg-gray-200">
-            <div className={`h-full transition-all ${currentStep >= 2 ? "bg-[#0066CC] w-full" : "bg-gray-200 w-0"}`} />
-          </div>
-          <div
-            className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
-              currentStep >= 2 ? "bg-[#0066CC] text-white" : "bg-gray-200 text-gray-500"
-            }`}
-          >
-            2
-          </div>
-        </div>
+          <div className="px-2 lg:px-6 py-8">
 
-        {/* Form Content */}
-        <div className="p-6 space-y-6">
-          {currentStep === 1 ? (
-            <CustomerInfoForm
-              formData={{
-                customerName: formData.customerName,
-                phoneNumber: formData.phoneNumber,
-                email: formData.email,
-                pickupDate: formData.pickupDate,
-                returnDate: formData.returnDate,
-              }}
-              onFormChange={onFormChange}
-            />
-          ) : (
-            <DriverInfoForm
-              formData={{
-                driverName: formData.driverName,
-                driverLastName: formData.driverLastName,
-                dateOfBirth: formData.dateOfBirth,
-                issueDate: formData.issueDate,
-                issuingCountry: formData.issuingCountry,
-                licenseClass: formData.licenseClass,
-              }}
-              onFormChange={onFormChange}
-            />
-          )}
-        </div>
+            {/* Step 1: Vehicle Information */}
+            <form onSubmit={handleSubmit(onSubmit)}>
+              <div className="flex items-start gap-3 mb-6">
+                <UserRound className="size-6 text-[#4B61A1ED] mt-1" />
+                <div>
+                  <h3 className="text-lg lg:text-xl font-medium text-black mb-1">Customer Information</h3>
+                  <p className="text-sm text-gray-600">Enter customer details</p>
+                </div>
+              </div>
 
-        {/* Footer Buttons */}
-        <div className="border-t border-gray-200 p-6 flex justify-end gap-3">
-          {currentStep === 2 && (
-            <button
-              onClick={onBack}
-              className="px-6 py-3 border-1 border-[#F97316] text-[#F97316] rounded-lg hover:bg-gray-50 font-medium cursor-pointer"
-            >
-              Back
-            </button>
-          )}
-          <button
-            onClick={onNext}
-            className="px-8 py-3 bg-[#F97316] text-white rounded-lg hover:bg-orange-600 font-medium cursor-pointer"
-          >
-            {currentStep === 1 ? "Next" : "Submit"}
-          </button>
+              <div className="grid grid-cols-1 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">Customer Name</label>
+                  <input type="text" placeholder="Enter customer name" {...register('customerName')} className=" text-[#5C5C5C] text-sm border border-gray-300 px-4 py-3 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
+                  {errors.customerName && (
+                    <p className="text-red-500 text-xs mt-1">{errors.customerName.message}</p>
+                  )}
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">Phone Number</label>
+                  <PhoneNumberInput value={watch('phone')} onValueChange={(value) => setValue("phone", value, { shouldValidate: true })} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-black mb-2">Email Address</label>
+                  <input type="email" placeholder="Enter customer email" {...register('email')} className=" text-[#5C5C5C] text-sm border border-gray-300 px-4 py-3 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
+                  {errors.email && (
+                    <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <div className='grid grid-cols-1'>
+                    <SelectDate
+                      label="Pickup Date"
+                      placeholder="Select pickup date"
+                      value={pickupDate}
+                      onChange={(date) => {
+                        if (date) setValue("pickupDate", date, { shouldValidate: true });
+                      }}
+                      minDate={new Date()}
+                    />
+                    {errors.pickupDate && (
+                      <p className="text-red-500 text-xs mt-1">{errors.pickupDate.message}</p>
+                    )}
+                  </div>
+
+                  <div className='grid grid-cols-1'>
+                    <SelectDate
+                      label="Return Date"
+                      placeholder="Select return date"
+                      value={returnDate}
+                      onChange={(date) => {
+                        if (date) setValue("returnDate", date, { shouldValidate: true })
+                      }}
+                      minDate={pickupDate || new Date()}
+                    />
+                    {errors.returnDate && (
+                      <p className="text-red-500 text-xs mt-1">{errors.returnDate.message}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className='bg-white px-6 py-4 flex items-center justify-end gap-4 mt-4'>
+                <button onClick={onBack} className={`flex px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer`} >
+                  Back
+                </button>
+                <button type="submit" onClick={onNext} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
+                  Reserve
+                </button>
+              </div>
+            </form>
+
+          </div>
+
         </div>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </dialog>
   )
 }
+
+
+
+
+
+
+
+
+
 
 // Success Modal
 interface SuccessModalProps {
@@ -399,10 +458,10 @@ export function SuccessModal({ isOpen, onClose, onDone }: SuccessModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[550px] p-0 gap-0">
-        <div className="p-8 space-y-6">
+        <div className="px-2 py-4 lg:p-8 space-y-6">
           <div className="flex justify-center">
-            <div className="w-20 h-20 rounded-full border-4 border-[#10B981] flex items-center justify-center">
-              <CheckCircle2 className="w-12 h-12 text-[#10B981]" />
+            <div className="w-12 lg:w-20 h-12 lg:h-20 rounded-full border-4 border-[#10B981] flex items-center justify-center">
+              <CheckCircle2 className="size-8 text-[#10B981]" />
             </div>
           </div>
 
@@ -417,7 +476,7 @@ export function SuccessModal({ isOpen, onClose, onDone }: SuccessModalProps) {
           <div className="flex justify-center">
             <button
               onClick={onDone}
-              className="px-12 py-3 bg-[#F97316] text-white rounded-lg hover:bg-orange-600 font-medium cursor-pointer"
+              className="px-4 py-2 bg-[#F97316] text-white rounded-lg hover:bg-orange-600 font-medium cursor-pointer"
             >
               Done
             </button>

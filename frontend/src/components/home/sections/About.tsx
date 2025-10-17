@@ -4,7 +4,7 @@ import BMW from "../../../assets/bmw.svg";
 const About = () => {
   return (
     <section className="bg-[#B9C2DB]/50 relative overflow-hidden py-12 md:py-52 rounded-xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-12 items-center">
           
           <div className="space-y-5 md:space-y-6 text-center lg:text-left relative z-10">

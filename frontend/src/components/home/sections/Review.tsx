@@ -48,16 +48,16 @@ export function Review() {
   const currentReview = reviews[currentIndex]
 
   return (
-    <div className="w-full bg-[#B9C2DB]/50 py-12 px-6">
+    <div className="w-full bg-[#B9C2DB]/50 py-12 px-2 lg:px-6 mb-10">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-10 -mt-30">
-          <h2 className="text-3xl md:text-5xl font-medium text-[#0D183A]">Customer Reviews</h2>
+          <h2 className="text-xl md:text-3xl font-semibold text-[#0D183A]">Customer Reviews</h2>
           <div className="flex gap-5">
             <Button
               variant="ghost"
               size="icon"
               onClick={goToPrevious}
-              className="h-15 w-15 rounded-full bg-white hover:bg-white/90 text-black cursor-pointer"
+              className="h-10 w-10 lg:h-15 lg:w-15 rounded-full bg-white hover:bg-white/90 text-black cursor-pointer"
               aria-label="Previous review"
             >
               <ChevronLeft className="h-50 w-50 font-extrabold text-black" />
@@ -66,7 +66,7 @@ export function Review() {
               variant="ghost"
               size="icon"
               onClick={goToNext}
-              className="h-15 w-15 rounded-full bg-white hover:bg-white/90 text-black cursor-pointer"
+              className="h-10 w-10 lg:h-15 lg:w-15 rounded-full bg-white hover:bg-white/90 text-black cursor-pointer"
               aria-label="Next review"
             >
               <ChevronRight className="h-50 w-50 font-extrabold text-black" />
