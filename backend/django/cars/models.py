@@ -12,7 +12,7 @@ def validate_year(value):
 class Car(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="cars")
     car_type = models.CharField(max_length=100)
-    year_of_manufacture = models.PositiveIntegerField(validators=[validate_year])
+    year_of_manufacture = models.PositiveIntegerField(validators=[validate_year], null=True)
     daily_rental_price = models.FloatField(default=0.00)
     available_dates = models.JSONField(blank=True, null=True)  
     rental_terms = models.TextField(blank=True, null=True)
