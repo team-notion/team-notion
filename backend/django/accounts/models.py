@@ -109,12 +109,12 @@ class Profile(models.Model):
 
     #license details
     license_number = models.CharField(max_length=50, blank=True)
-    issue_date = models.DateField(null=True, blank=True)
-    expiry_date = models.DateField(null=True, blank=True)
+    license_issue_date = models.DateField(null=True, blank=True)
+    license_expiry_date = models.DateField(null=True, blank=True)
     issuing_authority = models.CharField(max_length=100, blank=True)
     license_class = models.CharField(max_length=50, blank=True)
-    front_image = models.ImageField(upload_to='licenses/', blank=True, null=True)
-    back_image = models.ImageField(upload_to='licenses/', blank=True, null=True)
+    license_front_image = models.ImageField(upload_to='licenses/', blank=True, null=True)
+    license_back_image = models.ImageField(upload_to='licenses/', blank=True, null=True)
 
     def __str__(self):
         return f"{self.username or self.user.email}'s Profile"
