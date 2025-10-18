@@ -15,7 +15,7 @@ class CustomerRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
     def perform_create(self, serializer):
-        user = serializer.save(is_active=False)
+        user = serializer.save(is_active=True) #set to False later if email service is available
 
         uid, token = generate_token(user)   
 
