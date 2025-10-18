@@ -106,4 +106,10 @@ class UserReservationsView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return Reservation.objects.filter(customer=self.request.user)
+        if self.request.user.is_owner:
+            return Reservation.objects.filter(car__owner=self.request.user)
+        else:
+            return Reservation.objects.filter(customer=self.request.user)
+    
+
+
