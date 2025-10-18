@@ -10,6 +10,7 @@ import ReservationManagement from "./pages/reservationManagement";
 import ReservationPage from "./pages/reservation";
 import ProfileManagement from "./pages/profileManagement";
 import VehiclePage from "./pages/vehiclePage";
+import BusinessProfile from "./pages/businessProfile";
 
 const routes = createBrowserRouter([
   {
@@ -55,6 +56,10 @@ const routes = createBrowserRouter([
       {
         path: "reservation-management",
         element: <ReservationManagement />,
+      },
+      {
+        path: "settings",
+        element: <BusinessProfile />,
       },
     ],
   },

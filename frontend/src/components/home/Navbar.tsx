@@ -72,11 +72,11 @@ const Navbar = () => {
   }
 
   const handleDashboard = () => {
-    if (user?.userType === 'business' || user?.userType === 'owner') {
+    // if (user?.userType === 'business' || user?.userType === 'owner') {
       navigate('/business-dashboard');
-    } else {
-      return;
-    }
+    // } else {
+    //   return;
+    // }
   }
 
   return (

@@ -1,5 +1,5 @@
 // src/pages/Profile.tsx or CustomerProfile.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ProfileHeader from "../components/ProfileHeader";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Pencil, Save, Trash2, Upload } from "lucide-react";
@@ -10,6 +10,10 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import Footer from "@/components/home/Footer";
 import ActionModal from "@/components/ActionModal";
 import AddCardModal from "@/components/AddCardModal";
+import { getData, postData } from "@/components/lib/apiMethods";
+import CONFIG from "@/components/utils/config";
+import { apiEndpoints } from "@/components/lib/apiEndpoints";
+import { toast } from "sonner";
 
 interface Card {
   id: number;
@@ -27,6 +31,8 @@ const DUMMY_CARDS: Card[] = [
 
 const ProfileManagement = () => {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [isEditingLicense, setIsEditingLicense] = useState(false);
   const [isEditingBillingInfo, setIsEditingBillingInfo] = useState(false);
@@ -55,15 +61,91 @@ const ProfileManagement = () => {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [cards, setCards] = useState<Card[]>(DUMMY_CARDS);
   const currentCard = cards[currentCardIndex];
+  
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      setLoading(true);
+      try {
+        const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_USER_PROFILE}`);
+
+        if (resp && resp.data) {
+          const userData = resp.data;
+          setProfileData((prev) => ({
+            ...prev,
+            name: userData.username || userData.business_name || "",
+            email: userData.email || "",
+            phoneNumber: userData.phoneNumber || "",
+            licenseNumber: userData.license_number || "",
+            dateOfBirth: userData.date_of_birth ? new Date(userData.date_of_birth) : undefined,
+            issueDate: userData.issue_date ? new Date(userData.issue_date) : undefined,
+            issuingCountry: userData.issuing_country || "",
+            expiryDate: userData.expiry_date ? new Date(userData.expiry_date) : undefined,
+            issuingAuthority: userData.issuing_authority || "",
+            driverLicenseClass: userData.driver_license_class || "",
+            countryOrRegion: userData.country_or_region || "",
+          }) );
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (user?.id) {
+      fetchUserProfile();
+    }
+  }, [user?.id]);
+
 
   const getUserInitials = () => {
-    if (!user?.name) return "U";
-    const names = user.name.split(" ");
+    if (!profileData?.name) return "U";
+    const names = profileData.name.split(" ");
     if (names.length >= 2) {
       return `${names[0][0]}${names[1][0]}`.toUpperCase();
     }
     return names[0][0].toUpperCase();
   };
+
+
+
+
+  const handleSaveProfile = async () => {
+    setIsSaving(true);
+    try {
+      const updateData = {
+        name: profileData.name,
+        email: profileData.email,
+        phone: profileData.phoneNumber,
+        license_number: profileData.licenseNumber,
+        date_of_birth: profileData.dateOfBirth?.toISOString().split('T')[0],
+        issue_date: profileData.issueDate?.toISOString().split('T')[0],
+        issuing_country: profileData.issuingCountry,
+        expiry_date: profileData.expiryDate?.toISOString().split('T')[0],
+        issuing_authority: profileData.issuingAuthority,
+        driver_license_class: profileData.driverLicenseClass,
+        country_or_region: profileData.countryOrRegion,
+      };
+
+      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.UPDATE_USER_PROFILE}`, updateData);
+
+      if (resp && resp.statusCode === 200) {
+        toast.success("Profile updated successfully");
+        setIsEditingProfile(false);
+        setIsEditingLicense(false);
+        setIsEditingBillingInfo(false);
+      } else {
+        toast.error(resp?.message || "Failed to update profile");
+      }
+    } catch (err: any) {
+      console.error("Error updating profile:", err);
+      toast.error(err?.response?.data?.message || "An error occurred while updating profile");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+
 
   const handleInputChange = (field: string, value: string | Date | undefined) => {
     setProfileData((prev) => ({ ...prev, [field]: value }));
@@ -123,7 +205,7 @@ const ProfileManagement = () => {
 
           <div className="bg-white flex flex-col gap-8 p-2 py-4 lg:p-6 rounded-xl shadow-sm">
             <div className="flex justify-end items-center mb-1 lg:mb-6">
-              <button onClick={() => setIsEditingProfile(!isEditingProfile)}className={`p-2 rounded-lg transition cursor-pointer ${isEditingProfile ? 'bg-green-600 hover:bg-green-700 text-white': 'hover:bg-gray-100 text-gray-600'}`}>
+              <button onClick={() => { if (isEditingProfile) { handleSaveProfile(); } else { setIsEditingProfile(true); } }} disabled={isSaving} className={`p-2 rounded-lg transition cursor-pointer ${isEditingProfile ? 'bg-green-600 hover:bg-green-700 text-white': 'hover:bg-gray-100 text-gray-600'}`}>
                 {isEditingProfile ? ( <Save className="w-5 h-5" /> ) : ( <Pencil className="w-5 h-5" /> )}
               </button>
             </div>
@@ -132,7 +214,7 @@ const ProfileManagement = () => {
               <div className="flex flex-col items-center">
                 <div className="relative">
                   <Avatar className="h-48 w-48 border border-gray-200">
-                    <AvatarImage src={user?.avatar} alt={user?.name} />
+                    <AvatarImage src={user?.avatar} alt={profileData?.name} />
                     <AvatarFallback className="bg-gray-300 text-white text-3xl font-semibold">
                       {getUserInitials()}
                     </AvatarFallback>
