@@ -32,7 +32,7 @@ def send_password_reset_email(user, reset_link):
     msg.attach_alternative(html_content, "text/html")
     msg.send()"""
 
-resend.api_key = os.getenv("RESEND_API_KEY") 
+#resend.api_key = os.getenv("RESEND_API_KEY") 
 
 def send_verification_email(user, verify_link):
     subject = "Verify Your Email – Notion Rides 🚘"

@@ -14,8 +14,11 @@ User = get_user_model()
 class CustomerRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
+    user_flags = {}
     def perform_create(self, serializer):
-        user = serializer.save(is_active=True) #set to False later if email service is available
+        flags = getattr(self, "user_flags", {}) or {}
+        user = serializer.save(is_active=True, **flags) #set is_active to False to require email verification
+
 
         uid, token = generate_token(user)   
 
@@ -71,7 +74,6 @@ class VerifyEmailView(APIView):
 
 class OwnerRegisterView(CustomerRegisterView):
     user_flags = {'is_owner': True}
-
 
 
 
