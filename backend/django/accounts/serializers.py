@@ -42,5 +42,5 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['id', 'user', 'first_name', 'last_name', 'username', 'phone_no', 'country_code', 'date_of_birth',
-                  'license_number', 'license_expiry', 'license_image', 'profile_image']
+                  'license_number', 'license_expiry_date', 'license_front_image', 'license_back_image', 'profile_image']
         read_only_fields = ['id', 'user']
