@@ -4,6 +4,12 @@ import os
 DEBUG = False
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
+frontend_urls = os.getenv("FRONTEND_URLS", "")
+if frontend_urls:
+    CORS_ALLOWED_ORIGINS = [url.strip() for url in frontend_urls.split(",")]
+else:
+    CORS_ALLOW_ALL_ORIGINS = True 
+
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
