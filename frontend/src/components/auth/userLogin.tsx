@@ -5,7 +5,7 @@ import CustomCheckbox from "../ui/Checkbox";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { postData } from "../lib/apiMethods";
+import { getData, postData } from "../lib/apiMethods";
 import CONFIG from "../utils/config";
 import { apiEndpoints } from "../lib/apiEndpoints";
 import { toast } from "sonner";
@@ -47,38 +47,44 @@ const UserLogin = () => {
         password: data.password,
       });
 
-      if (resp.message === 'Login successful') {
+      // if (resp.message === 'Login successful') {
 
-        const { user, token  } = resp;
+      //   const { user, token  } = resp;
         
-        if (!token) {
-          throw new Error("No token received from server");
-        }
+      //   if (!token) {
+      //     throw new Error("No token received from server");
+      //   }
 
-        if (!user) {
-          throw new Error("No user data received from server");
-        }
+      //   if (!user) {
+      //     throw new Error("No user data received from server");
+      //   }
 
-        // const decoded = decodeJWT(token);
+      //   // const decoded = decodeJWT(token);
 
-        const userData = {
-          id: user.id,
-          email: user.email,
-          userType: user.user_type,
-          name: user.username || user.business_name,
-          avatar: user.avatar,
-        };
+      //   // const userProfile = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_USER_PROFILE}`, {
+      //   //   headers: { Authorization: `Bearer ${token}` },
+      //   // })
 
-        login(userData, token, data.rememberMe || false);
+      //   // console.log("User Profile:", userProfile);
 
-        if (userData.userType === "business" || userData.userType === "owner") {
-          navigate("/business-dashboard");
-        } else {
-          navigate("/");
-        }
-      } else {
-        toast.error(resp.data?.message || resp.message?.message || "Login failed");
-      }
+      //   const userData = {
+      //     id: user.id,
+      //     email: user.email,
+      //     userType: user.user_type,
+      //     name: user.username || user.business_name,
+      //     avatar: user.avatar,
+      //   };
+
+      //   login(userData, token, data.rememberMe || false);
+
+      //   if (userData.userType === "business" || userData.userType === "owner") {
+      //     navigate("/business-dashboard");
+      //   } else {
+      //     navigate("/");
+      //   }
+      // } else {
+      //   toast.error(resp.data?.message || resp.message?.message || "Login failed");
+      // }
     }
     catch (err: any) {
       console.error("Login error:", err);
