@@ -10,6 +10,7 @@ if frontend_urls:
 else:
     CORS_ALLOW_ALL_ORIGINS = True 
 
+CORS_ALLOW_CREDENTIALS = True
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
