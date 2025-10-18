@@ -21,6 +21,10 @@
 #### ANYONE
 - {{baseURL}}/cars/             FETCH CARS [GET]
 - {{baseURL}}/cars/{id}         FETCH CAR DETAILS [GET]
+#### AUTHENTICATED
+- {{baseURL}}/reserve/             RESERVE CARS [POST]
+- {{baseURL}}/reservations/{id}/cancel/         FETCH CAR DETAILS [POST]
+- {{baseURL}}/my-reservations/             FETCH RESERVATIONS [GET]
 
 ### PROFILE
 - {{baseURL}}/accounts/profile/         FETCH PROFILE [GET]
