@@ -14,6 +14,16 @@ class CarListView(generics.ListAPIView):
     permission_classes = [permissions.AllowAny]
     pagination_class = None 
 
+    def get_queryset(self):
+        queryset = Car.objects.filter(is_available=True)
+        owner_id = self.request.query_params.get('owner_id')
+
+        if owner_id:
+            queryset = queryset.filter(owner_id=owner_id)
+        return queryset
+
+
+
 
 class CarCreateView(generics.CreateAPIView):
     queryset = Car.objects.all()
