@@ -13,7 +13,7 @@ class CarListView(generics.ListAPIView):
     queryset = Car.objects.filter(is_available=True)
     serializer_class = CarSerializer
     permission_classes = [permissions.AllowAny]
-    pagination_class = None 
+
 
     def get_queryset(self):
         queryset = Car.objects.filter(is_available=True)
