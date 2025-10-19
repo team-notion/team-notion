@@ -122,7 +122,7 @@ const CarInventory = () => {
         </InputGroup>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
         {vehicles.map((vehicle) => (
           <VehicleCard key={vehicle.id} title={vehicle.title} price={vehicle.price} images={vehicle.images} licensePlate={vehicle.licensePlate} duration={vehicle.duration} availability={vehicle.availability} status={vehicle.status} onEdit={() => handleEdit(vehicle.id)} onDelete={() => handleDelete(vehicle.id)} />
         ))}

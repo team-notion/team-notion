@@ -28,11 +28,11 @@ const Navbar = () => {
       text: "Bookings",
       show: isAuthenticated && user?.username && user.username !== 'User' && user?.userType === 'customer'
     },
-    {
-      id: 4,
-      url: "#",
-      text: "About Us",
-    },
+    // {
+    //   id: 4,
+    //   url: "#",
+    //   text: "About Us",
+    // },
     {
       id: 5,
       url: "/signup",
@@ -72,11 +72,11 @@ const Navbar = () => {
   }
 
   const handleDashboard = () => {
-    // if (user?.userType === 'business' || user?.userType === 'owner') {
+    if (user?.userType === 'business' || user?.userType === 'owner') {
       navigate('/business-dashboard');
-    // } else {
-    //   return;
-    // }
+    } else {
+      return;
+    }
   }
 
   return (
@@ -129,10 +129,12 @@ const Navbar = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleDashboard} className="cursor-pointer text-gray-700">
-                    <User className="mr-2 h-4 w-4" />
-                    <span className="text-sm">Dashboard</span>
-                  </DropdownMenuItem>
+                  {user?.userType === 'business' && (
+                    <DropdownMenuItem onClick={handleDashboard} className="cursor-pointer text-gray-700">
+                      <User className="mr-2 h-4 w-4" />
+                      <span className="text-sm">Dashboard</span>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={handleProfile} className="cursor-pointer text-gray-700">
                     <Settings className="mr-2 h-4 w-4" />
                     <span className="text-sm">Profile</span>

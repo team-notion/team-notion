@@ -9,7 +9,7 @@ import { useNavigate } from "react-router";
 interface SignupDetailsProps {
   userType?: string;
   email?: string;
-  phoneNumber?: string;
+  phone_no?: string;
   password?: string;
   businessName?: string;
   userName?: string;

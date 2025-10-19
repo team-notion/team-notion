@@ -445,13 +445,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
-    const warningTime = Math.max(0, (timeToExpire - 300) * 1000);
+    // const warningTime = Math.max(0, (timeToExpire - 300) * 1000);
 
-    if (warningTime > 0) {
-      setTimeout(() => {
-        toast.warning('Your session will expire in 5 minutes.');
-      }, warningTime);
-    }
+    // if (warningTime > 0) {
+    //   setTimeout(() => {
+    //     toast.warning('Your session will expire in 5 minutes.');
+    //   }, warningTime);
+    // }
 
     const expirationTimeout = setTimeout(() => {
       toast.error('Your session has expired. Please log in again.');
