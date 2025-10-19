@@ -50,9 +50,17 @@ class CarSerializer(serializers.ModelSerializer):
 
 
 class ReservationSerializer(serializers.ModelSerializer):
+    customer_username = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = Reservation
-        fields = ['id', 'car', 'reserved_from', 'reserved_to', 'status']
+        fields = ['id', 'car', 'customer', 'customer_username', 'reserved_from', 'reserved_to']
+        read_only_fields = ['customer']
+
+    def create(self, validated_data):
+        # Remove 'customer_username' so it doesn't get passed to Reservation.objects.create()
+        validated_data.pop('customer_username', None)
+        return super().create(validated_data)
 
     def validate(self, attrs):
         car = attrs.get('car')
@@ -61,12 +69,14 @@ class ReservationSerializer(serializers.ModelSerializer):
 
         if reserved_from >= reserved_to:
             raise serializers.ValidationError("Reservation end date must be after start date.")
-        
+
         if not car.is_available:
             raise serializers.ValidationError("This car is currently not available.")
         
+        # Validate date range within car's availability
         if car.available_dates:
             try:
+                from django.utils.dateparse import parse_datetime
                 available_from = parse_datetime(car.available_dates[0])
                 available_to = parse_datetime(car.available_dates[1])
             except Exception:
@@ -75,7 +85,7 @@ class ReservationSerializer(serializers.ModelSerializer):
             if reserved_from < available_from or reserved_to > available_to:
                 raise serializers.ValidationError("Reservation dates must be within the car's available range.")
 
-        # Check if the car has overlapping reservations
+        # Check overlapping reservations
         overlapping = Reservation.objects.filter(
             car=car,
             reserved_from__lt=reserved_to,
@@ -87,15 +97,3 @@ class ReservationSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("This car is already reserved for the selected dates.")
 
         return attrs
-
-    def create(self, validated_data):
-        user = self.context['request'].user
-        reservation = Reservation.objects.create(
-            customer=user,
-            **validated_data
-        )
-        car = reservation.car
-        car.is_available = False
-        car.save()
-        return reservation
-

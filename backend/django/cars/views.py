@@ -1,10 +1,13 @@
-from rest_framework import generics, permissions, status    
+from rest_framework import generics, permissions, status, serializers    
 from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.response import Response
+from django.contrib.auth import get_user_model
 from .models import Car, Reservation
 from .serializers import CarSerializer, ReservationSerializer
 
 
+
+User = get_user_model()
 class CarListView(generics.ListAPIView):
     queryset = Car.objects.filter(is_available=True)
     serializer_class = CarSerializer
@@ -53,40 +56,73 @@ class CarUpdateView(generics.RetrieveUpdateDestroyAPIView):
         return super().update(request, *args, **kwargs)
 
 
-class ReservationCreateView(generics.CreateAPIView):
+class ReserveCarView(generics.CreateAPIView):
     serializer_class = ReservationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(customer=self.request.user)
+        user = self.request.user
+        car_id = self.request.data.get('car')
+        customer_username = self.request.data.get('customer_username', None)
 
+        # Get the car object
+        try:
+            car = Car.objects.get(id=car_id)
+        except Car.DoesNotExist:
+            raise serializers.ValidationError({"detail": "Car not found."})
 
+        # If user is an owner
+        if user.is_owner:
+            if car.owner != user:
+                raise serializers.ValidationError({"detail": "You can only reserve your own cars for customers."})
 
+            if not customer_username:
+                raise serializers.ValidationError({"detail": "Please provide a customer username."})
 
+            try:
+                customer = User.objects.get(username=customer_username)
+            except User.DoesNotExist:
+                raise serializers.ValidationError({"detail": "No user found with that username."})
+        else:
+            customer = user
+
+        # Check availability
+        if not car.is_available:
+            raise serializers.ValidationError({"detail": "Car is not available for reservation."})
+
+        # Create the reservation
+        reservation = serializer.save(customer=customer, car=car)
+        car.is_available = False
+        car.save()
+
+        return reservation
 
 
 
 
 class CancelReservationView(generics.UpdateAPIView):
-    serializer_class = ReservationSerializer
+    queryset = Reservation.objects.all()  # ✅ Fix: define queryset
     permission_classes = [permissions.IsAuthenticated]
 
-    def patch(self, request, *args, **kwargs):
-        reservation_id = kwargs.get("pk")
-        try:
-            reservation = Reservation.objects.get(id=reservation_id)
-        except Reservation.DoesNotExist:
-            raise NotFound("Reservation not found.")
-        
-        if reservation.customer != request.user:
-            raise PermissionDenied("You can only cancel your own reservation.")
+    def update(self, request, *args, **kwargs):
+        reservation = self.get_object()
+        user = request.user
 
-        if reservation.status in ["cancelled", "completed"]:
+        # ✅ Ensure only the customer or car owner can cancel
+        if user != reservation.customer and user != reservation.car.owner:
             return Response(
-                {"detail": "This reservation cannot be cancelled."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"detail": "You are not allowed to cancel this reservation."},
+                status=status.HTTP_403_FORBIDDEN
             )
 
+        # ✅ Prevent cancelling already cancelled ones
+        if reservation.status == "cancelled":
+            return Response(
+                {"detail": "This reservation has already been cancelled."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ✅ Cancel and update car
         reservation.status = "cancelled"
         reservation.save()
 
@@ -96,12 +132,13 @@ class CancelReservationView(generics.UpdateAPIView):
 
         return Response(
             {"message": "Reservation cancelled successfully."},
-            status=status.HTTP_200_OK,
+            status=status.HTTP_200_OK
         )
 
 
 
-class UserReservationsView(generics.ListAPIView):
+
+class ReservationsView(generics.ListAPIView):
     serializer_class = ReservationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
