@@ -146,7 +146,7 @@ const UserLogin = () => {
           <div className="flex items-center gap-x-1 text-xs md:text-sm">
             <CustomCheckbox {...register('rememberMe')} name='rememberMe' /> Remember me
           </div>
-          <a href="/forgot-password" className="text-xs md:text-sm text-[#001EB4] font-medium hover:underline">Forgot password?</a>
+          <a href="/reset-password" className="text-xs md:text-sm text-[#001EB4] font-medium hover:underline">Forgot password?</a>
         </div>
 
         <div className='flex flex-col gap-3 justify-center'>

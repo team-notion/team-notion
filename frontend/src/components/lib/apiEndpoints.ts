@@ -4,6 +4,8 @@ export enum apiEndpoints {
   BUSINESS_SIGNUP = '/accounts/register/owner/',
   USER_SIGNUP = '/accounts/register/customer/',
   VERIFY_EMAIL = '/email/veriffication-notification',
+  RESET_PASSWORD = '/accounts/reset/',
+  REQUEST_PASSWORD_RESET = '/accounts/password-reset/',
 
   // REFRESH_TOKEN
   REFRESH_TOKEN = '/refresh-token/',

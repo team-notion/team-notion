@@ -5,8 +5,6 @@ import ResetPasswordEmail from "@/components/auth/resetPasswordEmail";
 
 interface ForgotPassawordProps {
   email?: string;
-  newPassword?: string;
-  confirmPassword?: string;
 }
 
 const ForgotPassword = () => {
@@ -18,7 +16,7 @@ const ForgotPassword = () => {
   }
 
   const handleResetPasswordEmailNext = () => {
-    const message = `Password updated successfully, moving next to landing page`;
+    const message = `Password reset link sent successfully, please check your email`;
     console.log(message);
     // alert(message);
   }

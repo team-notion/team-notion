@@ -35,8 +35,8 @@ const UserForgotPassword = ({ details, setDetails, currentStep, setCurrentStep, 
 
   return (
     <div className="flex flex-col gap-6 md:gap-8 justify-between items-start h-full">
-      <div className="w-full text-center sm:text-left">
-        <h2 className="text-2xl font-semibold mb-3">Forgot Password</h2>
+      <div className="w-full text-center">
+        <h2 className="text-2xl font-semibold mb-3">Password reset</h2>
         <p className="text-sm text-gray-600">Please enter your email</p>
       </div>
 
@@ -54,7 +54,7 @@ const UserForgotPassword = ({ details, setDetails, currentStep, setCurrentStep, 
 
         <div className="flex flex-col  items-center justify-center md:justify-end gap-3 mt-4">
           <button type="submit" disabled={loading} className="px-8 py-2 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 w-[10rem] cursor-pointer" >
-            {loading ? "Submitting" : "Send Reset Link"}
+            {loading ? "Submitting" : "Send"}
           </button>
 
           <p className="text-sm text-gray-500 text-center">
