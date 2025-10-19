@@ -14,6 +14,9 @@ import { getData, postData } from "@/components/lib/apiMethods";
 import CONFIG from "@/components/utils/config";
 import { apiEndpoints } from "@/components/lib/apiEndpoints";
 import { toast } from "sonner";
+import { LOCAL_STORAGE_KEYS } from "@/components/utils/localStorageKeys";
+import Loader from "@/components/ui/Loader/Loader";
+import PhoneNumberInput from "@/components/ui/PhoneNumberInput";
 
 interface Card {
   id: number;
@@ -37,9 +40,12 @@ const ProfileManagement = () => {
   const [isEditingLicense, setIsEditingLicense] = useState(false);
   const [isEditingBillingInfo, setIsEditingBillingInfo] = useState(false);
   const [profileData, setProfileData] = useState({
-    name: user?.name || "",
-    email: user?.email || "",
-    phoneNumber: "",
+    username: "",
+    email: "",
+    first_name: "",
+    last_name: "",
+    country_code: "",
+    phone_no: "",
     licenseNumber: "",
     dateOfBirth: undefined as Date | undefined,
     issueDate: undefined as Date | undefined,
@@ -65,16 +71,24 @@ const ProfileManagement = () => {
   useEffect(() => {
     const fetchUserProfile = async () => {
       setLoading(true);
-      try {
-        const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_USER_PROFILE}`);
+      
+      const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
 
-        if (resp && resp.data) {
-          const userData = resp.data;
+      try {
+        const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_USER_PROFILE}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (resp) {
+          const userData = resp;
           setProfileData((prev) => ({
             ...prev,
-            name: userData.username || userData.business_name || "",
+            username: userData.username || "",
             email: userData.email || "",
-            phoneNumber: userData.phoneNumber || "",
+            phone_no: userData.phone_no || "",
+            first_name: userData.first_name || "",
+            last_name: userData.last_name || "",
+            country_code: userData.country_code || "",
             licenseNumber: userData.license_number || "",
             dateOfBirth: userData.date_of_birth ? new Date(userData.date_of_birth) : undefined,
             issueDate: userData.issue_date ? new Date(userData.issue_date) : undefined,
@@ -83,7 +97,7 @@ const ProfileManagement = () => {
             issuingAuthority: userData.issuing_authority || "",
             driverLicenseClass: userData.driver_license_class || "",
             countryOrRegion: userData.country_or_region || "",
-          }) );
+          }));
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
@@ -92,15 +106,13 @@ const ProfileManagement = () => {
       }
     }
 
-    if (user?.id) {
-      fetchUserProfile();
-    }
-  }, [user?.id]);
+    fetchUserProfile();
+  }, []);
 
 
   const getUserInitials = () => {
-    if (!profileData?.name) return "U";
-    const names = profileData.name.split(" ");
+    if (!profileData?.username) return "U";
+    const names = profileData.username.split(" ");
     if (names.length >= 2) {
       return `${names[0][0]}${names[1][0]}`.toUpperCase();
     }
@@ -112,11 +124,17 @@ const ProfileManagement = () => {
 
   const handleSaveProfile = async () => {
     setIsSaving(true);
+
+    const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+
     try {
       const updateData = {
-        name: profileData.name,
+        username: profileData.username,
         email: profileData.email,
-        phone: profileData.phoneNumber,
+        phone_no: profileData.phone_no,
+        country_code: profileData.country_code,
+        first_name: profileData.first_name,
+        last_name: profileData.last_name,
         license_number: profileData.licenseNumber,
         date_of_birth: profileData.dateOfBirth?.toISOString().split('T')[0],
         issue_date: profileData.issueDate?.toISOString().split('T')[0],
@@ -127,9 +145,11 @@ const ProfileManagement = () => {
         country_or_region: profileData.countryOrRegion,
       };
 
-      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.UPDATE_USER_PROFILE}`, updateData);
+      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.UPDATE_USER_PROFILE}`, updateData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
 
-      if (resp && resp.statusCode === 200) {
+      if (resp) {
         toast.success("Profile updated successfully");
         setIsEditingProfile(false);
         setIsEditingLicense(false);
@@ -193,6 +213,24 @@ const ProfileManagement = () => {
     securityCode: "123",
   };
 
+
+  const handlePhoneChange = (phone_no: string, country_code?: string) => {
+    setProfileData((prev) => ({ 
+      ...prev, 
+      phone_no: phone_no,
+      country_code: country_code || prev.country_code 
+    }));
+
+    console.log("Phone changed:", `${phone_no}, Country code: ${country_code}`);
+  };
+
+
+  if (loading || isSaving) {
+    return <div className="flex justify-center items-center h-dvh">
+      <Loader type="tailSpin" color="#175CD3" height={40} width={40} />
+    </div>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <ProfileHeader />
@@ -214,7 +252,7 @@ const ProfileManagement = () => {
               <div className="flex flex-col items-center">
                 <div className="relative">
                   <Avatar className="h-48 w-48 border border-gray-200">
-                    <AvatarImage src={user?.avatar} alt={profileData?.name} />
+                    <AvatarImage src={user?.profile_image} alt={profileData?.username} />
                     <AvatarFallback className="bg-gray-300 text-white text-3xl font-semibold">
                       {getUserInitials()}
                     </AvatarFallback>
@@ -230,7 +268,7 @@ const ProfileManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Name (as written on driver's license)
                   </label>
-                  <input type="text" value={profileData.name} onChange={(e) => handleInputChange("name", e.target.value)} disabled={!isEditingProfile} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                  <input type="text" value={profileData.username} onChange={(e) => handleInputChange("username", e.target.value)} disabled={!isEditingProfile} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
                 </div>
 
                 <div>
@@ -244,7 +282,7 @@ const ProfileManagement = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Phone number
                   </label>
-                  <input type="tel" value={profileData.phoneNumber} onChange={(e) => handleInputChange("phoneNumber", e.target.value) } placeholder="000-0000-0000" disabled={!isEditingProfile} className="w-full text-sm px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                  <PhoneNumberInput value={profileData.phone_no} onValueChange={handlePhoneChange} />
                 </div>
               </div>
             </div>

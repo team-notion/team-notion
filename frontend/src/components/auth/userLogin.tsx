@@ -5,7 +5,7 @@ import CustomCheckbox from "../ui/Checkbox";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { getData, postData } from "../lib/apiMethods";
+import { getData, getDataWithToken, postData } from "../lib/apiMethods";
 import CONFIG from "../utils/config";
 import { apiEndpoints } from "../lib/apiEndpoints";
 import { toast } from "sonner";
@@ -43,51 +43,58 @@ const UserLogin = () => {
 
     try {
       const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.LOGIN}`, {
-        login: data.email,
+        email: data.email,
         password: data.password,
       });
 
-      // if (resp.message === 'Login successful') {
+      if (resp) {
 
-      //   const { user, token  } = resp;
+        const { access, refresh, is_owner } = resp;
+        const token = access;
+
+        if (!access) {
+          throw new Error("No access token received from server");
+        }
+          
+        const decoded = decodeJWT(token);
+          
+        let userProfile: any;
+
+        try {
+          userProfile = await getDataWithToken(`${CONFIG.BASE_URL}${apiEndpoints.GET_USER_PROFILE}`, access);
+          
+        }
+        catch (err: any) {
+          const profileErrorMessage = err?.response?.data?.message || err?.response?.data?.detail || err.message || err?.response?.detail || err?.response?.data?.detail || "Failed to fetch user profile";
+          toast.error(profileErrorMessage);
+        }
+
         
-      //   if (!token) {
-      //     throw new Error("No token received from server");
-      //   }
+        const userData = {
+          id: userProfile?.id,
+          email: userProfile?.email,
+          userType: is_owner ? "business" : "customer",
+          username: userProfile?.username,
+          profile_image: userProfile?.profile_image,
+          first_name: userProfile?.first_name,
+          last_name: userProfile?.last_name,
+          phone_no: userProfile?.phone_no,
+          country_code: userProfile?.country_code,
+        };
 
-      //   if (!user) {
-      //     throw new Error("No user data received from server");
-      //   }
+        login(access, userData, data.rememberMe || false);
 
-      //   // const decoded = decodeJWT(token);
-
-      //   // const userProfile = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_USER_PROFILE}`, {
-      //   //   headers: { Authorization: `Bearer ${token}` },
-      //   // })
-
-      //   // console.log("User Profile:", userProfile);
-
-      //   const userData = {
-      //     id: user.id,
-      //     email: user.email,
-      //     userType: user.user_type,
-      //     name: user.username || user.business_name,
-      //     avatar: user.avatar,
-      //   };
-
-      //   login(userData, token, data.rememberMe || false);
-
-      //   if (userData.userType === "business" || userData.userType === "owner") {
-      //     navigate("/business-dashboard");
-      //   } else {
-      //     navigate("/");
-      //   }
-      // } else {
-      //   toast.error(resp.data?.message || resp.message?.message || "Login failed");
-      // }
+        
+        if (is_owner === true) {
+          navigate("/business-dashboard");
+        } else {
+          navigate("/");
+        }
+      } else {
+        toast.error(resp.data?.message || resp.message?.message || "Login failed");
+      }
     }
     catch (err: any) {
-      console.error("Login error:", err);
       toast.error(err.message);
     }
     finally {

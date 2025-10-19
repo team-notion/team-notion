@@ -2,9 +2,17 @@ import axios, { AxiosRequestConfig, InternalAxiosRequestConfig } from "axios";
 import { LOCAL_STORAGE_KEYS } from "../utils/localStorageKeys";
 import { decodeJWT } from './../utils/decoder';
 
+const isSanctumToken = (token: string): boolean => {
+  return token.includes("|")
+}
+
 export const isTokenExpired = (token: string | null): boolean => {
   if (!token) {
     return true;
+  }
+
+  if (isSanctumToken(token)) {
+    return false
   }
 
   try {
@@ -21,7 +29,7 @@ export const isTokenExpired = (token: string | null): boolean => {
 };
 
 export const getToken = (): string | null => {
-  const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+  const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
   if (!token) {
     return null;
   }
@@ -65,9 +73,7 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Handle 401 Unauthorized errors
     if (error?.response?.status === 401) {
-      // Dispatch a custom event that the app can listen for
       window.dispatchEvent(new CustomEvent('auth:expired'));
     }
     return Promise.reject(error);
@@ -121,5 +127,18 @@ export const deleteData = async (url: string, config?: AxiosRequestConfig) => {
     url,
     config,
   );
+  return data;
+};
+
+export const getDataWithToken = async (url: string, token: string, config?: AxiosRequestConfig) => {
+  const { data } = await axios.get(url, {
+    ...config,
+    headers: {
+      ...config?.headers,
+      'Content-Type': 'application/json',
+      'secureddata': 'getall',
+      'Authorization': `Bearer ${token}`
+    }
+  });
   return data;
 };
