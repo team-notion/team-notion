@@ -11,6 +11,7 @@ import ReservationPage from "./pages/reservation";
 import ProfileManagement from "./pages/profileManagement";
 import VehiclePage from "./pages/vehiclePage";
 import BusinessProfile from "./pages/businessProfile";
+import ForgotPassword from "./pages/forgotPassword";
 
 const routes = createBrowserRouter([
   {
@@ -24,6 +25,10 @@ const routes = createBrowserRouter([
   {
     path: "/login",
     element: <Login />,
+  },
+  {
+    path: "/forgot-password",
+    element: <ForgotPassword />,
   },
   {
       path: "/",
