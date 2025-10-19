@@ -33,6 +33,20 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen }) => {
     return user?.profile_image || null;
   }
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  }
+
+  const handleProfile = () => {
+    if (user?.userType === 'business' || user?.userType === 'owner') {
+      navigate('business-dashboard/profile');
+    }
+    else {
+      navigate('/profile');
+    }
+  }
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 1024)
