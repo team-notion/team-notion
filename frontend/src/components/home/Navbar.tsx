@@ -26,7 +26,7 @@ const Navbar = () => {
       id: 3,
       url: "/bookings",
       text: "Bookings",
-      show: isAuthenticated && user?.name && user.name !== 'User' && user?.userType === 'customer'
+      show: isAuthenticated && user?.username && user.username !== 'User' && user?.userType === 'customer'
     },
     {
       id: 4,
@@ -43,8 +43,8 @@ const Navbar = () => {
   const getUserInitials = () => {
     if (!user) return 'U';
 
-    if (user.name) {
-      const names = user.name.split(' ');
+    if (user.username) {
+      const names = user.username.split(' ');
       if (names.length >= 2) {
         return `${names[0][0]}${names[1][0]}`.toUpperCase();
       }
@@ -54,7 +54,7 @@ const Navbar = () => {
   }
 
   const getAvatarUrl = () => {
-    return user?.avatar || null;
+    return user?.profile_image || null;
   }
 
   const handleLogout = () => {
@@ -64,7 +64,7 @@ const Navbar = () => {
 
   const handleProfile = () => {
     if (user?.userType === 'business' || user?.userType === 'owner') {
-      navigate('business-dashboard/profile');
+      navigate('/settings');
     }
     else {
       navigate('/profile');
@@ -112,7 +112,7 @@ const Navbar = () => {
                 <DropdownMenuTrigger asChild>
                   <button className="focus:outline-none focus:ring-2 focus:ring-[#F97316] focus:ring-offset-2 rounded-full transition">
                     <Avatar className="h-10 w-10 cursor-pointer border border-[#F97316] hover:border-orange-600 transition-colors">
-                      <AvatarImage src={getAvatarUrl() || undefined} alt={user?.name || 'User'} />
+                      <AvatarImage src={getAvatarUrl() || undefined} alt={user?.username || 'User'} />
                       <AvatarFallback className="bg-[#F97316] text-white font-semibold text-sm">
                         {getUserInitials()}
                       </AvatarFallback>
@@ -122,7 +122,7 @@ const Navbar = () => {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-semibold text-gray-900">{user?.name || 'User'}</p>
+                      <p className="text-sm font-semibold text-gray-900">{user?.username || 'User'}</p>
                       <p className="text-xs text-gray-500 truncate">
                         {user?.email}
                       </p>
@@ -197,13 +197,13 @@ const Navbar = () => {
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3 px-3 py-2">
                     <Avatar className="h-10 w-10 border border-[#F97316] flex-shrink-0">
-                      <AvatarImage src={getAvatarUrl() || undefined} alt={user?.name || 'User'} />
+                      <AvatarImage src={getAvatarUrl() || undefined} alt={user?.username || 'User'} />
                       <AvatarFallback className="bg-[#F97316] text-white font-semibold text-sm">
                         {getUserInitials()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col min-w-0">
-                      <p className="text-sm font-semibold text-gray-900 truncate">{user?.name || 'User'}</p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{user?.username || 'User'}</p>
                       <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                     </div>
                   </div>

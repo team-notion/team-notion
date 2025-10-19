@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { Link, useLocation } from "react-router"
+import { Link, useLocation, useNavigate } from "react-router"
 import { DashboardLogo } from "../assets"
 import { FiCalendar, FiHome, FiSettings } from "react-icons/fi"
 import { HiOutlineLogout } from "react-icons/hi";
@@ -7,6 +7,7 @@ import { AiOutlineCar } from "react-icons/ai"
 import { TfiBarChartAlt } from "react-icons/tfi";
 import { GoPeople } from "react-icons/go";
 import { Menu, X } from 'lucide-react';
+import { useAuth } from "./lib/authContext";
 
 const menuItems = [
   { name: "Dashboard", icon: FiHome, path: "/business-dashboard" },
@@ -23,8 +24,10 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
+  const navigate = useNavigate();
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
+  const { logout } = useAuth();
 
   useEffect(() => {
     const handleResize = () => {
@@ -35,6 +38,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
     window.addEventListener("resize", handleResize)
     return () => window.removeEventListener("resize", handleResize)
   }, [])
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  }
+
+  const handleMenuItemClick = () => {
+    if (isMobile) {
+      setIsOpen(false);
+    }
+  }
 
   return (
     <>
@@ -54,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       >
         <div className={`flex flex-col h-full`}>
           <div className="flex items-center justify-between h-16 px-2">
-            <img src={DashboardLogo} alt="Notion Rides" className="size-20 lg:size-24 ml-2" />
+            <img src={DashboardLogo} onClick={() => navigate('/')} alt="Notion Rides" className="size-20 lg:size-24 ml-2" />
 
             <button className={`p-2 cursor-pointer rounded-md shadow-xs top-4 lg:hidden`} onClick={() => setIsOpen(!isOpen)}>
               <X className='size-5 text-neutral-700' />
@@ -71,6 +85,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                 <Link
                   key={item.name}
                   to={item.path}
+                  onClick={handleMenuItemClick}
                   className={`flex items-center gap-3 px-3 py-3 text-gray-600 text-sm font-medium hover:bg-[#175CD317] transition duration-200 ease-in-out cursor-pointer w-full rounded-md outline-none ${
                     isActive ? "bg-[#175CD317] text-[#1D2939] rounded-md border border-[#175CD317]" : ""
                 }`}
@@ -83,11 +98,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
           </nav>
 
           <div className="px-1 py-4 space-y-3">
-            <Link to="/settings" className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-neutral-200 transition-colors" >
+            <Link to="/settings" onClick={handleMenuItemClick} className="flex items-center gap-3 px-3 py-3 text-sm font-medium text-gray-700 rounded-lg hover:bg-neutral-200 transition-colors" >
               <FiSettings className="size-5 shrink-0" />
               <span>Settings</span>
             </Link>
-            <button className="flex items-center justify-start px-3 py-3 w-full rounded-md font-medium text-sm gap-3 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-200 ease-in-out cursor-pointer outline-none">
+            <button onClick={() => { handleLogout(); if (isMobile) setIsOpen(false); }} className="flex items-center justify-start px-3 py-3 w-full rounded-md font-medium text-sm gap-3 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-200 ease-in-out cursor-pointer outline-none">
               <HiOutlineLogout className="h-5 w-5 mr-3" /> Log Out
             </button>
           </div>

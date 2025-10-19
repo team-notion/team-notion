@@ -14,13 +14,13 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ sidebarOpen }) => {
   const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
 
   const getUserInitials = () => {
     if (!user) return 'U';
 
-    if (user.name) {
-      const names = user.name.split(' ');
+    if (user.username) {
+      const names = user.username.split(' ');
       if (names.length >= 2) {
         return `${names[0][0]}${names[1][0]}`.toUpperCase();
       }
@@ -30,7 +30,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen }) => {
   }
 
   const getAvatarUrl = () => {
-    return user?.avatar || null;
+    return user?.profile_image || null;
   }
 
   const handleLogout = () => {
@@ -71,7 +71,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen }) => {
     <header className={`bg-white border-b border-b-[#EAECF0] h-16 fixed top-0 right-0 left-0 z-20 transition-all duration-200 ease-in-out pl-20 lg:pl-0 ${isMobile ? "pl-20" : sidebarOpen ? 'lg:pl-64' : 'lg:pl-32'}`}>
       <div className="flex items-center justify-between h-full px-4 gap-2">
         {!sidebarOpen && (
-          <img src={DashboardLogo} alt="Notion Rides" className="size-20 lg:size-24 transition-all duration-200 ease-in-out hidden lg:flex" />
+          <img src={DashboardLogo} alt="Notion Rides" onClick={() => navigate('/')} className="size-20 lg:size-24 transition-all duration-200 ease-in-out hidden lg:flex" />
         )}
 
         {/* Right section */}
@@ -83,12 +83,12 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen }) => {
           <div className="flex items-center gap-3">
             {/* <img src={user?.profileImage || 'User'} alt={user?.name || 'user'} className="w-8 h-8 rounded-full border border-[#EAECF0] relative" /> */}
             <Avatar className="h-10 w-10 cursor-pointer border border-[#F97316] hover:border-orange-600 transition-colors">
-              <AvatarImage src={getAvatarUrl() || undefined} alt={user?.name || 'User'} />
+              <AvatarImage src={getAvatarUrl() || undefined} alt={user?.username || 'User'} />
               <AvatarFallback className="bg-[#F97316] text-white font-semibold text-sm">
                 {getUserInitials()}
               </AvatarFallback>
             </Avatar>
-            <span className="hidden sm:block text-sm text-[#344054] leading-5 font-normal">{user?.name || 'User'}</span>
+            <span className="hidden sm:block text-sm text-[#344054] leading-5 font-normal">{user?.username || 'User'}</span>
           </div>
         </div>
       </div>
