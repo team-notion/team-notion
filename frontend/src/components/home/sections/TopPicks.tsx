@@ -10,7 +10,7 @@ const TopPicks = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="bg-[#B9C2DB80] py-8 sm:py-10 md:py-12 lg:py-10 border border-gradient-to-r from-[#FFFEFE33] to-[#001EB433] rounded-xl overflow-hidden mb-20">
+    <section className="relative bg-[#B9C2DB80] py-8 sm:py-10 md:py-12 lg:py-30 border border-gradient-to-r from-[#FFFEFE33] to-[#001EB433] rounded-xl overflow-hidden mb-20">
       <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-medium text-[#0D183A] mb-6 md:mb-8 text-left">Top pick this month</h2>
 
@@ -25,8 +25,8 @@ const TopPicks = () => {
             <button onClick={() => { navigate("/reservation") }} className="px-6 py-2 lg:py-3 bg-[#F97316] text-white text-sm sm:text-base font-bold rounded-xl hover:bg-orange-600 transition cursor-pointer">Rent now</button>
           </div>
 
-          <div className="w-full lg:w-[40rem] flex h-80 sm:h-96 md:h-full justify-center md:justify-end order-1 md:order-2"> 
-            <img src={Porse} alt="Mercedes-AMG Car" className="w-full max-w-sm md:max-w-md lg:max-w-[100rem] h-auto object-contain" /> 
+          <div className="relative lg:absolute lg:right-0 lg:top-0 lg:bottom-0 w-full lg:w-1/2 mt-6 lg:mt-0  order-1 md:order-2"> 
+            <img src={Porse} alt="Mercedes-AMG Car" className="w-full h-60 sm:h-80 md:h-full object-cover object-center lg:object-left rounded-md lg:rounded-none" /> 
           </div>
         </div>
       </div>

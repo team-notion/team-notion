@@ -42,27 +42,27 @@ const VehicleCard = ({ title, price, images, licensePlate, duration, availabilit
           ))}
         </div>
       </div>
-      <CardHeader className="px-3 lg:px-5">
-        <div className="flex flex-col lg:flex-row items-start justify-between">
+      <CardHeader className="px-3 xl:px-4">
+        <div className="flex flex-col lxl:flex-row items-start justify-between">
           <CardTitle className="text-xl font-medium">{title}</CardTitle>
           <div className="text-right">
-            <span className="text-xl font-medium text-blue-600">${price}</span>
-            <span className="text-blue-600 text-md">per day</span>
+            <span className="text-lg font-medium text-blue-600">${price}</span>
+            <span className="text-blue-600 text-sm">per day</span>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="px-3 lg:px-5">
+      <CardContent className="px-3 xl:px-4">
         <div className="flex justify-between items-center">
-          <span className="text-md">License Plate</span>
-          <span className="text-md font-medium">{licensePlate}</span>
+          <span className="text-sm">License Plate</span>
+          <span className="text-sm font-medium">{licensePlate}</span>
         </div>
         <div className="flex justify-between items-center mt-2">
-          <span className="text-md">Duration for guest reservation</span>
-          <span className="text-md font-medium">{duration}</span>
+          <span className="text-sm">Duration for guest reservation</span>
+          <span className="text-sm font-medium">{duration}</span>
         </div>
         <div className="flex justify-between items-center mt-2">
-          <span className="text-md">Availability date</span>
-          <span className="text-md font-medium">{availability}</span>
+          <span className="text-sm">Availability date</span>
+          <span className="text-sm font-medium">{availability}</span>
         </div>
       </CardContent>
       <CardFooter className="flex justify-between gap-2 lg:gap-4 pt-0">

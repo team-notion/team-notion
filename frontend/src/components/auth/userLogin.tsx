@@ -103,7 +103,7 @@ const UserLogin = () => {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-dvh">
+    return <div className="flex justify-center items-center h-64">
       <Loader type="tailSpin" color="#175CD3" height={40} width={40} />
     </div>;
   }
