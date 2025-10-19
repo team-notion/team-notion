@@ -74,9 +74,8 @@ const CustomerSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
           ...prev,
           username: data.username,
           email: data.email,
-          phone: data.phone,
+          phone_no: data.phone,
           password: data.password,
-          userType: "customer"
         }));
 
         if (onNext) {

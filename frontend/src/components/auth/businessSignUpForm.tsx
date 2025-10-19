@@ -71,11 +71,10 @@ const BusinessSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
 
         setDetails((prev: any) => ({
           ...prev,
-          business_name: data.business_name,
+          username: data.business_name,
           email: data.email,
-          phone: data.phone,
+          phone_no: data.phone,
           password: data.password,
-          userType: "business"
         }));
 
         if (onNext) {
