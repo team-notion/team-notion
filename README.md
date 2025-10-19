@@ -238,9 +238,7 @@ If an account holder reserves the same car while it’s soft-reserved by a guest
 - When reservation is updated (in-app)  
 - When payment is confirmed (in-app)  
 
-**Channels:**  
-- Email (resend email, firebase)  
-- In-app notification (firebase)  
+  
 
 ---
 
@@ -260,7 +258,7 @@ If an account holder reserves the same car while it’s soft-reserved by a guest
 | Backend         | Laravel |
 | Database        | PostgreSQL |
 | Authentication  | Firebase Auth for secure login sessions. |
-| Payment Gateway | Stripe/PayPal/Paystack integration. to be concluded |
+| Payment Gateway | Stripe |
 | Notifications   | Firebase Push Notifications. |
 | Hosting         | Vercel / Render for backend & frontend deployment. |
 | Security        | HTTPS for all communications; encrypted storage for sensitive data (driver’s license, payment methods). |
@@ -283,19 +281,18 @@ This PRD outlines NotionRides streamlined car rental platform tailored to a sing
 | 1   | Odegha Clementina         | PM   | 
 | 2   | Ogbuefi Ikemsinachi       | PD   | 
 | 3   | Shalom Nwachukwu-kanu     | PD   |
-| 4   | Grace Nzubechukwu Okorie  | PD   |
+| 4   | Damina Beatrice           | PM   |
 | 5   | Obaloluwa Tubi            | FE   |
 | 6   | Huncho Sherif             | FE   |
-| 7   | George Udonte             | FE   |
-| 8   | Niwagaba Clever           | BE   |
-| 9   | Jethro Ayegbe             | BE   |
+| 7   | Niwagaba Clever           | BE   |
+| 8   | Jethro Ayegbe             | BE   |
 
 ---
 
 ## RESOURCES  
 
 - **Organization Repo:** https://github.com/team-notion  
-- **Figma:** (link to be added later)  
-- **Pitch Deck:** (link to be added later)
+- **Figma:** (https://www.figma.com/design/iyPq7DvTMJDvvH4SqpqCQd/NotionRides-QACircle-hackathon?node-id=0-1&p=f&t=TZLpOaJHMeDICUzH-0)  
+- **Meetings Minutes:** (https://drive.google.com/drive/folders/1zwLGPbNYHVNKg9bGmaVh9ZNQkKofgujR)
 - **Demo:** (link to be added later)
 
