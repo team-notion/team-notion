@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.contrib.auth import get_user_model
 from .models import Car, Reservation
 from .serializers import CarSerializer, ReservationSerializer
+from notifications.utils import create_notification
 
 
 
@@ -12,7 +13,17 @@ class CarListView(generics.ListAPIView):
     queryset = Car.objects.filter(is_available=True)
     serializer_class = CarSerializer
     permission_classes = [permissions.AllowAny]
-    pagination_class = None 
+
+
+    def get_queryset(self):
+        queryset = Car.objects.filter(is_available=True)
+        owner_id = self.request.query_params.get('owner_id')
+
+        if owner_id:
+            queryset = queryset.filter(owner_id=owner_id)
+        return queryset
+
+
 
 
 class CarCreateView(generics.CreateAPIView):
@@ -95,6 +106,12 @@ class ReserveCarView(generics.CreateAPIView):
         car.is_available = False
         car.save()
 
+        create_notification(
+            users=[user, car.owner],
+            message=f"Reservation confirmed for {car}.",
+            status='success'
+        )
+
         return reservation
 
 
@@ -129,6 +146,12 @@ class CancelReservationView(generics.UpdateAPIView):
         car = reservation.car
         car.is_available = True
         car.save()
+
+        create_notification(
+            users=[user, car.owner],
+            message=f"Reservation cancelled for {car}.",
+            status='success'
+        )
 
         return Response(
             {"message": "Reservation cancelled successfully."},

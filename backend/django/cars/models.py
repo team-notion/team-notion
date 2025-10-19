@@ -71,3 +71,5 @@ class Reservation(models.Model):
         ordering = ['-reserved_from']
         verbose_name = 'Reservation'
         verbose_name_plural = 'Reservations'
+
+
