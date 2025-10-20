@@ -22,10 +22,12 @@ class CarPhotoSerializer(serializers.ModelSerializer):
                     content = ContentFile(response.content, name=file_name)
                     validated_data["photo"] = content
             except requests.Timeout:
+                validated_data["photo"] = None 
                 raise serializers.ValidationError(
                     {"image_url": "Request timed out while fetching image"}
                 )
             except Exception as e:
+                validated_data["photo"] = None 
                 raise serializers.ValidationError(
                     {"image_url": f"Failed to fetch image: {str(e)}"}
                 )
