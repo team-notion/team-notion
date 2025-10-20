@@ -21,6 +21,14 @@ class Car(models.Model):
     is_available = models.BooleanField(default=True)
     license = models.TextField()
 
+
+    color = models.CharField(max_length=50, blank=True, null=True)
+    location = models.CharField(max_length=150, blank=True, null=True)
+    mileage = models.PositiveIntegerField(blank=True, null=True)
+    model = models.CharField(max_length=100, blank=True, null=True)
+    duration_non_paid_in_hours = models.PositiveIntegerField(blank=True, null=True)
+    features = models.JSONField(blank=True, null=True)
+
     def __str__(self):
         return f"{self.car_type} ({self.owner.profile.username})"
 

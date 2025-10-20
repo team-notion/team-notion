@@ -16,15 +16,23 @@ class CarPhotoSerializer(serializers.ModelSerializer):
 
         if image_url and not photo:
             try:
-                response = requests.get(image_url)
+                response = requests.get(image_url, timeout=10)
                 if response.status_code == 200:
-                    file_name = image_url.split("/")[-1]
-                    content = ContentFile(response.content)
+                    file_name = image_url.split("/")[-1] or "downloaded_image.jpg"
+                    content = ContentFile(response.content, name=file_name)
                     validated_data["photo"] = content
+            except requests.Timeout:
+                raise serializers.ValidationError(
+                    {"image_url": "Request timed out while fetching image"}
+                )
             except Exception as e:
                 raise serializers.ValidationError(
-                    {"image_url": f"Failed to fetch image: {e}"}
+                    {"image_url": f"Failed to fetch image: {str(e)}"}
                 )
+        if not photo and not image_url:
+            raise serializers.ValidationError(
+                {"photo": "Either a photo file or image_url must be provided."}
+            )
         return super().create(validated_data)
     
 class CarSerializer(serializers.ModelSerializer):
@@ -40,14 +48,17 @@ class CarSerializer(serializers.ModelSerializer):
         photos_data = validated_data.pop("photos", [])
         car = Car.objects.create(**validated_data)
 
-        # Handle photos
         for photo_data in photos_data:
-            CarPhoto.objects.create(car=car, **photo_data)
-
+            photo_serializer = CarPhotoSerializer(data=photo_data)
+            if photo_serializer.is_valid():
+                photo_serializer.save(car=car)
+            else:
+                raise serializers.ValidationError({"photos": photo_serializer.errors})
+        
         return car
+
+
     
-
-
 
 class ReservationSerializer(serializers.ModelSerializer):
     customer_username = serializers.CharField(write_only=True, required=False)
@@ -58,7 +69,7 @@ class ReservationSerializer(serializers.ModelSerializer):
         read_only_fields = ['customer']
 
     def create(self, validated_data):
-        # Remove 'customer_username' so it doesn't get passed to Reservation.objects.create()
+        
         validated_data.pop('customer_username', None)
         return super().create(validated_data)
 
@@ -73,12 +84,22 @@ class ReservationSerializer(serializers.ModelSerializer):
         if not car.is_available:
             raise serializers.ValidationError("This car is currently not available.")
         
-        # Validate date range within car's availability
         if car.available_dates:
             try:
                 from django.utils.dateparse import parse_datetime
-                available_from = parse_datetime(car.available_dates[0])
-                available_to = parse_datetime(car.available_dates[1])
+
+                parsed_dates = [
+                    parse_datetime(dt) for dt in car.available_dates if parse_datetime(dt)
+                ]
+
+                if not parsed_dates:
+                    raise ValueError("No valid datetime found in available_dates.")
+
+                available_from = min(parsed_dates)
+                available_to = max(parsed_dates)
+
+                if available_from is None or available_to is None:
+                    raise ValueError("Invalid datetime format")
             except Exception:
                 raise serializers.ValidationError("Invalid format in car.available_dates.")
 
