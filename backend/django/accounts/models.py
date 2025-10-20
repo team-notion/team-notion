@@ -104,6 +104,8 @@ class Profile(models.Model):
     username = models.CharField(max_length=150, blank=True)
     phone_no = models.CharField(max_length=15, blank=True)
     country_code = models.CharField(max_length=4, blank=True)
+    country_or_region = models.CharField(max_length=100, blank=True, null=True)
+    address = models.CharField(max_length=255, blank=True, null=True)
     date_of_birth = models.DateField(null=True, blank=True)
     profile_image = models.ImageField(upload_to='profiles/', blank=True, null=True)
 
