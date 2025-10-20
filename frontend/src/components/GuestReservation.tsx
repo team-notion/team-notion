@@ -55,7 +55,7 @@ export default function GuestReservation() {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
-    customerName: "",
+    customerName: user?.username || "",
     phoneNumber: "",
     email: "",
     pickupDate: "",
@@ -147,7 +147,7 @@ export default function GuestReservation() {
         car: car.id,
         reserved_from: formData.pickupDate + 'T00:00:00Z',
         reserved_to: formData.returnDate + 'T23:59:59Z',
-        guest_name: formData.customerName,
+        customer_username: formData.customerName,
         guest_email: formData.email,
         guest_phone: formData.phoneNumber,
       };
@@ -184,7 +184,12 @@ export default function GuestReservation() {
         return;
       }
 
-      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.MAKE_A_RESERVATION}`, reservationData, {
+      const reservationDataWithCar = {
+        ...reservationData,
+        customer_username: formData?.customerName,
+      };
+
+      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.MAKE_A_RESERVATION}`, reservationDataWithCar, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
