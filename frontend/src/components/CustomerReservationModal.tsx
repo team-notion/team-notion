@@ -7,12 +7,23 @@ import z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
+import { toast } from "sonner";
+
+interface Car {
+  id: number;
+  car_type: string;
+  model: string | null;
+  year_of_manufacture: number;
+  daily_rental_price: number;
+  deposit: number;
+}
 
 interface ReservationModalProps {
   isOpen: boolean;
-  onNext: () => void;
   onClose: () => void;
-  onConfirm: () => void;
+  onNext: (reservationData: any) => void;
+  onConfirm: (reservationData: any) => void;
+  car: Car;
 }
 
 const reservationSchema = z.object({
@@ -36,8 +47,11 @@ const CustomerReservationModal = ({
   onClose,
   onNext,
   onConfirm,
+  car,
 }: ReservationModalProps) => {
-  const { register, handleSubmit, watch, setValue, control, reset, formState: { errors, isValid }, getValues, trigger, } = useForm<ReservationFormData>({
+  const [loading, setLoading] = useState(false);
+
+  const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<ReservationFormData>({
     resolver: zodResolver(reservationSchema),
     mode:'onChange',
     defaultValues: {
@@ -49,12 +63,54 @@ const CustomerReservationModal = ({
     }
   });
 
-  const startDate = watch('startDate');
-  const endDate = watch('endDate');
+  const startDate = watch("startDate");
+  const endDate = watch("endDate");
 
-  const onSubmit = () => {
-    onNext();
+  const formatDateForAPI = (date: Date) => {
+    return date.toISOString().split('T')[0] + 'T00:00:00Z';
   };
+
+
+  const onSubmit = (data: ReservationFormData) => {
+    if (!car) {
+      toast.error("Car information is missing");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const reservationPayload = {
+        car: car.id,
+        reserved_from: formatDateForAPI(data.startDate),
+        reserved_to: formatDateForAPI(data.endDate),
+        pickup_location: data.pickupLocation,
+        notes: data.notes || '',
+        payment_option: data.paymentOption,
+      };
+
+      
+      onNext(reservationPayload);
+      
+    } catch (error) {
+      console.error("Reservation error:", error);
+      toast.error("Failed to process reservation");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const calculateRentalDetails = () => {
+    if (!startDate || !endDate) return null;
+    
+    const timeDiff = endDate.getTime() - startDate.getTime();
+    const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    const totalPrice = days * car.daily_rental_price;
+    
+    return { days, totalPrice };
+  };
+
+  const rentalDetails = calculateRentalDetails();
 
   return (
     <dialog open={isOpen} className="modal">
@@ -64,13 +120,11 @@ const CustomerReservationModal = ({
           <div className="sticky top-0 bg-[#F3F4F6] px-6 py-4 flex items-center justify-between z-20">
             <div>
               <h2 className="text-xl font-medium text-black">
-                Create a reservation
+                Create a reservation - {car.car_type} {car.model || ''}
               </h2>
+              <p className="text-sm text-gray-600">₦{car.daily_rental_price?.toLocaleString()}/day</p>
             </div>
-            <button
-              onClick={onClose}
-              className="text-red-500 hover:text-red-700 transition-colors cursor-pointer"
-            >
+            <button onClick={onClose} className="text-red-500 hover:text-red-700 transition-colors cursor-pointer" >
               <X size={20} />
             </button>
           </div>
@@ -99,6 +153,9 @@ const CustomerReservationModal = ({
                   }}
                   minDate={new Date()}
                 />
+                {errors.startDate && (
+                  <p className="text-red-500 text-xs -mt-4">{errors.startDate.message}</p>
+                )}
 
                 <SelectDate
                   label="End Date"
@@ -109,24 +166,35 @@ const CustomerReservationModal = ({
                   }}
                   minDate={startDate || new Date()}
                 />
+                {errors.endDate && (
+                  <p className="text-red-500 text-xs -mt-4">{errors.endDate.message}</p>
+                )}
                 <div>
                   <Label className="mb-4">Payment Options</Label>
-                  <RadioGroup defaultValue="comfortable">
+                  <RadioGroup defaultValue="pay_on_delivery" onValueChange={(value: 'pay_on_delivery' | 'pay_now') => 
+                      setValue('paymentOption', value, { shouldValidate: true })
+                    }>
                     <div className="flex items-center gap-3">
-                      <RadioGroupItem value="pay_on_delivery" {...register('paymentOption')} id="r1" />
+                      <RadioGroupItem value="pay_on_delivery" id="r1" />
                       <Label htmlFor="r1" className='font-normal text-[#5C5C5C] text-sm'>Pay on Delivery</Label>
                     </div>
                     <div className="flex items-center gap-3">
-                      <RadioGroupItem value="pay_now" {...register('paymentOption')} id="r2" />
+                      <RadioGroupItem value="pay_now" id="r2" />
                       <Label htmlFor="r2" className='font-normal text-[#5C5C5C] text-sm'>Pay Now</Label>
                     </div>
                   </RadioGroup>
+                  {errors.paymentOption && (
+                    <p className="text-red-500 text-xs mt-1">{errors.paymentOption.message}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-black mb-2">
                     Pickup Location
                   </label>
                   <input type="text" placeholder="e.g, Ikeja" {...register('pickupLocation')} onChange={(e) => setValue("pickupLocation", e.target.value) } className="text-[#5C5C5C] text-sm w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                  {errors.pickupLocation && (
+                    <p className="text-red-500 text-xs mt-1">{errors.pickupLocation.message}</p>
+                  )}
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-black mb-2">
@@ -136,11 +204,11 @@ const CustomerReservationModal = ({
                 </div>
               </div>
               <div className="bg-white px-6 py-4 flex items-center justify-end gap-4">
-                <button onClick={onClose} className={`flex px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer`} >
-                  Back
+                <button type="button" onClick={onClose} className={`flex px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer`} >
+                  Cancel
                 </button>
-                <button type="submit" onClick={onSubmit} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
-                  Next
+                <button type="submit" disabled={loading} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
+                  {loading ? 'Processing...' : 'Make Reservation'}
                 </button>
               </div>
             </form>

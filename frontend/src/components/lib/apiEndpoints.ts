@@ -19,8 +19,14 @@ export enum apiEndpoints {
   GET_ALL_CARS = '/cars/',
   ADD_CAR = '/cars/create/',
   GET_ALL_CARS_BY_OWNER_ID = '/cars/?owner_id=',
-  GET_CAR_DETAILS = '/cars/:id',
+  GET_CAR_DETAILS = '/cars/',
   UPDATE_CAR = '/cars/:id/manage',
   DELETE_CAR = '/cars/',
+
+  // RESERVATIONS
+  MAKE_A_RESERVATION = '/cars/reserve/',
+  MY_RESERVATIONS = '/cars/my-reservations/',
+  UPDATE_RESERVATION = '/cars/reserve/:id',
+  CANCEL_RESERVATION = '/cars/reserve/:id/cancel',
 
 }

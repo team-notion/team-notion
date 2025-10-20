@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { IoIosClose } from "react-icons/io";
 import { AiOutlineCar } from "react-icons/ai"
 import { IoImageOutline } from "react-icons/io5";
@@ -7,7 +7,7 @@ import { PencilIcon } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
-import { postData } from "./lib/apiMethods";
+import { postData, putData } from "./lib/apiMethods";
 import { apiEndpoints } from "./lib/apiEndpoints";
 import CONFIG from "./utils/config";
 import { LOCAL_STORAGE_KEYS } from "./utils/localStorageKeys";
@@ -37,17 +37,47 @@ const addCarSchema = z.object({
 });
 
 type AddCarFormData = z.infer<typeof addCarSchema>;
+interface CarPhoto {
+  id: number;
+  photo: string | null;
+  image_url: string;
+}
+
+interface Car {
+  id: number;
+  owner: string;
+  photos: CarPhoto[];
+  car_type: string;
+  year_of_manufacture: number;
+  daily_rental_price: number;
+  available_dates: string[];
+  rental_terms: string;
+  deposit: number;
+  deposit_percentage: number;
+  is_available: boolean;
+  license: string;
+  color: string | null;
+  location: string | null;
+  mileage: number | null;
+  model: string | null;
+  duration_non_paid_in_hours: number | null;
+  features: string[] | null;
+}
+
 interface AddCarModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  carData?: Car | null;
+  mode?: 'add' | 'edit';
 }
 
-const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
+const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' }: AddCarModalProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [uploadingImages, setUploadingImages] = useState<number | null>(null);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const isEditMode = mode === 'edit' && carData !== null;
 
   const { register, handleSubmit, watch, formState: { errors }, reset, setValue, trigger } = useForm({
     resolver: zodResolver(addCarSchema),
@@ -70,6 +100,36 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
       photos: [],
     },
   });
+
+  useEffect(() => {
+    if (isEditMode && carData) {
+      const formattedDates = carData.available_dates.map(date => date.split('T')[0]);
+
+      setValue('car_type', carData.car_type);
+      setValue('year_of_manufacture', carData.year_of_manufacture);
+      setValue('color', carData.color || '');
+      setValue('location', carData.location || '');
+      setValue('license', carData.license);
+      setValue('mileage', carData.mileage || 0);
+      setValue('model', carData.model || '');
+      setValue('available_dates', formattedDates);
+
+      const hours = carData.duration_non_paid_in_hours || 0;
+      const days = Math.ceil(hours / 24);
+      setValue('duration_non_paid', `${days} day${days !== 1 ? 's' : ''}`);
+      
+      setValue('daily_rental_price', carData.daily_rental_price);
+      setValue('deposit', carData.deposit);
+      setValue('deposit_percentage', carData.deposit_percentage);
+      setValue('features', carData.features || []);
+      setValue('rental_terms', carData.rental_terms);
+      
+      const photos = carData.photos.map(photo => ({
+        image_url: photo.image_url || photo.photo || ''
+      }));
+      setValue('photos', photos);
+    }
+  }, [isEditMode, carData, setValue]);
 
   const formData = watch();
   const selectedFeatures = watch('features');
@@ -108,9 +168,7 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
     try {
       setUploadingImages(index);
     
-      // uploadMultipleImages expects an array of File, so wrap single file in an array
       const uploadResult = await uploadMultipleImages([file]);
-      // uploadResult might be an array of URLs or a single URL; normalize to a single string
       const imageUrl = Array.isArray(uploadResult) ? uploadResult[0] : uploadResult;
     
       const currentPhotos = watch('photos') || [];
@@ -128,7 +186,7 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
       newFiles[index] = file;
       setPhotoFiles(newFiles);
     
-      toast.success('Image uploaded successfully!');
+      // toast.success('Image uploaded successfully!');
     
     } catch (error: any) {
       console.error('Upload error:', error);
@@ -140,7 +198,6 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
 
 
   const onSubmit = async (data: AddCarFormData) => {
-    console.log('triggered')
     setLoading(true);
 
     const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
@@ -165,23 +222,39 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
         location: data.location,
         mileage: data.mileage,
         model: data.model,
-        duration_non_paid_in_hours: data.duration_non_paid,
+        duration_non_paid_in_hours: parseInt(data.duration_non_paid) || 0,
         features: data.features,
       };
 
-      console.log('Sending payload:', payload);
+      if (isEditMode && carData) {
+        const updateEndpoint = apiEndpoints.UPDATE_CAR.replace(':id', carData.id.toString());
 
-      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.ADD_CAR}`, payload, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+        const resp = await putData(`${CONFIG.BASE_URL}${updateEndpoint}`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
 
-      if (resp) {
-        toast.success(resp?.message || 'Vehicle added successfully');
-        handleCancel();
-        onConfirm();
+        if (resp) {
+          toast.success(resp?.message || 'Vehicle updated successfully');
+          handleCancel();
+          onConfirm();
+        }
+        else {
+          toast.error(resp?.message || resp?.detail || 'Failed to updated car');
+        }
       }
       else {
-        toast.error(resp?.message || resp?.detail || 'Failed to add car');
+        const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.ADD_CAR}`, payload, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+  
+        if (resp) {
+          toast.success(resp?.message || 'Vehicle added successfully');
+          handleCancel();
+          onConfirm();
+        }
+        else {
+          toast.error(resp?.message || resp?.detail || 'Failed to add car');
+        }
       }
     }
     catch (err: any) {
@@ -264,7 +337,7 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
             {/* Header */}
             <div className="sticky top-0 bg-[#F3F4F6] px-6 py-4 flex items-center justify-between z-20">
               <div>
-                <h2 className="text-xl font-medium text-black">Add new car</h2>
+                <h2 className="text-xl font-medium text-black">{isEditMode ? 'Edit car' : 'Add new car'}</h2>
                 <p className="text-sm text-gray-600 mt-1">Step {currentStep} of 4</p>
               </div>
               <button onClick={handleCancel} className="text-red-500 hover:text-red-700 transition-colors cursor-pointer" >
@@ -412,23 +485,55 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
                       <IoImageOutline className="size-11 lg:size-6 text-[#1E3A8A] mt-1" />
                       <div>
                         <h3 className="text-lg lg:text-xl font-semibold text-black mb-1">Upload Car Photo</h3>
-                        <p className="text-sm text-gray-600">Put a face to your car, upload your photo and start earning with confidence.</p>
+                        <p className="text-sm text-gray-600">{isEditMode ? 'Update car photos' : 'Put a face to your car, upload your photo and start earning with confidence.'}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {[0, 1, 2, 3, 4, ].map((index) => (
-                        <label key={index}  htmlFor={`photo-${index}`} className="aspect-video lg:aspect-square border border-gray-300 rounded-xl flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors" >
-                          <input type="file" id={`photo-${index}`} accept="image/*" className="hidden object-cover" onChange={(e) => handleImageSelect(e, index)} />
-                          {photoFiles[index] ? (
-                            <img src={URL.createObjectURL(photoFiles[index])} alt={`Photo ${index}`} className="w-full h-full object-cover rounded-xl" />
-                          ) : (
-                            <IoImageOutline className="w-12 h-12 text-gray-400" />
-                          )}
-                        </label>
-                      ))}
-                      {errors.photos && <p className="text-red-500 text-xs mt-1">{errors.photos.message}</p>}
+                      {[0, 1, 2, 3, 4].map((index) => {
+                        const currentPhotos = watch('photos') || [];
+                        const existingPhoto = currentPhotos[index];
+        
+                        return (
+                          <label key={index} htmlFor={`photo-${index}`} className="aspect-video lg:aspect-square border-2 border-gray-300 rounded-xl flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors relative overflow-hidden" >
+                            <input type="file" id={`photo-${index}`} accept="image/*" className="hidden" onChange={(e) => handleImageSelect(e, index)} disabled={uploadingImages === index}/>
+            
+                            {uploadingImages === index ? (
+                              <div className="flex flex-col items-center justify-center">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mb-2"></div>
+                                <span className="text-xs text-gray-500">Uploading...</span>
+                              </div>
+                            ) : existingPhoto?.image_url ? (
+                              <>
+                                <img src={existingPhoto.image_url} alt={`Photo ${index}`} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                                  <span className="text-white text-sm opacity-0 hover:opacity-100">Change</span>
+                                </div>
+                              </>
+                            ) : photoFiles[index] ? (
+                              <img src={URL.createObjectURL(photoFiles[index])} alt={`Photo ${index}`} className="w-full h-full object-cover" />
+                            ) : (
+                              <div className="flex flex-col items-center justify-center text-gray-400">
+                                <IoImageOutline className="w-8 h-8 mb-2" />
+                                <span className="text-xs">Add Photo</span>
+                              </div>
+                            )}
+                          </label>
+                        );
+                      })}
                     </div>
+    
+                    {errors.photos && <p className="text-red-500 text-xs mt-1">{errors.photos.message}</p>}
+    
+                    {/* Show current photo URLs for debugging */}
+                    {isEditMode && (formData.photos || []).length > 0 && (
+                      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <p className="text-sm font-medium text-blue-700 mb-2">
+                          {(formData.photos || []).length} photo(s) currently set
+                        </p>
+                      </div>
+                    )}
+
                   </div>
                 )}
 
@@ -514,7 +619,7 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
                           </div>
                           <div className='flex gap-1 items-center'>
                             <p className="text-xs font-semibold text-black">Available Dates: </p>
-                            <p className="text-xs text-gray-600">{formData.available_dates}</p>
+                            <p className="text-xs text-gray-600">{Array.isArray(formData.available_dates) ? formData.available_dates.join(', ') : 'No dates selected'}</p>
                           </div>
                         </div>
 

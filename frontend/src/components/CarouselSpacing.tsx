@@ -325,7 +325,7 @@ const CarCard = ({ car }: CarCardProps) => {
             <span className="text-lg font-semibold text-gray-600">₦{car.daily_rental_price}</span>
             <span className="text-gray-600 text-sm font-semibold">per day</span>
           </div>
-          <Link to="/reservation" className="block w-[8rem] bg-[#F97316] text-white px-6 py-2.5 rounded-xl cursor-pointer hover:bg-orange-600 text-center mt-4" >
+          <Link to={`/reservation/${car.id}`} className="block w-[8rem] bg-[#F97316] text-white px-6 py-2.5 rounded-xl cursor-pointer hover:bg-orange-600 text-center mt-4" >
             Rent now
           </Link>
         </div>
@@ -364,7 +364,6 @@ export function CarouselSpacing() {
           throw new Error('Unexpected response format');
         }
 
-        console.log("Fetched cars:", car);
       }
       catch (err) {
         console.error("Error fetching vehicles:", err);
