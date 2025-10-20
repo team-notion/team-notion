@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { CarouselSpacing } from '@/components/CarouselSpacing'
 
 export const Picks = () => {

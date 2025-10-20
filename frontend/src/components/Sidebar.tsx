@@ -68,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
       >
         <div className={`flex flex-col h-full`}>
           <div className="flex items-center justify-between h-16 px-2">
-            <img src={DashboardLogo} onClick={() => navigate('/')} alt="Notion Rides" className="size-20 lg:size-24 ml-2" />
+            <img src={DashboardLogo} onClick={() => navigate('/')} alt="Notion Rides" className="size-20 lg:size-24 ml-2 cursor-pointer" />
 
             <button className={`p-2 cursor-pointer rounded-md shadow-xs top-4 lg:hidden`} onClick={() => setIsOpen(!isOpen)}>
               <X className='size-5 text-neutral-700' />
