@@ -6,6 +6,7 @@ import { ColumnDef } from '@tanstack/react-table';
 import TransactionTable from './../components/ui/TransactionTable';
 import AddCarModal from '../components/AddCarModal';
 import { useNavigate } from 'react-router';
+import { useAuth } from '@/components/lib/authContext';
 
 interface Booking {
   id: string
@@ -89,6 +90,7 @@ const sampleBookings: Booking[] = [
 
 const BusinessDashboard = () => {
   const navigate = useNavigate();
+  const { isAuthenticated, user } = useAuth();
   const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false)
   const [pagination, setPagination] = useState({
     pageIndex: 0,
@@ -177,7 +179,7 @@ const BusinessDashboard = () => {
     <div className='space-y-6 px-0 lg:px-4'>
       <div>
         <h1 className='text-2xl font-semibold text-black leading-9'>Dashboard</h1>
-        <p className='text-neutral-600 mt-1'>Welcome back, Favour</p>
+        <p className='text-neutral-600 mt-1'>Welcome back, {user?.username}</p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <BusinessDashboardCards

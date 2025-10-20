@@ -51,6 +51,10 @@ const routes = createBrowserRouter([
     element: <ProfileManagement />
   },
   {
+    path: "/bookings",
+    element: <ForgotPassword />,
+  },
+  {
     path: "/",
     element: <BusinessDashboardLayout />,
     children: [
