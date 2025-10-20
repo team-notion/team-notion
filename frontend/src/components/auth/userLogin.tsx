@@ -91,7 +91,7 @@ const UserLogin = () => {
           navigate("/");
         }
       } else {
-        toast.error(resp.data?.message || resp.message?.message || "Login failed");
+        toast.error(resp.message || resp?.detail || "Login failed");
       }
     }
     catch (err: any) {

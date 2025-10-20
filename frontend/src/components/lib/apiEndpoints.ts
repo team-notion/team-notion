@@ -16,9 +16,9 @@ export enum apiEndpoints {
   UPDATE_USER_PROFILE = '/accounts/profile',
 
   // CARS
-  GET__ALL_CARS = '/cars/',
+  GET_ALL_CARS = '/cars/',
   ADD_CAR = '/cars/create/',
-  GET_ALL_CARS_BY_OWNER_ID = '/cars/?owner_id',
+  GET_ALL_CARS_BY_OWNER_ID = '/cars/?owner_id=',
   GET_CAR_DETAILS = '/cars/:id',
   UPDATE_CAR = '/cars/:id/manage',
   DELETE_CAR = '/cars/',

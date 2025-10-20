@@ -2,77 +2,165 @@ import { BMW_1, BMW_2, BMW_3, Honda_Civic_1, Honda_Civic_2, Honda_Civic_3, Tesla
 import ActionModal from "@/components/ActionModal";
 import AddCarModal from "@/components/AddCarModal";
 import CarInventoryCard from "@/components/carInventoryCard";
+import { apiEndpoints } from "@/components/lib/apiEndpoints";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import CONFIG from "@/components/utils/config";
+import { LOCAL_STORAGE_KEYS } from "@/components/utils/localStorageKeys";
 import VehicleCard from "@/components/VehicleCard";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
-import { ChevronDownIcon, Plus, SearchIcon } from 'lucide-react';
-import { useState } from "react";
+import { ChevronDownIcon, LayoutGrid, List, Plus, SearchIcon } from 'lucide-react';
+import { useEffect, useState } from "react";
+
+interface CarPhoto {
+  id: number;
+  photo: string | null;
+  image_url: string;
+}
+
+interface Car {
+  id: number;
+  owner: string;
+  photos: CarPhoto[];
+  car_type: string;
+  year_of_manufacture: number;
+  daily_rental_price: number;
+  available_dates: string[];
+  rental_terms: string;
+  deposit: number;
+  deposit_percentage: number;
+  is_available: boolean;
+  license: string;
+  color: string | null;
+  location: string | null;
+  mileage: number | null;
+  model: string | null;
+  duration_non_paid_in_hours: number | null;
+  features: string[] | null;
+}
+
+const ITEMS_PER_PAGE = 20;
+
+const VehicleCardSkeleton = () => (
+  <div className="w-full rounded-3xl overflow-hidden shadow-lg h-[800px] bg-gray-200 animate-pulse">
+    <div className="h-[300px] bg-gray-300" />
+    <div className="p-6 space-y-4">
+      <div className="h-8 bg-gray-300 rounded" />
+      <div className="h-6 bg-gray-300 rounded w-1/2" />
+      <div className="space-y-2">
+        <div className="h-4 bg-gray-300 rounded" />
+        <div className="h-4 bg-gray-300 rounded" />
+        <div className="h-4 bg-gray-300 rounded" />
+      </div>
+    </div>
+  </div>
+);
 
 const CarInventory = () => {
+  const [loading, setLoading] = useState(false);
+  const [vehicles, setVehicles] = useState<Car[]>([]);
+  const [filteredVehicles, setFilteredVehicles] = useState<Car[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false);
   const [selectedCarId, setSelectedCarId] = useState<number | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState<"make" | "model" | "year">("make");
 
-  const vehicles = [
-    {
-      id: 1,
-      title: "Toyota Corolla 2021",
-      price: 50,
-      images: [ Toyota_Corolla_1, Toyota_Corolla_2, Toyota_Corolla_3,],
-      licensePlate: "SEG-431",
-      duration: "5days",
-      availability: "Mon-Fri",
-      status: "Available" as const,
-    },
-    {
-      id: 2,
-      title: "Tesla Model 3 2023",
-      price: 30,
-      images: [Tesla_1, Tesla_2, Tesla_3],
-      licensePlate: "YIL-986",
-      duration: "3days",
-      availability: "Mon-Sun",
-      status: "Rented" as const,
-    },
-    {
-      id: 3,
-      title: "Honda Civic 2022",
-      price: 25,
-      images: [Honda_Civic_1, Honda_Civic_2, Honda_Civic_3],
-      licensePlate: "ABC-123",
-      duration: "3days",
-      availability: "Mon-Sun",
-      status: "Rented" as const,
-    },
-    {
-      id: 4,
-      title: "BMW 2023",
-      price: 55,
-      images: [BMW_1, BMW_2, BMW_3],
-      licensePlate: "XYZ-789",
-      duration: "7days",
-      availability: "Weekends",
-      status: "Available" as const,
-    },
-  ];
+
+  const getCurrentUserId = () => {
+    const userData = localStorage.getItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID);
+    return userData;
+  };
+
+  useEffect(() => {
+    const fetchCars = async () => {
+      setLoading(true);
+      
+      try {
+        const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+        const userId = getCurrentUserId();
+
+        if (!userId) {
+          throw new Error("User ID not found");
+        }
+
+        const resp = await fetch(`${CONFIG.BASE_URL}${apiEndpoints.GET_ALL_CARS_BY_OWNER_ID}${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (!resp.ok) {
+          throw new Error("Failed to fetch cars");
+        }
+        
+        const data = await resp.json();
+
+        if (data && Array.isArray(data.results)) {
+          setVehicles(data.results);
+          setFilteredVehicles(data.results);
+        } else {
+          throw new Error('Unexpected response format');
+        }
+
+        console.log("Fetched cars:", data);
+      }
+      catch (err) {
+        console.error("Error fetching vehicles:", err);
+      }
+      finally {
+        setLoading(false);
+      }
+    }
+
+    fetchCars();
+  }, []);
+
+
+  useEffect(() => {
+    let filtered = vehicles;
+
+    if (searchTerm) {
+      filtered = vehicles.filter((car) =>
+        car.car_type.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        car.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        car.license.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      if (sortBy === "make") return a.car_type.localeCompare(b.car_type);
+      if (sortBy === "model") return (a.model || "").localeCompare(b.model || "");
+      if (sortBy === "year") return b.year_of_manufacture - a.year_of_manufacture;
+      return 0;
+    });
+
+    setFilteredVehicles(filtered);
+    setCurrentPage(1);
+  }, [searchTerm, sortBy, vehicles]);
+
+
+  // Pagination
+  const totalPages = Math.ceil(filteredVehicles.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedVehicles = filteredVehicles.slice(startIndex, endIndex);
+
 
   const handleAddCarConfirm = () => {
-    console.log("Add new car:");
     setIsAddCarModalOpen(false);
   }
 
   const handleEdit = (id: number) => {
-    console.log("Edit vehicle:", id)
+
   };
 
   const handleDelete = (id: number) => {
     setSelectedCarId(id);
     setDeleteModalOpen(true);
-    console.log("Delete vehicle:", id)
   };
 
   const handleDeleteConfirm = () => {
-    console.log("Delete vehicle:", selectedCarId);
     setSelectedCarId(null);
   }
 
@@ -101,7 +189,7 @@ const CarInventory = () => {
 
       <div className='bg-white p-4 rounded-lg shadow-sm'>
         <InputGroup>
-          <InputGroupInput placeholder="Search cars by make, model or plate number" className='outline-0 focus-visible:outline-0 focus-within:ring-0 focus:ring-0 focus:outline-0' />
+          <InputGroupInput placeholder="Search cars by make, model or plate number" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='outline-0 focus-visible:outline-0 focus-within:ring-0 focus:ring-0 focus:outline-0' />
           <InputGroupAddon>
             <SearchIcon />
           </InputGroupAddon>
@@ -113,20 +201,102 @@ const CarInventory = () => {
                 </InputGroupButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="[--radius:0.95rem] bg-white shadow-md p-1 rounded-sm z-10">
-                <DropdownMenuItem className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Make</DropdownMenuItem>
-                <DropdownMenuItem className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Model</DropdownMenuItem>
-                <DropdownMenuItem className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Year</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("make")} className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Make</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("model")} className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Model</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("year")} className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Year</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </InputGroupAddon>
         </InputGroup>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {vehicles.map((vehicle) => (
-          <VehicleCard key={vehicle.id} title={vehicle.title} price={vehicle.price} images={vehicle.images} licensePlate={vehicle.licensePlate} duration={vehicle.duration} availability={vehicle.availability} status={vehicle.status} onEdit={() => handleEdit(vehicle.id)} onDelete={() => handleDelete(vehicle.id)} />
+          <VehicleCard key={vehicle.id} data={vehicle} onEdit={() => handleEdit(vehicle.id)} onDelete={() => handleDelete(vehicle.id)} />
         ))}
-      </div>
+      </div> */}
+
+      {/* Loading State */}
+      {loading ? (
+        <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`}>
+          {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
+            <VehicleCardSkeleton key={i} />
+          ))}
+        </div>
+      ) : filteredVehicles.length === 0 ? (
+        /* No Results State */
+        <div className="flex flex-col items-center justify-center py-12 bg-white rounded-lg">
+          <SearchIcon className="size-12 text-gray-300 mb-4" />
+          <h3 className="text-lg font-semibold text-gray-700">No cars found</h3>
+          <p className="text-gray-500 mt-1">Try adjusting your search or filters</p>
+        </div>
+      ) : (
+        <>
+          {/* Vehicles Grid/List */}
+          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`}>
+            {paginatedVehicles.map((vehicle) => (
+              <VehicleCard
+                key={vehicle.id}
+                data={vehicle}
+                onEdit={() => handleEdit(vehicle.id)}
+                onDelete={() => handleDelete(vehicle.id)}
+              />
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-8">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+
+                  {Array.from({ length: totalPages }).map((_, i) => {
+                    const pageNum = i + 1;
+                    const isActive = pageNum === currentPage;
+                    const isNearCurrent = Math.abs(pageNum - currentPage) <= 1;
+                    const isFirstOrLast = pageNum === 1 || pageNum === totalPages;
+
+                    if (isNearCurrent || isFirstOrLast) {
+                      return (
+                        <PaginationItem key={pageNum}>
+                          <PaginationLink
+                            onClick={() => setCurrentPage(pageNum)}
+                            isActive={isActive}
+                            className="cursor-pointer"
+                          >
+                            {pageNum}
+                          </PaginationLink>
+                        </PaginationItem>
+                      );
+                    } else if (pageNum === 2 || pageNum === totalPages - 1) {
+                      return <PaginationEllipsis key={pageNum} />;
+                    }
+                    return null;
+                  })}
+
+                  <PaginationItem>
+                    <PaginationNext
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
+
+          {/* Results Summary */}
+          <div className="text-center text-sm text-gray-600">
+            Showing {startIndex + 1} to {Math.min(endIndex, filteredVehicles.length)} of {filteredVehicles.length} vehicles
+          </div>
+        </>
+      )}
 
       <AddCarModal isOpen={isAddCarModalOpen} onClose={() => setIsAddCarModalOpen(false)} onConfirm={handleAddCarConfirm} />
 

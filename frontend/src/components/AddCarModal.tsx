@@ -14,7 +14,7 @@ import { LOCAL_STORAGE_KEYS } from "./utils/localStorageKeys";
 import { toast } from "sonner";
 import SelectDate from "./SelectDate";
 import SelectMultipleDates from "./SelectMultipleDates";
-import { uploadToCloudinary } from "./utils/imageUpload";
+import { uploadMultipleImages } from "./utils/imageUpload";
 
 const addCarSchema = z.object({
   car_type: z.string().min(2, "Car type is required"),
@@ -108,7 +108,10 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
     try {
       setUploadingImages(index);
     
-      const imageUrl = await uploadToCloudinary(file);
+      // uploadMultipleImages expects an array of File, so wrap single file in an array
+      const uploadResult = await uploadMultipleImages([file]);
+      // uploadResult might be an array of URLs or a single URL; normalize to a single string
+      const imageUrl = Array.isArray(uploadResult) ? uploadResult[0] : uploadResult;
     
       const currentPhotos = watch('photos') || [];
       const newPhotos = [...currentPhotos];
@@ -162,7 +165,7 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
         location: data.location,
         mileage: data.mileage,
         model: data.model,
-        duration_non_paid: data.duration_non_paid,
+        duration_non_paid_in_hours: data.duration_non_paid,
         features: data.features,
       };
 
@@ -173,7 +176,7 @@ const AddCarModal = ({ isOpen, onClose, onConfirm }: AddCarModalProps) => {
       });
 
       if (resp) {
-        toast.success(resp?.message);
+        toast.success(resp?.message || 'Vehicle added successfully');
         handleCancel();
         onConfirm();
       }
