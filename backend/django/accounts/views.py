@@ -20,12 +20,12 @@ class CustomerRegisterView(generics.CreateAPIView):
         user = serializer.save(is_active=True, **flags) #set is_active to False to require email verification
 
 
-        uid, token = generate_token(user)   
+        """uid, token = generate_token(user)   
 
         verify_link = f"https://team-notion.netlify.app/verify-email/{uid}/{token}/"
 
         # Run email sending in a background thread
-        threading.Thread(target=send_verification_email, args=(user, verify_link)).start()
+        threading.Thread(target=send_verification_email, args=(user, verify_link)).start()"""
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
