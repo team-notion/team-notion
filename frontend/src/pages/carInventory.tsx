@@ -63,6 +63,8 @@ const CarInventory = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false);
   const [selectedCarId, setSelectedCarId] = useState<number | null>(null);
+  const [selectedCar, setSelectedCar] = useState<Car | null>(null);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortBy, setSortBy] = useState<"make" | "model" | "year">("make");
@@ -149,10 +151,57 @@ const CarInventory = () => {
 
   const handleAddCarConfirm = () => {
     setIsAddCarModalOpen(false);
+    setSelectedCar(null);
+    setModalMode('add');
+
+    const fetchCars = async () => {
+      setLoading(true);
+      
+      try {
+        const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+        const userId = getCurrentUserId();
+
+        if (!userId) {
+          throw new Error("User ID not found");
+        }
+
+        const resp = await fetch(`${CONFIG.BASE_URL}${apiEndpoints.GET_ALL_CARS_BY_OWNER_ID}${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (!resp.ok) {
+          throw new Error("Failed to fetch cars");
+        }
+        
+        const data = await resp.json();
+
+        if (data && Array.isArray(data.results)) {
+          setVehicles(data.results);
+          setFilteredVehicles(data.results);
+        } else {
+          throw new Error('Unexpected response format');
+        }
+
+        console.log("Fetched cars:", data);
+      }
+      catch (err) {
+        console.error("Error fetching vehicles:", err);
+      }
+      finally {
+        setLoading(false);
+      }
+    }
+
+    fetchCars();
   }
 
   const handleEdit = (id: number) => {
-
+    const carToEdit = vehicles.find(car => car.id === id);
+    if (carToEdit) {
+      setSelectedCar(carToEdit);
+      setModalMode('edit');
+      setIsAddCarModalOpen(true);
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -298,7 +347,7 @@ const CarInventory = () => {
         </>
       )}
 
-      <AddCarModal isOpen={isAddCarModalOpen} onClose={() => setIsAddCarModalOpen(false)} onConfirm={handleAddCarConfirm} />
+      <AddCarModal isOpen={isAddCarModalOpen} onClose={() => { setIsAddCarModalOpen(false); setSelectedCar(null); setModalMode('add'); }} onConfirm={handleAddCarConfirm} carData={selectedCar} mode={modalMode} />
 
       <ActionModal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Are you sure you want to delete this car?" onConfirm={handleDeleteConfirm} confirmText="Delete" cancelText="Cancel" confirmVariant="danger" />
     </div>

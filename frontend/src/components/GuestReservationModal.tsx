@@ -7,6 +7,7 @@ import { useState } from "react"
 import PhoneNumberInput from "./ui/PhoneNumberInput"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { toast } from "sonner"
 
 export interface ReservationFormData {
   customerName: string
@@ -20,6 +21,15 @@ export interface ReservationFormData {
   issueDate: string
   issuingCountry: string
   licenseClass: string
+}
+
+interface Car {
+  id: number;
+  car_type: string;
+  model: string | null;
+  year_of_manufacture: number;
+  daily_rental_price: number;
+  deposit: number;
 }
 
 // Warning Modal
@@ -293,8 +303,9 @@ function DriverInfoForm({ formData, onFormChange }: DriverInfoFormProps) {
 interface ReservationModalProps {
   isOpen: boolean
   onClose: () => void
-  onNext: () => void
+  onNext: (reservationData: any) => void
   onBack: () => void
+  car: Car
 }
 
 
@@ -304,6 +315,7 @@ const reservationSchema = z.object({
   phone: z.string().min(10, "Please enter a valid phone number"),
   pickupDate: z.date({ message: "Pickup date is required" }),
   returnDate: z.date({ message: "Return date is required" }),
+  pickupLocation: z.string().min(2, "Pickup location is required"),
   })
   .refine((data) => data.returnDate > data.pickupDate, {
     message: "Return date must be after pickup date",
@@ -316,10 +328,12 @@ export function ReservationModal({
   onClose,
   onNext,
   onBack,
+  car,
 }: ReservationModalProps) {
+  const [loading, setLoading] = useState(false);
   type ReservationFormData = z.infer<typeof reservationSchema>;
 
-  const { register, handleSubmit, watch, setValue, formState: { errors }, trigger } = useForm<ReservationFormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ReservationFormData>({
     resolver: zodResolver(reservationSchema),
     mode: 'onChange',
     defaultValues: {
@@ -328,18 +342,58 @@ export function ReservationModal({
       phone: '',
       pickupDate: undefined,
       returnDate: undefined,
+      pickupLocation: '',
     },
   });
 
   const pickupDate = watch('pickupDate');
   const returnDate = watch('returnDate');
 
+  const formatDateForAPI = (date: Date): string => {
+    return date.toISOString().split('T')[0] + 'T00:00:00Z';
+  };
+
   const onSubmit = async (data: ReservationFormData) => {
-    const isValid = await trigger();
-    if (isValid) {
-      onNext();
+    if (!car) {
+      toast.error("Car information is missing");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const reservationPayload = {
+        car: car.id,
+        reserved_from: formatDateForAPI(data.pickupDate),
+        reserved_to: formatDateForAPI(data.returnDate),
+        guest_name: data.customerName,
+        guest_email: data.email,
+        guest_phone: data.phone,
+        pickup_location: data.pickupLocation,
+      };
+
+      console.log("Guest reservation payload:", reservationPayload);
+      
+      onNext(reservationPayload);
+      
+    } catch (error) {
+      console.error("Reservation error:", error);
+      toast.error("Failed to process reservation");
+    } finally {
+      setLoading(false);
     }
   };
+
+  const calculateRentalDetails = () => {
+    if (!pickupDate || !returnDate) return null;
+    
+    const timeDiff = returnDate.getTime() - pickupDate.getTime();
+    const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
+    const totalPrice = days * car.daily_rental_price;
+    
+    return { days, totalPrice };
+  };
+
+  const rentalDetails = calculateRentalDetails();
 
   if (!isOpen) return null;
   
@@ -350,7 +404,8 @@ export function ReservationModal({
           {/* Header */}
           <div className="sticky top-0 bg-[#F3F4F6] px-6 py-4 flex items-center justify-between z-20">
             <div>
-              <h2 className="text-xl font-medium text-black">Reservation</h2>
+              <h2 className="text-xl font-medium text-black">Guest Reservation - {car.car_type} {car.model || ''}</h2>
+              <p className="text-sm text-gray-600">₦{car.daily_rental_price?.toLocaleString()}/day</p>
             </div>
             <button onClick={onClose} className="text-red-500 hover:text-red-700 transition-colors cursor-pointer" >
               <X size={20} />
@@ -418,14 +473,48 @@ export function ReservationModal({
                       <p className="text-red-500 text-xs mt-1">{errors.returnDate.message}</p>
                     )}
                   </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-black mb-2">
+                      Pickup Location
+                    </label>
+                    <input type="text" placeholder="e.g, Ikeja" {...register('pickupLocation')} className="text-[#5C5C5C] text-sm w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
+                    {errors.pickupLocation && (
+                      <p className="text-red-500 text-xs mt-1">{errors.pickupLocation.message}</p>
+                    )}
+                  </div>
                 </div>
+
+                {rentalDetails && (
+                  <div className="bg-blue-50 p-4 rounded-lg">
+                    <h4 className="font-semibold text-blue-800 mb-2">Rental Summary</h4>
+                    <div className="space-y-1 text-sm">
+                      <div className="flex justify-between">
+                        <span>Rental Days:</span>
+                        <span>{rentalDetails.days} days</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Daily Rate:</span>
+                        <span>₦{car.daily_rental_price?.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between font-semibold border-t pt-1">
+                        <span>Total Price:</span>
+                        <span>₦{rentalDetails.totalPrice.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Deposit:</span>
+                        <span>₦{car.deposit?.toLocaleString() || '0'}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className='bg-white px-6 py-4 flex items-center justify-end gap-4 mt-4'>
                 <button onClick={onBack} className={`flex px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer`} >
                   Back
                 </button>
-                <button type="submit" onClick={onNext} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
-                  Reserve
+                <button type="submit" disabled={loading} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
+                  {loading ? 'Processing...' : 'Make Reservation'}
                 </button>
               </div>
             </form>

@@ -2,12 +2,31 @@ import { useState } from "react"
 import { ChevronLeft, ChevronRight, ChevronDown, Star } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
+interface AvailabilitySectionProps {
+  availableDates?: string[];
+}
 
-export function AvailabilitySection() {
+interface RentalTermsSectionProps {
+  rentalTerms?: string;
+}
+
+export function AvailabilitySection({ availableDates }: AvailabilitySectionProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [currentMonth, setCurrentMonth] = useState(new Date(2025, 9)) // October 2025
+  const [currentMonth, setCurrentMonth] = useState(new Date())
 
-  const bookedDates = [15, 16, 17, 22]
+  const bookedDates = (availableDates ?? []).map((date) => {
+    const d = new Date(date)
+    return d.getFullYear() === currentMonth.getFullYear() && d.getMonth() === currentMonth.getMonth()
+      ? d.getDate()
+      : null
+  }).filter((d): d is number => d !== null)
+
+  const getBookedDaysForMonth = (month: Date) => {
+    return (availableDates ?? [])
+      .map((date) => new Date(date))
+      .filter(d => d.getMonth() === month.getMonth() && d.getFullYear() === month.getFullYear())
+      .map(d => d.getDate());
+  }
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear()
@@ -18,6 +37,7 @@ export function AvailabilitySection() {
   }
 
   const { firstDay, daysInMonth } = getDaysInMonth(currentMonth)
+  const bookedDays = getBookedDaysForMonth(currentMonth)
 
   const previousMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))
@@ -29,6 +49,33 @@ export function AvailabilitySection() {
 
   const monthName = currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })
 
+  const isDateAvailable = (day: number) => {
+    const testDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    return !bookedDates.some(bookedDay => bookedDay === testDate.getDate());
+  }
+
+  const formatAvailableDates = () => {
+    const dates = availableDates ?? [];
+
+    if (dates.length === 0) {
+      return "No specific availability dates set";
+    }
+
+    const formattedDates = dates.map(date => {
+      return new Date(date).toLocaleDateString("en-US", {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
+      });
+    });
+
+    if (formattedDates.length <= 3) {
+      return formattedDates.join(", ");
+    } else {
+      return `${formattedDates.slice(0, 3).join(", ")} and ${formattedDates.length - 3} more dates`;
+    }
+  }
+
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="max-w-md">
       <CollapsibleTrigger className="flex items-center justify-between gap-10 lg:gap-40 p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-200 rounded-md w-full">
@@ -37,6 +84,12 @@ export function AvailabilitySection() {
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="p-4 border-t-2 border-[#0066CC]">
+          {/* Calendar Header */}
+          <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+            <h4 className="font-semibold text-blue-800 mb-2">Available Dates</h4>
+            <p className="text-sm text-blue-700">{formatAvailableDates()}</p>
+          </div>
+
           {/* Calendar Header */}
           <div className="flex items-center justify-between mb-4">
             <button onClick={previousMonth} className="p-1 hover:bg-gray-100 rounded">
@@ -64,13 +117,23 @@ export function AvailabilitySection() {
             {/* Calendar days */}
             {Array.from({ length: daysInMonth }).map((_, index) => {
               const day = index + 1
-              const isBooked = bookedDates.includes(day)
+              const isBooked = bookedDays.includes(day)
+              const isAvailable = isDateAvailable(day)
+              const isToday = new Date().getDate() === day && 
+                new Date().getMonth() === currentMonth.getMonth() && 
+                             new Date().getFullYear() === currentMonth.getFullYear()
 
               return (
                 <div
                   key={day}
-                  className={`text-center py-2 text-sm ${
-                    isBooked ? "bg-red-500 text-white rounded-full" : "text-gray-800"
+                  className={`text-center py-2 text-sm rounded-full ${
+                    isBooked 
+                      ? "bg-red-500 text-white" 
+                      : isToday
+                      ? "bg-blue-500 text-white"
+                      : isAvailable
+                      ? "bg-green-100 text-green-800"
+                      : "text-gray-400"
                   }`}
                 >
                   {day}
@@ -80,9 +143,33 @@ export function AvailabilitySection() {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-red-500 rounded-sm" />
-            <span className="text-sm text-gray-600">Booked</span>
+          <div className="flex flex-wrap gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-green-100 border border-green-300 rounded-sm" />
+              <span className="text-gray-600">Available</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-red-500 rounded-sm" />
+              <span className="text-gray-600">Booked</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-4 h-4 bg-blue-500 rounded-sm" />
+              <span className="text-gray-600">Today</span>
+            </div>
+          </div>
+
+          {/* Availability Status */}
+          <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between">
+              <span className="font-medium">Current Status:</span>
+              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                (availableDates?.length ?? 0) > 0
+                  ? "bg-green-100 text-green-800" 
+                  : "bg-yellow-100 text-yellow-800"
+              }`}>
+                {(availableDates?.length ?? 0) > 0 ? "Available" : "Not Available"}
+              </span>
+            </div>
           </div>
         </div>
       </CollapsibleContent>
@@ -93,8 +180,14 @@ export function AvailabilitySection() {
 
 // RENTAL TERMS
 
-export function RentalTermsSection() {
+export function RentalTermsSection({ rentalTerms = '' }: RentalTermsSectionProps) {
   const [isOpen, setIsOpen] = useState(false)
+
+  const defaultTerms = `No rental terms specified by the car owner. Please contact the owner for specific rental requirements, terms, and conditions.`;
+
+  const displayTerms = rentalTerms || defaultTerms;
+
+  const termsParagraphs = displayTerms.split('\n').filter(paragraph => paragraph.trim() !== '');
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="">
@@ -103,37 +196,79 @@ export function RentalTermsSection() {
         <ChevronDown className={`w-5 lg:w-8 h-5 lg:h-8 text-black transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="p-4 space-y-4 text-sm text-black leading-relaxed">
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisque faucibus ex sapien vitae pellentesque sem
-            placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam egestas. Praesent
-            diam eros, iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent
-            taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisque faucibus ex sapien vitae pellentesque sem
-            placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam egestas. Praesent
-            diam eros, iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent
-            taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisque faucibus ex sapien vitae pellentesque sem
-            placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam egestas. Praesent
-            diam eros, iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent
-            taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisque faucibus ex sapien vitae pellentesque sem
-            placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam egestas. Praesent
-            diam eros, iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent
-            taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
-          </p>
-          <p>
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Quisque faucibus ex sapien vitae pellentesque sem
-            placerat. In id cursus mi pretium tellus duis convallis. Tempus leo eu aenean sed diam egestas. Praesent
-            diam eros, iaculis massa nisl malesuada lacinia integer nunc posuere. Ut hendrerit semper vel class aptent
-            taciti sociosqu. Ad litora torquent per conubia nostra inceptos himenaeos.
-          </p>
+        <div className="p-4 space-y-6">
+          <div className="space-y-4 text-sm text-black leading-relaxed">
+            {termsParagraphs.length > 0 ? (
+              termsParagraphs.map((paragraph, index) => (
+                <p key={index} className="text-justify">
+                  {paragraph}
+                </p>
+              ))
+            ) : (
+              <p className="text-justify text-gray-500 italic">
+                {displayTerms}
+              </p>
+            )}
+          </div>
+
+          {/* Additional Standard Terms */}
+          {rentalTerms && (
+            <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h4 className="font-semibold text-yellow-800 mb-2">Important Notice</h4>
+              <p className="text-sm text-yellow-700">
+                These are the specific terms set by the car owner. Please ensure you understand and agree to all conditions before making a reservation. 
+                For any clarifications, contact the car owner directly.
+              </p>
+            </div>
+          )}
+
+          {/* Key Points Summary */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+            <div className="space-y-3">
+              <h5 className="font-semibold text-gray-800">General Requirements</h5>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-1">•</span>
+                  <span>Valid driver's license required</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-1">•</span>
+                  <span>Minimum age: 21 years</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-1">•</span>
+                  <span>Security deposit applies</span>
+                </li>
+              </ul>
+            </div>
+            
+            <div className="space-y-3">
+              <h5 className="font-semibold text-gray-800">Usage Policies</h5>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-1">•</span>
+                  <span>No smoking in vehicle</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-1">•</span>
+                  <span>Mileage limits may apply</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-500 mt-1">•</span>
+                  <span>Return with same fuel level</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Contact Information */}
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h5 className="font-semibold text-blue-800 mb-2">Need Clarification?</h5>
+            <p className="text-sm text-blue-700">
+              If you have any questions about the rental terms or need additional information, 
+              please contact the car owner before making your reservation.
+            </p>
+          </div>
         </div>
       </CollapsibleContent>
     </Collapsible>

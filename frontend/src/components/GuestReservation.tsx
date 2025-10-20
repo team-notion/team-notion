@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { ChevronLeft, ChevronRight, Star } from "lucide-react" 
 import { WarningModal, ReservationModal, SuccessModal } from "./GuestReservationModal";
 import { AvailabilitySection, RentalTermsSection, ReviewsSection } from "./AvailabilitySection";
@@ -7,10 +7,47 @@ import Footer from "./home/Footer";
 import Navbar from "./home/Navbar";
 import { useAuth } from "./lib/authContext";
 import CustomerReservationModal from "./CustomerReservationModal";
+import { useParams, useSearchParams } from "react-router";
+import { apiEndpoints } from "./lib/apiEndpoints";
+import CONFIG from "./utils/config";
+import { LOCAL_STORAGE_KEYS } from "./utils/localStorageKeys";
+import { toast } from "sonner";
+import { getData, postData } from "./lib/apiMethods";
+
+interface CarPhoto {
+  id: number;
+  photo: string | null;
+  image_url: string;
+}
+
+interface Car {
+  id: number;
+  owner: string;
+  photos: CarPhoto[];
+  car_type: string;
+  year_of_manufacture: number;
+  daily_rental_price: number;
+  available_dates: string[];
+  rental_terms: string;
+  deposit: number;
+  deposit_percentage: number;
+  is_available: boolean;
+  license: string;
+  color: string | null;
+  location: string | null;
+  mileage: number | null;
+  model: string | null;
+  duration_non_paid_in_hours: number | null;
+  features: string[] | null;
+}
 
 export default function GuestReservation() {
   const { isAuthenticated, user } = useAuth();
-  const [currentImageIndex, setCurrentImageIndex] = useState(0)
+  const { carId } = useParams<{ carId: string }>();
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [car, setCar] = useState<Car | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const [showWarningModal, setShowWarningModal] = useState(false)
   const [showReservationModal, setShowReservationModal] = useState(false)
@@ -18,7 +55,7 @@ export default function GuestReservation() {
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
   const [formData, setFormData] = useState({
-    customerName: "",
+    customerName: user?.username || "",
     phoneNumber: "",
     email: "",
     pickupDate: "",
@@ -29,23 +66,60 @@ export default function GuestReservation() {
     issueDate: "",
     issuingCountry: "",
     licenseClass: "",
-  })
+  });
+
+
+  useEffect(() => {
+    const fetchCarDetails = async () => {
+      if (!carId) {
+        toast.error("No car selected");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+        
+        const resp = await fetch(`${CONFIG.BASE_URL}${apiEndpoints.GET_CAR_DETAILS}${carId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        if (!resp.ok) {
+          throw new Error("Failed to fetch car details");
+        }
+
+        const carData = await resp.json();
+        setCar(carData);
+        
+      } catch (error) {
+        console.error("Error fetching car details:", error);
+        toast.error("Failed to load car details");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (carId) {
+      fetchCarDetails();
+    }
+  }, [carId]);
 
 
   const handleReserveClick = () => {
-    // if (isAuthenticated && user?.userType === 'customer') {
-    //   setShowCustomerReservationModal(true);
-    //   return;
-    // }
+    if (!car) {
+      toast.error("Car information not loaded");
+      return;
+    }
 
     if (isAuthenticated) {
       setShowCustomerReservationModal(true);
       return;
     }
 
-    // if (isAuthenticated && user?.userType === 'business' || user?.userType === 'owner') {
-    //   return;
-    // }
+    if (isAuthenticated && user?.userType === 'business' || user?.userType === 'owner') {
+      return;
+    }
 
     setShowWarningModal(true)
   }
@@ -60,16 +134,88 @@ export default function GuestReservation() {
     if (currentStep === 1) {
       setCurrentStep(2)
     } else if (currentStep === 2) {
-      setShowReservationModal(false)
-      setShowSuccessModal(true)
+      handleGuestReservation();
     }
   }
+
+
+  const handleGuestReservation = async () => {
+    if (!car) return;
+
+    try {
+      const reservationData = {
+        car: car.id,
+        reserved_from: formData.pickupDate + 'T00:00:00Z',
+        reserved_to: formData.returnDate + 'T23:59:59Z',
+        customer_username: formData.customerName,
+        guest_email: formData.email,
+        guest_phone: formData.phoneNumber,
+      };
+
+      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.MAKE_A_RESERVATION}`, reservationData, {
+        headers: {'Content-Type': 'application/json'}
+      });
+
+      if (resp) {
+        setShowReservationModal(false);
+        setShowSuccessModal(true);
+        toast.success("Reservation created successfully!");
+      }
+      else {
+        throw new Error(resp?.detail || "Failed to make reservation");
+      }
+      
+    } catch (error) {
+      console.error("Reservation error:", error);
+      toast.error("Failed to make reservation");
+    }
+  };
+
+
+
+  const handleCustomerReservation = async (reservationData: any) => {
+    if (!car) return;
+    
+    try {
+      const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+    
+      if (!token) {
+        toast.error("Please log in to make a reservation");
+        return;
+      }
+
+      const reservationDataWithCar = {
+        ...reservationData,
+        customer_username: formData?.customerName,
+      };
+
+      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.MAKE_A_RESERVATION}`, reservationDataWithCar, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (resp) {
+        setShowCustomerReservationModal(false);
+        setShowSuccessModal(true);
+        toast.success("Reservation created successfully!");
+      }
+      else {
+        throw new Error(resp?.detail || "Failed to make reservation");
+      }
+    
+    } catch (error: any) {
+      console.error("Reservation error:", error);
+      toast.error(error?.message || "Failed to make reservation");
+    }
+  };
+
 
   const handleBackStep = () => {
     if (currentStep === 2) {
       setCurrentStep(1)
     }
   }
+
+
 
   const handleFormChange = (data: Partial<typeof formData>) => {
     setFormData({ ...formData, ...data })
@@ -93,38 +239,37 @@ export default function GuestReservation() {
     })
   }
 
-  const handleCustomerReservationNext = () => {
-    setShowCustomerReservationModal(false);
-  }
-
-  const images = [
-    "/infie.svg",
-    "/infi.svg",
-    "/infii.svg",
-  ]
-
-  const imeges = [
-    "/infi.svg",
-    "/infi.svg",
-    "/infii.svg",
-  ]
-
-  const features = [
-    "USB Charging",
-    "Sunroof",
-    "Bluetooth",
-    "Heated seats",
-    "Back up Camera",
-    "Cruise control",
-    "Apple Carplay",
-  ]
+  const images = (car?.photos?.map(photo => photo.image_url ?? photo.photo) ?? []).filter((p): p is string => p != null && p !== '') as string[];
+  const features = car?.features || [];
 
   const nextImage = () => {
-    setCurrentImageIndex((prev) => (prev + 1) % images.length)
-  }
+    setCurrentImageIndex((prev) => (prev + 1) % images.length);
+  };
 
   const prevImage = () => {
-    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length)
+    setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading car details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!car) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-semibold text-gray-700">Car not found</h2>
+          <p className="text-gray-500 mt-2">The car you're looking for doesn't exist or is no longer available.</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -141,56 +286,68 @@ export default function GuestReservation() {
             <div className="flex gap-4 items-center lg:items-start justify-center">
               {/* Main Image */}
               <div className="flex-1 bg-gray-100 rounded-2xl relative overflow-hidden hidden lg:flex">
-                <img
-                  src={images[currentImageIndex] || "Infinix"}
-                  alt="Infiniti QX50"
-                  className="w-full h-full object-cover"
-                />
+                {images.length > 0 ? (
+                  <img
+                    src={images[currentImageIndex]}
+                    alt={car.car_type}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
+                    <span className="text-gray-500">No image available</span>
+                  </div>
+                )}
                 {/* Navigation Arrows */}
-                <button
-                  onClick={prevImage}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50"
-                >
-                  <ChevronLeft className="w-6 h-6 text-gray-800" />
-                </button>
-                <button
-                  onClick={nextImage}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50"
-                >
-                  <ChevronRight className="w-6 h-6 text-gray-800" />
-                </button>
+                {images.length > 1 && (
+                  <>
+                    <button
+                      onClick={prevImage}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50"
+                    >
+                      <ChevronLeft className="w-6 h-6 text-gray-800" />
+                    </button>
+                    <button
+                      onClick={nextImage}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50"
+                    >
+                      <ChevronRight className="w-6 h-6 text-gray-800" />
+                    </button>
+                  </>
+                )}
               </div>
 
               {/* Thumbnails */}
-              <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-1 gap-3 items-center">
-                {imeges.map((img, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setCurrentImageIndex(index)}
-                    className={`w-58 h-54 lg:h-40 rounded-lg overflow-hidden border-2 ${
-                      currentImageIndex === index ? "border-[#0066CC]" : "border-gray-200"
-                    }`}
-                  >
-                    <img
-                      src={img || "/placeholder.svg"}
-                      alt={`Thumbnail ${index + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </button>
-                ))}
-              </div>
+              {images.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-1 gap-3 items-center">
+                  {images.map((img, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentImageIndex(index)}
+                      className={`w-58 h-54 lg:h-40 rounded-lg overflow-hidden border-2 ${
+                        currentImageIndex === index ? "border-[#0066CC]" : "border-gray-200"
+                      }`}
+                    >
+                      <img
+                        src={img}
+                        alt={`Thumbnail ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Vehicle Details */}
             <div className="flex flex-col md:flex-row items-start justify-between gap-4 mt-4">
               <div className="space-y-4 max-w-md lg:max-w-xl">
-                <h1 className="text-3xl font-semibold text-[#0D183A]">Infiniti QX50</h1>
+                <h1 className="text-3xl font-semibold text-[#0D183A]">{car.car_type} {car.model ? `- ${car.model}` : ''} {car.year_of_manufacture}</h1>
 
                 {/* Specs */}
                 <div className="flex items-center gap-6 text-gray-600">
                   <div className="flex items-center gap-2">
                     <p>Mileage: </p>
-                    <p>20,000 miles</p>
+                    <p>{car.mileage || 'N/A'} miles</p>
                   </div>
                 </div>
 
@@ -205,17 +362,24 @@ export default function GuestReservation() {
                 </div>
 
                 {/* Features */}
-                <div className="flex flex-wrap gap-4">
-                  {features.map((feature, index) => (
-                    <span key={index} className="px-4 py-2 bg-[#4A5FD9] text-white text-sm rounded-lg">
-                      {feature}
-                    </span>
-                  ))}
-                </div>
+                {features.length > 0 && (
+                  <div className="flex flex-wrap gap-4">
+                    {features.slice(0, 7).map((feature, index) => (
+                      <span key={index} className="px-4 py-2 bg-[#4A5FD9] text-white text-sm rounded-lg">
+                        {feature}
+                      </span>
+                    ))}
+                    {features.length > 7 && (
+                      <span className="px-4 py-2 bg-gray-500 text-white text-sm rounded-lg">
+                        +{features.length - 7} more
+                      </span>
+                    )}
+                  </div>
+                )}
 
                 {/* Price and Reserve Button */}
                 <div className="pt-4">
-                  <div className="text-2xl font-semibold text-[#0D183A]">₦ 49,000/day</div>
+                  <div className="text-2xl font-semibold text-[#0D183A]">₦ {car.daily_rental_price?.toLocaleString()}/day</div>
                   <button 
                   onClick={handleReserveClick}
                   className="px-8 py-3 mt-4 bg-[#F97316] text-sm lg:text-base text-white rounded-xl hover:bg-orange-600 font-medium cursor-pointer">
@@ -232,37 +396,42 @@ export default function GuestReservation() {
                 <div className="space-y-3">
                   <div className="flex justify-between gap-6">
                     <span className="text-sm font-medium text-[#0D183A]">Year of manufacture:</span>
-                    <span className="text-sm font-normal text-gray-600">2025</span>
+                    <span className="text-sm font-normal text-gray-600">{car.year_of_manufacture}</span>
                   </div>
 
                   <div className="flex justify-between gap-6">
                     <span className="text-sm font-medium text-[#0D183A]">Make:</span>
-                    <span className="text-sm font-normal text-gray-600">Infiniti</span>
+                    <span className="text-sm font-normal text-gray-600">{car.car_type}</span>
                   </div>
 
                   <div className="flex justify-between gap-6">
                     <span className="text-sm font-medium text-[#0D183A]">Color:</span>
-                    <span className="text-sm font-normal text-gray-600">White</span>
+                    <span className="text-sm font-normal text-gray-600">{car.color || 'N/A'}</span>
                   </div>
 
                   <div className="flex justify-between gap-6">
                     <span className="text-sm font-medium text-[#0D183A]">Location:</span>
-                    <span className="text-sm font-normal text-gray-600">Kaduna</span>
+                    <span className="text-sm font-normal text-gray-600">{car.location || 'N/A'}</span>
                   </div>
 
                   <div className="flex justify-between gap-6">
                     <span className="text-sm font-medium text-[#0D183A]">Mileage:</span>
-                    <span className="text-sm font-normal text-gray-600">2000 miles</span>
+                    <span className="text-sm font-normal text-gray-600">{car.mileage || 'N/A'} miles</span>
                   </div>
 
                   <div className="flex justify-between gap-6">
                     <span className="text-sm font-medium text-[#0D183A]">Model:</span>
-                    <span className="text-sm font-normal text-gray-600">QX50</span>
+                    <span className="text-sm font-normal text-gray-600">{car.model || 'N/A'}</span>
                   </div>
 
                   <div className="flex justify-between gap-6">
                     <span className="text-sm font-medium text-[#0D183A]">Deposit:</span>
-                    <span className="text-sm font-normal text-gray-600">100,000 Naira</span>
+                    <span className="text-sm font-normal text-gray-600">₦ {car.deposit?.toLocaleString() || 'N/A'}</span>
+                  </div>
+
+                  <div className="flex justify-between gap-6">
+                    <span className="text-sm font-medium text-[#0D183A]">License Plate:</span>
+                    <span className="text-sm font-normal text-gray-600">{car.license}</span>
                   </div>
                 </div>
               </div>
@@ -272,8 +441,8 @@ export default function GuestReservation() {
         </div>
 
         <div className="mt-12 space-y-6">
-          <AvailabilitySection />
-          <RentalTermsSection />
+          <AvailabilitySection availableDates={car.available_dates} />
+          <RentalTermsSection rentalTerms={car.rental_terms} />
           <ReviewsSection />
         </div>
       </div>
@@ -290,8 +459,9 @@ export default function GuestReservation() {
       <ReservationModal
         isOpen={showReservationModal}
         onClose={() => setShowReservationModal(false)}
-        onNext={handleNextStep}
-        onBack={handleBackStep}
+        onNext={handleGuestReservation}
+        onBack={() => setShowReservationModal(false)}
+        car={car}
       />
 
       <SuccessModal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} onDone={handleDone} />
@@ -300,7 +470,7 @@ export default function GuestReservation() {
 
       <Footer />
 
-      <CustomerReservationModal isOpen={showCustomerReservationModal} onClose={() => setShowCustomerReservationModal(false)} onNext={handleCustomerReservationNext} onConfirm={handleCustomerReservationNext} />
+      <CustomerReservationModal isOpen={showCustomerReservationModal} onClose={() => setShowCustomerReservationModal(false)} onNext={handleCustomerReservation} onConfirm={handleCustomerReservation} car={car} />
     </div>
   )
 }
