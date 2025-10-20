@@ -1,6 +1,7 @@
 from rest_framework import generics, permissions, status, serializers    
-from rest_framework.exceptions import PermissionDenied, NotFound
+#from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.response import Response
+from rest_framework.filters import OrderingFilter
 from django.contrib.auth import get_user_model
 from .models import Car, Reservation
 from .serializers import CarSerializer, ReservationSerializer
@@ -13,14 +14,44 @@ class CarListView(generics.ListAPIView):
     queryset = Car.objects.filter(is_available=True)
     serializer_class = CarSerializer
     permission_classes = [permissions.AllowAny]
+    filter_backends = [OrderingFilter]
+    ordering_fields = ['daily_rental_price', 'year_of_manufacture']
+    ordering = ['daily_rental_price']
 
 
     def get_queryset(self):
         queryset = Car.objects.filter(is_available=True)
-        owner_id = self.request.query_params.get('owner_id')
 
+        # Filters
+        #availability
+        availability = self.request.query_params.get("is_available")
+        if availability is not None:
+            queryset = queryset.filter(is_available=availability.lower() in ["true", "1", "yes"])
+        else:
+            queryset = queryset.filter(is_available=True)
+
+        #owner
+        owner_id = self.request.query_params.get("owner_id")
         if owner_id:
             queryset = queryset.filter(owner_id=owner_id)
+
+        #car type
+        car_type = self.request.query_params.get("car_type")
+        if car_type:
+            queryset = queryset.filter(car_type__icontains=car_type)
+
+        #model
+        model = self.request.query_params.get("model")
+        if model:
+            queryset = queryset.filter(model__icontains=model)
+
+        #price range
+        min_price = self.request.query_params.get("min_price")
+        max_price = self.request.query_params.get("max_price")
+        if min_price:
+            queryset = queryset.filter(daily_rental_price__gte=min_price)
+        if max_price:
+            queryset = queryset.filter(daily_rental_price__lte=max_price)
         return queryset
 
 
