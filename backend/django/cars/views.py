@@ -11,9 +11,10 @@ from notifications.utils import create_notification
 
 User = get_user_model()
 class CarListView(generics.ListAPIView):
+    authentication_classes = [] #comment this line to restrict unverified (is_active = False) users
+    permission_classes = [permissions.AllowAny]
     queryset = Car.objects.filter(is_available=True)
     serializer_class = CarSerializer
-    permission_classes = [permissions.AllowAny]
     filter_backends = [OrderingFilter]
     ordering_fields = ['daily_rental_price', 'year_of_manufacture']
     ordering = ['daily_rental_price']

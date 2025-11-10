@@ -5,3 +5,11 @@ class IsActiveUser(BasePermission):
 
     def has_permission(self, request, view):
         return request.user and request.user.is_active
+
+
+class IsAuthenticatedOrInactive(BasePermission):
+    """
+    Allows access to authenticated users, even if they are inactive.
+    """
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated

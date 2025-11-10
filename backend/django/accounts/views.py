@@ -9,6 +9,7 @@ from django.contrib.auth import get_user_model
 from .serializers import RegisterSerializer, CustomTokenObtainPairSerializer, ProfileSerializer 
 from .utils import send_verification_email, generate_token, verify_token, send_password_reset_email
 from .permissions import IsActiveUser
+from .authentication import AllowInactiveJWTAuthentication
 
 
 User = get_user_model()
@@ -39,17 +40,36 @@ class CustomerRegisterView(generics.CreateAPIView):
         )
 
 class SendVerificationEmailView(APIView):
+    authentication_classes = [AllowInactiveJWTAuthentication]
+    permission_classes = [] 
+
     def post(self, request):
         user = request.user
+
         if not user.is_authenticated:
-            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
-
+            return Response(
+                {'error': 'Authentication required'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        if user.is_active:
+            return Response(
+                {'message': 'Email is already verified'}, 
+                status=status.HTTP_200_OK
+            )
+        
         uid, token = generate_token(user)
-        #verify_link = f"{request.scheme}://{request.get_host()}/api/accounts/verify/{uid}/{token}/"
+        #verify_link = f"{request.scheme}://{request.get_host()}/api/accounts/verify/{uid}/{token}/" ---for testing locally
         verify_link = f"{frontend_url}/verify-email/{uid}/{token}/"
-        send_verification_email(user, verify_link)
-        return Response({'message': 'Verification email sent'}, status=status.HTTP_200_OK)
-
+        threading.Thread(
+            target=send_verification_email, 
+            args=(user, verify_link)
+        ).start()
+        
+        return Response(
+            {'message': 'Verification email sent'}, 
+            status=status.HTTP_200_OK
+        )
 
 class VerifyEmailView(APIView):
     def get(self, request, uidb64, token):
