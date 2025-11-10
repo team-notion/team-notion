@@ -1,5 +1,5 @@
-import os
-import resend
+#import os
+#import resend
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
@@ -11,7 +11,7 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 token_generator = PasswordResetTokenGenerator()
 
-"""def send_verification_email(user, verify_link):
+def send_verification_email(user, verify_link):
     subject = "Verify Your Email – Notion Rides 🚘"
     html_content = render_to_string("emails/verify_email.html", {"user": user, "verify_link": verify_link})
     text_content = f"Hi {user.username}, click the link to verify your email: {verify_link}"
@@ -30,9 +30,11 @@ def send_password_reset_email(user, reset_link):
 
     msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [user.email])
     msg.attach_alternative(html_content, "text/html")
-    msg.send()"""
+    msg.send()
 
-#resend.api_key = os.getenv("RESEND_API_KEY") 
+
+#RESEND
+"""resend.api_key = os.getenv("RESEND_API_KEY") 
 
 def send_verification_email(user, verify_link):
     subject = "Verify Your Email – Notion Rides 🚘"
@@ -69,7 +71,7 @@ def send_password_reset_email(user, reset_link):
         })
         print(f"Password reset email sent")
     except Exception as e:
-        print(f"Failed to send password reset email")
+        print(f"Failed to send password reset email")"""
     
 
 
