@@ -62,7 +62,7 @@ class CarSerializer(serializers.ModelSerializer):
 
     
 
-class ReservationSerializer(serializers.ModelSerializer):
+class AuthReservationSerializer(serializers.ModelSerializer):
     customer_username = serializers.CharField(write_only=True, required=False)
 
     class Meta:
@@ -109,6 +109,37 @@ class ReservationSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError("Reservation dates must be within the car's available range.")
 
         # Check overlapping reservations
+        overlapping = Reservation.objects.filter(
+            car=car,
+            reserved_from__lt=reserved_to,
+            reserved_to__gt=reserved_from,
+            status__in=['pending', 'confirmed']
+        ).exists()
+
+        if overlapping:
+            raise serializers.ValidationError("This car is already reserved for the selected dates.")
+
+        return attrs
+
+
+class GuestReservationSerializer(serializers.ModelSerializer):
+    guest_email = serializers.EmailField(write_only=True)
+
+    class Meta:
+        model = Reservation
+        fields = ['id', 'car', 'guest_email', 'reserved_from', 'reserved_to']
+
+    def validate(self, attrs):
+        car = attrs.get('car')
+        reserved_from = attrs.get('reserved_from')
+        reserved_to = attrs.get('reserved_to')
+
+        if reserved_from >= reserved_to:
+            raise serializers.ValidationError("Reservation end date must be after start date.")
+
+        if not car.is_available:
+            raise serializers.ValidationError("This car is currently not available.")
+
         overlapping = Reservation.objects.filter(
             car=car,
             reserved_from__lt=reserved_to,

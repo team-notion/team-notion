@@ -1,4 +1,4 @@
-import threading
+from threading import Thread
 import os
 from dotenv import load_dotenv
 from rest_framework import generics, status, permissions
@@ -30,7 +30,7 @@ class CustomerRegisterView(generics.CreateAPIView):
         verify_link = f"{frontend_url}/verify-email/{uid}/{token}/"
 
         # Run email sending in a background thread
-        threading.Thread(target=send_verification_email, args=(user, verify_link)).start()
+        Thread(target=send_verification_email, args=(user, verify_link)).start()
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
@@ -61,7 +61,7 @@ class SendVerificationEmailView(APIView):
         uid, token = generate_token(user)
         #verify_link = f"{request.scheme}://{request.get_host()}/api/accounts/verify/{uid}/{token}/" ---for testing locally
         verify_link = f"{frontend_url}/verify-email/{uid}/{token}/"
-        threading.Thread(
+        Thread(
             target=send_verification_email, 
             args=(user, verify_link)
         ).start()
@@ -72,6 +72,9 @@ class SendVerificationEmailView(APIView):
         )
 
 class VerifyEmailView(APIView):
+    authentication_classes = [AllowInactiveJWTAuthentication]
+
+
     def get(self, request, uidb64, token):
         user = verify_token(uidb64, token)
 
@@ -129,7 +132,10 @@ class RequestPasswordResetView(APIView):
         uid, token = generate_token(user)
         #reset_link = f"{request.scheme}://{request.get_host()}/api/accounts/reset/{uid}/{token}/"
         reset_link = f"{frontend_url}/reset-password/{uid}/{token}/"
-        send_password_reset_email(user, reset_link)
+        Thread(
+            target=send_password_reset_email, 
+            args=(user, reset_link)
+        ).start()
         return Response({'message': 'Password reset email sent'}, status=status.HTTP_200_OK)
 
 class PasswordResetConfirmView(APIView):

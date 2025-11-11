@@ -3,9 +3,12 @@ from rest_framework import generics, permissions, status, serializers
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from django.contrib.auth import get_user_model
-from .models import Car, Reservation
-from .serializers import CarSerializer, ReservationSerializer
+from threading import Thread
 from notifications.utils import create_notification
+from .models import Car, Reservation
+from .serializers import CarSerializer, AuthReservationSerializer, GuestReservationSerializer
+from .utils import send_guest_reservation_email
+
 
 
 
@@ -100,7 +103,7 @@ class CarUpdateView(generics.RetrieveUpdateDestroyAPIView):
 
 
 class ReserveCarView(generics.CreateAPIView):
-    serializer_class = ReservationSerializer
+    serializer_class = AuthReservationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
@@ -157,21 +160,18 @@ class CancelReservationView(generics.UpdateAPIView):
         reservation = self.get_object()
         user = request.user
 
-        # ✅ Ensure only the customer or car owner can cancel
         if user != reservation.customer and user != reservation.car.owner:
             return Response(
                 {"detail": "You are not allowed to cancel this reservation."},
                 status=status.HTTP_403_FORBIDDEN
             )
 
-        # ✅ Prevent cancelling already cancelled ones
         if reservation.status == "cancelled":
             return Response(
                 {"detail": "This reservation has already been cancelled."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # ✅ Cancel and update car
         reservation.status = "cancelled"
         reservation.save()
 
@@ -194,7 +194,7 @@ class CancelReservationView(generics.UpdateAPIView):
 
 
 class ReservationsView(generics.ListAPIView):
-    serializer_class = ReservationSerializer
+    serializer_class = AuthReservationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -205,3 +205,33 @@ class ReservationsView(generics.ListAPIView):
     
 
 
+class GuestReserveCarView(generics.CreateAPIView):
+    serializer_class = GuestReservationSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def perform_create(self, serializer):
+        guest_email = self.request.data.get('guest_email')
+        car_id = self.request.data.get('car')
+
+        try:
+            car = Car.objects.get(id=car_id)
+        except Car.DoesNotExist:
+            raise serializers.ValidationError({"detail": "Car not found."})
+
+        reservation = serializer.save(car=car)
+        car.is_available = False
+        car.save()
+
+        create_notification(
+            users=[car.owner],
+            message=f"Guest reservation confirmed for {car}. (Guest: {guest_email})",
+            status='success'
+        )
+
+        Thread(
+            target=send_guest_reservation_email, 
+            args=(guest_email, car, reservation.reserved_from, reservation.reserved_to)
+        ).start()
+
+        
+        return reservation
