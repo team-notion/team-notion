@@ -67,8 +67,8 @@ class AuthReservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reservation
-        fields = ['id', 'car', 'customer', 'customer_username', 'reserved_from', 'reserved_to']
-        read_only_fields = ['customer']
+        fields = ['id', 'car', 'reservation_code', 'customer', 'customer_username', 'reserved_from', 'reserved_to']
+        read_only_fields = ['customer', 'reservation_code']
 
     def create(self, validated_data):
         

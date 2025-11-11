@@ -230,7 +230,7 @@ class GuestReserveCarView(generics.CreateAPIView):
 
         Thread(
             target=send_guest_reservation_email, 
-            args=(guest_email, car, reservation.reserved_from, reservation.reserved_to)
+            args=(guest_email, car, reservation.reserved_from, reservation.reserved_to, reservation.reservation_code)
         ).start()
 
         

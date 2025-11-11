@@ -34,19 +34,25 @@
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>Reservation Confirmed!</h2>
-    <p>Hello,</p>
-    <p>Your reservation for <strong>{{ car }}</strong> has been successfully confirmed.</p>
+    <div class="container">
+        <h1>Reservation Confirmed!</h1>
+        <p>Thank you for choosing our service. Your reservation details are below:</p>
 
-    <div class="details">
-      <p><strong>Car:</strong> {{ car }}</p>
-      <p><strong>From:</strong> {{ reserved_from }}</p>
-      <p><strong>To:</strong> {{ reserved_to }}</p>
+        <div class="details">
+            <p><strong>Car:</strong> {{ car }}</p>
+            <p><strong>Reserved From:</strong> {{ reserved_from }}</p>
+            <p><strong>Reserved To:</strong> {{ reserved_to }}</p>
+        </div>
+
+        <div class="reservation-code">
+            <strong>Reservation Code:</strong>Reservation Code: {{ reservation_code }}
+        </div>
+
+        <p>Please keep this code safe, it will be required for payment.</p>
+
+        <div class="footer">
+            &copy; {{ now|date:"Y" }} Notion Rides. All rights reserved.
+        </div>
     </div>
-
-    <p>Thank you for choosing our service 🚗💨</p>
-
-  </div>
 </body>
 </html>

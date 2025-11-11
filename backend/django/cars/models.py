@@ -1,3 +1,5 @@
+import string
+import random
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -62,6 +64,11 @@ class Reservation(models.Model):
         null=True, blank=True,
         related_name='reservations'
     )
+    reservation_code = models.CharField(
+        max_length=6,
+        unique=True,
+        editable=False
+    )
     guest_email = models.EmailField(null=True, blank=True)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     reserved_from = models.DateTimeField()
@@ -70,10 +77,22 @@ class Reservation(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        if not self.reservation_code:
+            self.reservation_code = self.generate_unique_code()
+        super().save(*args, **kwargs)
+
+    def generate_unique_code(self):
+        chars = string.ascii_uppercase + string.digits
+        while True:
+            code = ''.join(random.choices(chars, k=6))
+            if not Reservation.objects.filter(reservation_code=code).exists():
+                return code
+
     def __str__(self):
         if self.customer:
-            return f"{self.customer.email} reserved {self.car.car_type}"
-        return f"Guest ({self.guest_email}) reserved {self.car.car_type}"
+            return f"{self.customer.email} reserved {self.car.car_type} [{self.reservation_code}]"
+        return f"Guest ({self.guest_email}) reserved {self.car.car_type} [{self.reservation_code}]"
 
     class Meta:
         ordering = ['-reserved_from']

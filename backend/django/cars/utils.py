@@ -3,13 +3,14 @@ from django.template.loader import render_to_string
 from django.conf import settings
 
 
-def send_guest_reservation_email(guest_email, car, reserved_from, reserved_to):
+def send_guest_reservation_email(guest_email, car, reserved_from, reserved_to, reservation_code):
     subject = f"Reservation Confirmed for {car}"
 
     html_message = render_to_string("notify_guest.html", {
         "car": car,
         "reserved_from": reserved_from,
         "reserved_to": reserved_to,
+        "reservation_code": reservation_code, 
     })
 
     # Plain text fallback
@@ -17,7 +18,9 @@ def send_guest_reservation_email(guest_email, car, reserved_from, reserved_to):
         f"Your reservation for {car} has been confirmed.\n\n"
         f"From: {reserved_from}\n"
         f"To: {reserved_to}\n\n"
-        f"Thank you for choosing our service."
+        f"Reservation Code: {reservation_code}\n\n"  # include reservation code
+        "Please keep this code safe, it will be required for payment.\n\n"
+        "Thank you for choosing our service."
     )
 
     msg = EmailMultiAlternatives(
