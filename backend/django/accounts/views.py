@@ -11,6 +11,7 @@ from .utils import send_verification_email, generate_token, verify_token, send_p
 from .permissions import IsActiveUser
 from .authentication import AllowInactiveJWTAuthentication
 
+load_dotenv()
 
 User = get_user_model()
 

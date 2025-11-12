@@ -67,8 +67,8 @@ class AuthReservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reservation
-        fields = ['id', 'car', 'reservation_code', 'customer', 'customer_username', 'reserved_from', 'reserved_to']
-        read_only_fields = ['customer', 'reservation_code']
+        fields = ['id', 'car', 'reservation_code', 'customer', 'customer_username', 'reserved_from', 'reserved_to', 'is_paid']
+        read_only_fields = ['customer', 'reservation_code', 'is_paid']
 
     def create(self, validated_data):
         
@@ -127,7 +127,8 @@ class GuestReservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reservation
-        fields = ['id', 'car', 'guest_email', 'reserved_from', 'reserved_to']
+        fields = ['id', 'car', 'guest_email', 'reserved_from', 'reserved_to', 'is_paid']
+        read_only_fields = ['is_paid']
 
     def validate(self, attrs):
         car = attrs.get('car')

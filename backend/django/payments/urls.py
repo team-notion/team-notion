@@ -1,8 +1,9 @@
 # urls.py
 from django.urls import path
-from . import views
+from .views import start_payment, verify_payment, paystack_callback
 
 urlpatterns = [
-    path('start/', views.start_payment, name='start_payment'),
-    path('verify/', views.verify_payment, name='verify_payment'),
+    path('start/', start_payment, name='start_payment'),
+    path('verify/', verify_payment, name='verify_payment'),
+    path('paystack/callback/', paystack_callback, name='paystack_callback'),
 ]
