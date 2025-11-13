@@ -25,6 +25,7 @@ class Payment(models.Model):
         default="initialized"
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    authorization_url = models.URLField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.user} - {self.reference}"

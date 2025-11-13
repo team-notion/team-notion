@@ -1,4 +1,4 @@
-import requests
+import requests, json
 from threading import Thread
 from django.conf import settings
 from django.urls import reverse
@@ -18,7 +18,9 @@ def async_initialize_payment(payment):
         if data.get("status") and data.get("data") and "reference" in data["data"]:
             payment.reference = data["data"]["reference"]
             payment.status = "pending"
+            payment.authorization_url = data["data"].get("authorization_url")  
             payment.save()
+            print("payment successfully initialized")
         else:
             payment.status = "failed"
             payment.save()
@@ -30,26 +32,27 @@ def async_initialize_payment(payment):
 
 @api_view(['POST'])
 def start_payment(request):
-    email = request.data.get('email')
-    amount = request.data.get('amount')
     reservation_code = request.data.get("reservation_code")
+    amount = request.data.get("amount")
 
-    if not email or not amount or not reservation_code:
-        return Response({'error': 'Email, reservation code, and amount required'}, status=400)
+    if not reservation_code or not amount:
+        return Response({'error': 'Reservation code and amount are required'}, status=400)
     
     try:
-        reservation = Reservation.objects.get(code=reservation_code)
+        reservation = Reservation.objects.get(reservation_code=reservation_code)
     except Reservation.DoesNotExist:
-        return Response(
-            {"error": "Invalid reservation code."},
-            status=400
-        )
-    
+        return Response({"error": "Invalid reservation code."}, status=400)
+
     if reservation.is_paid:
-            return Response(
-                {"error": "This reservation has already been paid."},
-                status=400
-            )
+        return Response({"error": "This reservation has already been paid."}, status=400)
+    
+    # Determine email
+    if reservation.guest_email:
+        email = reservation.guest_email
+    elif hasattr(reservation, 'customer') and reservation.customer.email:
+        email = reservation.customer.email
+    else:
+        return Response({"error": "No email available for this reservation."}, status=400)
     
 
     payment = Payment.objects.create(
@@ -63,6 +66,7 @@ def start_payment(request):
 
     return Response({
         'message': 'Payment initialization in progress',
+        "redirect_url": f"/api/payments/{payment.id}/",
         'payment_id': payment.id
     }, status=201)
 
@@ -83,25 +87,29 @@ def verify_payment(request):
             payment.reservation.is_paid = True
             payment.reservation.save()  
             payment.save()
+            return Response({"message": "Payment verified successfully", "data": result["data"]})
         except Payment.DoesNotExist:
             return Response({"error": "Payment record not found"}, status=404)
+    else:
+        return Response({"error": "Payment verification failed", "data": result}, status=400)
 
 
-#for testing callback handling locally
+
 @api_view(['GET'])
-def paystack_callback(request):
-    """
-    Temporary callback endpoint to simulate frontend action.
-    It calls /verify_payment internally and returns the result.
-    """
-    reference = request.GET.get('reference') or request.GET.get('trxref')
-    if not reference:
-        return Response({'error': 'No reference provided'}, status=400)
+def payment_redirect(request, payment_id):
+    try:
+        payment = Payment.objects.get(id=payment_id)
+    except Payment.DoesNotExist:
+        return Response({"error": "Payment not found"}, status=404)
 
-    # Use Django test Client to call verify_payment internally
-    client = Client()
-    verify_url = reverse('verify_payment')  # make sure your verify_payment view has name='verify_payment'
-    response = client.get(verify_url, {'reference': reference})
+    if payment.status == "failed":
+        return Response({"error": "Payment initialization failed"}, status=400)
 
-    # Return the response as-is
-    return Response(response.json(), status=response.status_code)
+    if not payment.authorization_url:
+        return Response({"message": "Payment still initializing, try again shortly."}, status=202)
+
+    return Response({
+        "authorization_url": payment.authorization_url,
+        "status": payment.status,
+        "payment_id": payment.id
+    })

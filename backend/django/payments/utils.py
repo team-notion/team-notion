@@ -1,11 +1,12 @@
 import requests
 import os
-from dotenv import load_dotenv
 from django.conf import settings
+from dotenv import load_dotenv
 
 load_dotenv()
 
-callback_url = os.getenv("CALLBACK_URL", "http:localhost:8000/api/payments/paystack/callback/")
+
+callback_url = os.getenv("CALLBACK_URL", "http://localhost:8000/api/payments/verify/")
 
 def initialize_payment(email, amount):
     """

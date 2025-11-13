@@ -127,8 +127,8 @@ class GuestReservationSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Reservation
-        fields = ['id', 'car', 'guest_email', 'reserved_from', 'reserved_to', 'is_paid']
-        read_only_fields = ['is_paid']
+        fields = ['id', 'car', 'guest_email', 'reservation_code', 'reserved_from', 'reserved_to', 'is_paid']
+        read_only_fields = ['is_paid', 'reservation_code']
 
     def validate(self, attrs):
         car = attrs.get('car')
