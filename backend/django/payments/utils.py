@@ -10,7 +10,7 @@ callback_url = os.getenv("CALLBACK_URL", "http://localhost:8000/api/payments/ver
 
 def initialize_payment(email, amount):
     """
-    Initialize payment with Paystack
+    Initialize payment with Paystackc
     amount is in Naira — Paystack expects amount in Kobo (multiply by 100)
     """
     url = 'https://api.paystack.co/transaction/initialize'

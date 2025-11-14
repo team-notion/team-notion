@@ -43,8 +43,8 @@ def start_payment(request):
     except Reservation.DoesNotExist:
         return Response({"error": "Invalid reservation code."}, status=400)
 
-    if reservation.is_paid:
-        return Response({"error": "This reservation has already been paid."}, status=400)
+    if reservation.deposit_paid:
+        return Response({"error": "Deposit has already been paid."}, status=400)
     
     # Determine email
     if reservation.guest_email:
@@ -84,7 +84,7 @@ def verify_payment(request):
             payment = Payment.objects.get(reference=reference)
             payment.verified = True
             payment.status = "success"
-            payment.reservation.is_paid = True
+            payment.reservation.deposit_paid = True
             payment.reservation.save()  
             payment.save()
             return Response({"message": "Payment verified successfully", "data": result["data"]})

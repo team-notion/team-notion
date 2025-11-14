@@ -16,7 +16,7 @@ User = get_user_model()
 class CarListView(generics.ListAPIView):
     authentication_classes = [] #comment this line to restrict unverified (is_active = False) users
     permission_classes = [permissions.AllowAny]
-    queryset = Car.objects.filter(is_available=True)
+    queryset = Car.objects.all()
     serializer_class = CarSerializer
     filter_backends = [OrderingFilter]
     ordering_fields = ['daily_rental_price', 'year_of_manufacture']
@@ -24,7 +24,8 @@ class CarListView(generics.ListAPIView):
 
 
     def get_queryset(self):
-        queryset = Car.objects.filter(is_available=True)
+
+        queryset = super().get_queryset()
 
         # Filters
         #availability
@@ -80,7 +81,7 @@ class CarCreateView(generics.CreateAPIView):
         serializer.save(owner=self.request.user)
 
 class CarDetailView(generics.RetrieveAPIView):
-    queryset = Car.objects.filter(is_available=True)
+    queryset = Car.objects.all()
     serializer_class = CarSerializer
     permission_classes = [permissions.AllowAny]
 
@@ -91,54 +92,43 @@ class CarUpdateView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if getattr(user, "is_owner", False):
+        if user.is_owner:
             return Car.objects.filter(owner=user)
         return Car.objects.none()
 
     def update(self, request, *args, **kwargs):
-        if not getattr(request.user, "is_owner", False):
+        user = self.request.user
+        if not user.is_owner:
             return Response({"detail": "Only owners can update cars."},
                             status=status.HTTP_403_FORBIDDEN)
         return super().update(request, *args, **kwargs)
 
-
+#Reservation for authenticated customers
 class ReserveCarView(generics.CreateAPIView):
     serializer_class = AuthReservationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
         user = self.request.user
-        car_id = self.request.data.get('car')
         customer_username = self.request.data.get('customer_username', None)
 
-        # Get the car object
-        try:
-            car = Car.objects.get(id=car_id)
-        except Car.DoesNotExist:
-            raise serializers.ValidationError({"detail": "Car not found."})
 
-        # If user is an owner
-        if user.is_owner:
-            if car.owner != user:
-                raise serializers.ValidationError({"detail": "You can only reserve your own cars for customers."})
-
-            if not customer_username:
-                raise serializers.ValidationError({"detail": "Please provide a customer username."})
-
+        if user.is_owner and customer_username:
             try:
                 customer = User.objects.get(username=customer_username)
+                if customer == user:
+                    raise serializers.ValidationError({"customer_username": "You cannot reserve your own car for yourself."})
             except User.DoesNotExist:
                 raise serializers.ValidationError({"detail": "No user found with that username."})
         else:
             customer = user
+            if user.is_owner:
+                raise serializers.ValidationError({"detail": "Owners cannot reserve their own cars."})
 
-        # Check availability
-        if not car.is_available:
-            raise serializers.ValidationError({"detail": "Car is not available for reservation."})
 
-        # Create the reservation
-        reservation = serializer.save(customer=customer, car=car)
-        car.is_available = False
+
+        reservation = serializer.save(customer=customer)
+        car=reservation.car
         car.save()
 
         create_notification(
@@ -153,7 +143,7 @@ class ReserveCarView(generics.CreateAPIView):
 
 
 class CancelReservationView(generics.UpdateAPIView):
-    queryset = Reservation.objects.all()  # ✅ Fix: define queryset
+    queryset = Reservation.objects.all()  
     permission_classes = [permissions.IsAuthenticated]
 
     def update(self, request, *args, **kwargs):
@@ -211,15 +201,15 @@ class GuestReserveCarView(generics.CreateAPIView):
 
     def perform_create(self, serializer):
         guest_email = self.request.data.get('guest_email')
-        car_id = self.request.data.get('car')
 
-        try:
-            car = Car.objects.get(id=car_id)
-        except Car.DoesNotExist:
-            raise serializers.ValidationError({"detail": "Car not found."})
+        if User.objects.filter(email__iexact=guest_email).exists():
+            raise serializers.ValidationError({
+                "detail": "This email is already registered. Please login to continue."
+            })
 
-        reservation = serializer.save(car=car)
-        car.is_available = False
+        reservation = serializer.save()
+
+        car = reservation.car 
         car.save()
 
         create_notification(

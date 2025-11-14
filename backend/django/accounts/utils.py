@@ -31,6 +31,7 @@ def send_password_reset_email(user, reset_link):
     msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [user.email])
     msg.attach_alternative(html_content, "text/html")
     msg.send()
+    print(f"password reset email sent")
 
 
 #RESEND

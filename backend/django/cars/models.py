@@ -3,7 +3,7 @@ import random
 from django.db import models
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from datetime import datetime
+from datetime import datetime, timezone
 
 def validate_year(value):
     current_year = datetime.now().year
@@ -16,13 +16,15 @@ class Car(models.Model):
     car_type = models.CharField(max_length=100)
     year_of_manufacture = models.PositiveIntegerField(validators=[validate_year], null=True)
     daily_rental_price = models.FloatField(default=0.00)
-    available_dates = models.JSONField(blank=True, null=True)  
     rental_terms = models.TextField(blank=True, null=True)
-    deposit = models.FloatField(default=0.00)
+    deposit = models.FloatField(default=0.00, editable=False)
     deposit_percentage = models.FloatField(default=0.00)
-    is_available = models.BooleanField(default=True)
-    license = models.TextField()
+    #available_dates = models.JSONField(blank=True, null=True)  
+    
+    
+    is_available = models.BooleanField(default=True) #substitute for availability
 
+    license = models.TextField()
 
     color = models.CharField(max_length=50, blank=True, null=True)
     location = models.CharField(max_length=150, blank=True, null=True)
@@ -74,14 +76,44 @@ class Reservation(models.Model):
     reserved_from = models.DateTimeField()
     reserved_to = models.DateTimeField()
 
+    # Payment + pricing fields
+    deposit_amount = models.FloatField(default=0.00)
+    total_price = models.FloatField(default=0.00)
+    amount_paid = models.FloatField(default=0.00)
+    balance_due = models.FloatField(default=0.00)
+
+    deposit_paid = models.BooleanField(default=False)
+    deposit_deadline = models.DateTimeField(null=True, blank=True) #add payment_deadline later
+    is_cancelled = models.BooleanField(default=False)
+
+    notes = models.TextField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    is_paid = models.BooleanField(default=False)
+    #is_paid = models.BooleanField(default=False)  ---set this up later for full payment tracking
 
     def save(self, *args, **kwargs):
         if not self.reservation_code:
             self.reservation_code = self.generate_unique_code()
         super().save(*args, **kwargs)
+
+        if not self.pk:
+            num_days = (self.reserved_to.date() - self.reserved_from.date()).days + 1
+
+            self.deposit_amount = (self.car.deposit_percentage / 100) * (
+                num_days * self.car.daily_rental_price
+            )
+            self.total_price = num_days * self.car.daily_rental_price
+            self.balance_due = self.total_price - self.deposit_amount
+
+            if self.car.duration_non_paid_in_hours:
+                self.deposit_deadline = timezone.now() + timezone.timedelta(
+                    hours=self.car.duration_non_paid_in_hours
+                )
+            super().save(update_fields=[
+                "total_price", "deposit_amount", "balance_due", "deposit_deadline"
+            ])
+
 
     def generate_unique_code(self):
         chars = string.ascii_uppercase + string.digits
@@ -89,6 +121,25 @@ class Reservation(models.Model):
             code = ''.join(random.choices(chars, k=6))
             if not Reservation.objects.filter(reservation_code=code).exists():
                 return code
+    
+    def mark_deposit_paid(self):
+        self.deposit_paid = True
+        self.status = 'confirmed'
+        self.save(update_fields=["deposit_paid", "status"])
+
+    def check_and_cancel_if_overdue(self):
+        if (
+            not self.deposit_paid and
+            self.deposit_deadline and 
+            timezone.now() > self.deposit_deadline
+        ):
+            self.status = 'cancelled'
+            self.is_cancelled = True
+            self.save(update_fields=["status", "is_cancelled"])
+            return True
+        return False
+
+
 
     def __str__(self):
         if self.customer:
