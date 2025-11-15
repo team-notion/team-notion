@@ -38,13 +38,18 @@ def start_payment(request):
     if not reservation_code or not amount:
         return Response({'error': 'Reservation code and amount are required'}, status=400)
     
+
+    
     try:
         reservation = Reservation.objects.get(reservation_code=reservation_code)
     except Reservation.DoesNotExist:
         return Response({"error": "Invalid reservation code."}, status=400)
 
-    if reservation.deposit_paid:
+    if reservation.has_paid_deposit:
         return Response({"error": "Deposit has already been paid."}, status=400)
+    
+    if amount != reservation.deposit_amount:
+        return Response({"error": f"Please enter valid deposit amount: {reservation.deposit_amount}"}, status=400)
     
     # Determine email
     if reservation.guest_email:
@@ -82,11 +87,20 @@ def verify_payment(request):
     if result.get("status") and result["data"]["status"] == "success":
         try:
             payment = Payment.objects.get(reference=reference)
+            reservation = payment.reservation
+
             payment.verified = True
             payment.status = "success"
-            payment.reservation.deposit_paid = True
-            payment.reservation.save()  
-            payment.save()
+
+            reservation.amount_paid += float(payment.amount)
+            #reservation.has_paid_deposit = True
+            reservation.mark_deposit_paid()
+            reservation.car.is_available = False
+
+            reservation.car.save(update_fields=["is_available"])
+            reservation.save(update_fields=["amount_paid", "has_paid_deposit"])  
+            payment.save(update_fields=["verified", "status"])
+
             return Response({"message": "Payment verified successfully", "data": result["data"]})
         except Payment.DoesNotExist:
             return Response({"error": "Payment record not found"}, status=404)

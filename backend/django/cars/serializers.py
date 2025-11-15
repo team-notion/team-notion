@@ -60,93 +60,6 @@ class CarSerializer(serializers.ModelSerializer):
         
         return car
 
-"""
-class BaseReservationValidator:
-    def validate_car_instance(self, car_id):
-        try:
-            car = Car.objects.get(id=car_id)
-        except Car.DoesNotExist:
-            raise serializers.ValidationError("Car not found.")
-
-        if not car.is_available:
-            raise serializers.ValidationError("This car is currently not available.")
-
-        return car
-    
-    def validate_dates(self, car, reserved_from, reserved_to):
-        if reserved_from >= reserved_to:
-            raise serializers.ValidationError("Reservation end date must be after start date.")
-    
-        if reserved_from.date() == reserved_to.date():
-            raise serializers.ValidationError("Reservation must be at least 1 day long.")
-
-        if reserved_from < timezone.now():
-            raise serializers.ValidationError("Start date cannot be in the past.")
-
-    def check_overlapping_reservations(self, car, reserved_from, reserved_to):
-        overlapping = Reservation.objects.filter(
-            car=car,
-            reserved_from__lt=reserved_to,
-            reserved_to__gt=reserved_from,
-            status__in=['pending', 'confirmed']
-        ).exists()
-
-        if overlapping:
-            raise serializers.ValidationError("This car is already reserved for the selected dates.")
-
-
-    
-
-class AuthReservationSerializer(serializers.ModelSerializer, BaseReservationValidator):
-    customer_username = serializers.CharField(write_only=True, required=False)
-
-    class Meta:
-        model = Reservation
-        fields = ['id', 'car', 'reservation_code', 'customer', 'customer_username', 'reserved_from', 'reserved_to', 'deposit_paid']
-        read_only_fields = ['customer', 'reservation_code', 'deposit_paid']
-
-    def create(self, validated_data):
-        
-        validated_data.pop('customer_username', None)
-        return super().create(validated_data)
-
-def validate(self, attrs):
-    car = attrs.get('car')
-    self.validate_car_instance(car) 
-
-    reserved_from = attrs.get('reserved_from')
-    reserved_to = attrs.get('reserved_to')
-
-    self.validate_dates(car, reserved_from, reserved_to)
-    self.check_overlapping_reservations(car, reserved_from, reserved_to)
-
-    return attrs
-        
-        
-
-
-class GuestReservationSerializer(serializers.ModelSerializer, BaseReservationValidator):
-    guest_email = serializers.EmailField(write_only=True, required=True)
-
-    class Meta:
-        model = Reservation
-        fields = ['id', 'car', 'guest_email', 'reservation_code', 'reserved_from', 'reserved_to', 'deposit_paid']
-        read_only_fields = ['deposit_paid', 'reservation_code']
-
-    def validate(self, attrs):
-        car = attrs.get('car')  
-        self.validate_car_instance(car)
-
-        reserved_from = attrs.get('reserved_from')
-        reserved_to = attrs.get('reserved_to')
-
-        self.validate_dates(car, reserved_from, reserved_to)
-        self.check_overlapping_reservations(car, reserved_from, reserved_to)
-
-        return attrs
-"""
-
-
 class BaseReservationValidator:
     # Updated to accept car instance directly (instead of car_id)
     def validate_car_instance(self, car):
@@ -192,8 +105,8 @@ class AuthReservationSerializer(serializers.ModelSerializer, BaseReservationVali
 
     class Meta:
         model = Reservation
-        fields = ['id', 'car', 'reservation_code', 'customer', 'customer_username', 'reserved_from', 'reserved_to', 'deposit_paid']
-        read_only_fields = ['customer', 'reservation_code', 'deposit_paid']
+        fields = ['id', 'car', 'reservation_code', 'customer', 'customer_username', 'reserved_from', 'reserved_to', 'has_paid_deposit']
+        read_only_fields = ['customer', 'reservation_code', 'has_paid_deposit']
 
     def create(self, validated_data):
         validated_data.pop('customer_username', None)  # Remove extra field before creation
@@ -217,8 +130,8 @@ class GuestReservationSerializer(serializers.ModelSerializer, BaseReservationVal
 
     class Meta:
         model = Reservation
-        fields = ['id', 'car', 'guest_email', 'reservation_code', 'reserved_from', 'reserved_to', 'deposit_paid']
-        read_only_fields = ['deposit_paid', 'reservation_code']
+        fields = ['id', 'car', 'guest_email', 'reservation_code', 'reserved_from', 'reserved_to', 'deposit_amount', 'has_paid_deposit']
+        read_only_fields = ['has_paid_deposit', 'reservation_code']
 
     def validate(self, attrs):
         car = attrs.get('car')  # DRF already gives Car instance
