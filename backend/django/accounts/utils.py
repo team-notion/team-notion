@@ -7,11 +7,38 @@ from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth import get_user_model
+from core.utils import send_email
 
 User = get_user_model()
 token_generator = PasswordResetTokenGenerator()
 
 def send_verification_email(user, verify_link):
+    subject = "Verify Your Email – Notion Rides 🚘"
+    context = {"user": user, "verify_link": verify_link}
+
+    send_email(
+        to_email=user.email,
+        subject=subject,
+        template_name="emails/verify_email.html",
+        context=context,
+    )
+    print("Verification email sent ✔️")
+
+
+def send_password_reset_email(user, reset_link):
+    subject = "Password Reset – Notion Rides 🔐"
+    context = {"user": user, "reset_link": reset_link}
+
+    send_email(
+        to_email=user.email,
+        subject=subject,
+        template_name="emails/password_reset.html",
+        context=context,
+    )
+    print("Password reset email sent ✔️")
+
+
+"""def send_verification_email(user, verify_link):
     subject = "Verify Your Email – Notion Rides 🚘"
     html_content = render_to_string("emails/verify_email.html", {"user": user, "verify_link": verify_link})
     text_content = f"Hi {user.username}, click the link to verify your email: {verify_link}"
@@ -32,31 +59,8 @@ def send_password_reset_email(user, reset_link):
     msg.attach_alternative(html_content, "text/html")
     msg.send()
     print(f"password reset email sent")
+"""
 
-
-#RESEND
-"""# using SendGrid's Python Library
-# https://github.com/sendgrid/sendgrid-python
-import os
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
-
-message = Mail(
-    from_email='from_email@example.com',
-    to_emails='to@example.com',
-    subject='Sending with Twilio SendGrid is Fun',
-    html_content='<strong>and easy to do anywhere, even with Python</strong>')
-try:
-    sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
-    # sg.set_sendgrid_data_residency("eu")
-    # uncomment the above line if you are sending mail using a regional EU subuser
-    response = sg.send(message)
-    print(response.status_code)
-    print(response.body)
-    print(response.headers)
-except Exception as e:
-    print(e.message)"""
-    
 
 
 
