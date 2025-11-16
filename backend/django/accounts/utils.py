@@ -35,44 +35,27 @@ def send_password_reset_email(user, reset_link):
 
 
 #RESEND
-"""resend.api_key = os.getenv("RESEND_API_KEY") 
+"""# using SendGrid's Python Library
+# https://github.com/sendgrid/sendgrid-python
+import os
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 
-def send_verification_email(user, verify_link):
-    subject = "Verify Your Email – Notion Rides 🚘"
-    html_content = render_to_string("emails/verify_email.html", {"user": user, "verify_link": verify_link})
-    text_content = f"Hi {user.username}, click the link to verify your email: {verify_link}"
-
-    try:
-        resend.Emails.send({
-            "from": settings.DEFAULT_FROM_EMAIL,  
-            "to": user.email,
-            "subject": subject,
-            "html": html_content,
-            "text": text_content,
-        })
-        print(f"Verification email sent")
-    except Exception as e:
-        import traceback
-        print("⚠️ Failed to send verification email:")
-        traceback.print_exc()
-        
-
-def send_password_reset_email(user, reset_link):
-    subject = "Password Reset Request – Notion Rides 🔐"
-    html_content = render_to_string("emails/password_reset.html", {"user": user, "reset_link": reset_link})
-    text_content = f"Hi {user.username}, click the link to reset your password: {reset_link}"
-
-    try:
-        resend.Emails.send({
-            "from": settings.DEFAULT_FROM_EMAIL,
-            "to": user.email,
-            "subject": subject,
-            "html": html_content,
-            "text": text_content,
-        })
-        print(f"Password reset email sent")
-    except Exception as e:
-        print(f"Failed to send password reset email")"""
+message = Mail(
+    from_email='from_email@example.com',
+    to_emails='to@example.com',
+    subject='Sending with Twilio SendGrid is Fun',
+    html_content='<strong>and easy to do anywhere, even with Python</strong>')
+try:
+    sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
+    # sg.set_sendgrid_data_residency("eu")
+    # uncomment the above line if you are sending mail using a regional EU subuser
+    response = sg.send(message)
+    print(response.status_code)
+    print(response.body)
+    print(response.headers)
+except Exception as e:
+    print(e.message)"""
     
 
 

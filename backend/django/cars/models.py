@@ -33,6 +33,18 @@ class Car(models.Model):
     duration_non_paid_in_hours = models.PositiveIntegerField(blank=True, null=True)
     features = models.JSONField(blank=True, null=True)
 
+    @property
+    def reserved_ranges(self):
+        reservations = self.reservations.filter(status__in=["pending", "confirmed"])
+
+        ranges = []
+        for r in reservations:
+            ranges.append({
+                "from": r.reserved_from.date(),
+                "to": r.reserved_to.date()
+            })
+        return ranges
+
     def __str__(self):
         return f"{self.car_type} ({self.owner.profile.username})"
 
@@ -142,6 +154,8 @@ class Reservation(models.Model):
             self.save(update_fields=["status", "is_cancelled"])
             return True
         return False
+    
+
 
 
 

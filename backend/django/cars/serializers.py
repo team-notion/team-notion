@@ -43,11 +43,15 @@ class CarPhotoSerializer(serializers.ModelSerializer):
 class CarSerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source="owner.username")
     photos = CarPhotoSerializer(many=True, required=True)
+    reserved_ranges = serializers.SerializerMethodField()
 
     class Meta:
         model = Car
         fields = "__all__"
         read_only_fields = ["owner"]
+
+    def get_reserved_ranges(self, obj):
+        return obj.reserved_ranges
 
     def create(self, validated_data):
         photos_data = validated_data.pop("photos", [])

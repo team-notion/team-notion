@@ -93,11 +93,9 @@ def verify_payment(request):
             payment.status = "success"
 
             reservation.amount_paid += float(payment.amount)
-            #reservation.has_paid_deposit = True
-            reservation.mark_deposit_paid()
-            reservation.car.is_available = False
 
-            reservation.car.save(update_fields=["is_available"])
+            reservation.mark_deposit_paid()
+
             reservation.save(update_fields=["amount_paid", "has_paid_deposit"])  
             payment.save(update_fields=["verified", "status"])
 
