@@ -22,7 +22,7 @@ def send_verification_email(user, verify_link):
         template_name="emails/verify_email.html",
         context=context,
     )
-    print("Verification email sent ✔️")
+    print("Verification email sent")
 
 
 def send_password_reset_email(user, reset_link):
@@ -35,7 +35,7 @@ def send_password_reset_email(user, reset_link):
         template_name="emails/password_reset.html",
         context=context,
     )
-    print("Password reset email sent ✔️")
+    print("Password reset email sent")
 
 
 """def send_verification_email(user, verify_link):

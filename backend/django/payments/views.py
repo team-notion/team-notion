@@ -44,12 +44,21 @@ def start_payment(request):
         reservation = Reservation.objects.get(reservation_code=reservation_code)
     except Reservation.DoesNotExist:
         return Response({"error": "Invalid reservation code."}, status=400)
-
-    if reservation.has_paid_deposit:
-        return Response({"error": "Deposit has already been paid."}, status=400)
     
-    if amount != reservation.deposit_amount:
-        return Response({"error": f"Please enter valid deposit amount: {reservation.deposit_amount}"}, status=400)
+    if not reservation.has_paid_deposit:
+        if amount != reservation.deposit_amount:
+                return Response({"error": f"Please enter valid deposit amount: {reservation.deposit_amount}"}, status=400)
+
+    else:
+        if not reservation.balance_due - amount < 0:
+            if amount != reservation.new_daily_rental_price:
+                return Response({"error": f"Please enter valid new daily rental price: {reservation.new_daily_rental_price}"}, status=400)
+        else:
+            return Response({"error": "No balance due, user has completed payment."})
+
+
+    
+    
     
     # Determine email
     if reservation.guest_email:
@@ -92,11 +101,17 @@ def verify_payment(request):
             payment.verified = True
             payment.status = "success"
 
-            reservation.amount_paid += float(payment.amount)
+            reservation.amount_paid += payment.amount
+            reservation.balance_due -= payment.amount
 
-            reservation.mark_deposit_paid()
+            if not reservation.has_paid_deposit:
+                reservation.mark_deposit_paid()
+                reservation.update_daily_price_after_deposit()   
 
-            reservation.save(update_fields=["amount_paid", "has_paid_deposit"])  
+            if reservation.balance_due == 0:
+                reservation.status = "completed"
+
+            reservation.save(update_fields=["amount_paid", "has_paid_deposit", "balance_due", "new_daily_rental_price", "status"])  
             payment.save(update_fields=["verified", "status"])
 
             return Response({"message": "Payment verified successfully", "data": result["data"]})

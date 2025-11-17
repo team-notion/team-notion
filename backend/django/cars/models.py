@@ -5,6 +5,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import datetime
+from decimal import Decimal
+
 
 def validate_year(value):
     current_year = datetime.now().year
@@ -90,10 +92,12 @@ class Reservation(models.Model):
 
     # Payment + pricing fields
 
-    deposit_amount = models.FloatField(default=0.00)
-    total_price = models.FloatField(default=0.00)
-    amount_paid = models.FloatField(default=0.00)
-    balance_due = models.FloatField(default=0.00)
+    deposit_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    balance_due = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    new_daily_rental_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
 
     has_paid_deposit = models.BooleanField(default=False)
     deposit_deadline = models.DateTimeField(null=True, blank=True) #add payment_deadline later
@@ -114,15 +118,15 @@ class Reservation(models.Model):
                 self.reservation_code = self.generate_unique_code()
             
 
-            num_days = (self.reserved_to.date() - self.reserved_from.date()).days + 1
+            num_days = Decimal((self.reserved_to.date() - self.reserved_from.date()).days + 1)
+            daily_price = Decimal(self.car.daily_rental_price)
+            deposit_pct = Decimal(self.car.deposit_percentage) / Decimal("100")           
 
-            self.deposit_amount = (self.car.deposit_percentage / 100) * (
-                num_days * self.car.daily_rental_price
-            )
 
-            print(f"Deposit amount: {self.deposit_amount}")
-            self.total_price = num_days * self.car.daily_rental_price
-            self.balance_due = self.total_price - self.deposit_amount
+            self.total_price = num_days * daily_price
+            self.deposit_amount = self.total_price * deposit_pct
+            self.balance_due = self.total_price
+            self.new_daily_rental_price = self.balance_due / num_days
 
             if self.car.duration_non_paid_in_hours:
                 self.deposit_deadline = timezone.now() + timezone.timedelta(
@@ -141,7 +145,13 @@ class Reservation(models.Model):
     def mark_deposit_paid(self):
         self.has_paid_deposit = True
         self.status = 'confirmed'
-        self.save(update_fields=["has_paid_deposit", "status"])
+
+    def update_daily_price_after_deposit(self):
+        num_days = Decimal((self.reserved_to.date() - self.reserved_from.date()).days + 1)
+        self.new_daily_rental_price = self.balance_due / num_days
+
+
+
 
     def check_and_cancel_if_overdue(self):
         if (
