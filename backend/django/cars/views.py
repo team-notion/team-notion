@@ -1,13 +1,15 @@
+import uuid
 from rest_framework import generics, permissions, status, serializers    
 #from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 from threading import Thread
 from notifications.utils import create_notification
 from .models import Car, Reservation
 from .serializers import CarSerializer, AuthReservationSerializer, GuestReservationSerializer
-from .utils import send_guest_reservation_email
+from .utils import send_guest_reservation_email, send_cancel_confirmation_email
 
 
 
@@ -142,44 +144,87 @@ class ReserveCarView(generics.CreateAPIView):
 
 
 
-class CancelReservationView(generics.UpdateAPIView):
-    queryset = Reservation.objects.all()  
-    permission_classes = [permissions.IsAuthenticated]
+class RequestCancelReservationView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
 
-    def update(self, request, *args, **kwargs):
-        reservation = self.get_object()
-        user = request.user
+    def post(self, request):
+        reservation_code = request.data.get("reservation_code")
 
-        if user != reservation.customer and user != reservation.car.owner:
-            return Response(
-                {"detail": "You are not allowed to cancel this reservation."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        if not reservation_code:
+            return Response({"detail": "Reservation code is required"}, status=400)
 
-        if reservation.status == "cancelled":
-            return Response(
-                {"detail": "This reservation has already been cancelled."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        try:
+            reservation = Reservation.objects.get(reservation_code=reservation_code)
+        except Reservation.DoesNotExist:
+            return Response({"detail": "Invalid reservation code"}, status=404)
 
-        reservation.status = "cancelled"
-        reservation.save()
+        if reservation.is_cancelled:
+            return Response({"detail": "Reservation is already cancelled."}, status=400)
+        
+        if reservation.status == "completed":
+            return Response({"detail": "Reservation is already completed."}, status=400)
 
-        car = reservation.car
-        car.is_available = True
-        car.save()
+        # Generate token
+        token = uuid.uuid4().hex
+        reservation.cancel_token = token
+        reservation.save(update_fields=["cancel_token"])
 
-        create_notification(
-            users=[user, car.owner],
-            message=f"Reservation cancelled for {car}.",
-            status='success'
+        # Build confirmation link
+        confirm_url = request.build_absolute_uri(
+            reverse("confirm-cancel-reservation") + f"?token={token}"
         )
+
+
+        if request.user.is_authenticated:
+            email = request.user.email
+        else:
+            email = reservation.guest_email
+
+        Thread(
+            target=send_cancel_confirmation_email, 
+            args=(reservation, confirm_url, email)
+        ).start()
+ 
+
+        masked_email = self.mask_email(email)
+
+        return Response(
+            {"message": f"Confirmation email has been sent to {masked_email}"},
+            status=200
+        )
+
+    @staticmethod
+    def mask_email(email):
+        
+        name, domain = email.split("@")
+        return name[:3] + "***@" + domain
+
+class ConfirmCancelReservationView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        token = request.query_params.get("token")
+
+        if not token:
+            return Response({"detail": "Token is required"}, status=400)
+
+        try:
+            reservation = Reservation.objects.get(cancel_token=token)
+        except Reservation.DoesNotExist:
+            return Response({"detail": "Invalid or expired token"}, status=400)
+
+        # Cancel reservation
+        reservation.is_cancelled = True
+        reservation.status = "cancelled"
+        reservation.cancel_token = None
+
+
+        reservation.save(update_fields=["is_cancelled", "status", "cancel_token"])
 
         return Response(
             {"message": "Reservation cancelled successfully."},
-            status=status.HTTP_200_OK
+            status=200
         )
-
 
 
 

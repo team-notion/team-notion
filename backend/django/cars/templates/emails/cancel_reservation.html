@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h3>Reservation Cancellation Request</h3>
+    <p>
+      You requested to cancel your reservation for <strong>{{ reservation.car }}</strong>.
+    </p>
+
+    <p>
+      Click the link below to confirm the cancellation:
+      <br><br>
+      <a href="{{ confirm_url }}">Confirm Cancellation</a>
+    </p>
+
+    <p>If you did not make this request, please ignore this email.</p>
+    <div class="footer">
+            &copy; {{ now|date:"Y" }} Notion Rides. All rights reserved.
+    </div>
+  </body>
+</html>

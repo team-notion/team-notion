@@ -46,6 +46,8 @@ class Car(models.Model):
                 "to": r.reserved_to.date()
             })
         return ranges
+    
+
 
     def __str__(self):
         return f"{self.car_type} ({self.owner.profile.username})"
@@ -100,8 +102,9 @@ class Reservation(models.Model):
 
 
     has_paid_deposit = models.BooleanField(default=False)
-    deposit_deadline = models.DateTimeField(null=True, blank=True) #add payment_deadline later
+    deposit_deadline = models.DateTimeField(null=True, blank=True) 
     is_cancelled = models.BooleanField(default=False)
+    cancel_token = models.CharField(max_length=64, blank=True, null=True)
 
     notes = models.TextField(null=True, blank=True)
 
