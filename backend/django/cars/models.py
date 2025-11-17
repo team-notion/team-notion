@@ -154,6 +154,14 @@ class Reservation(models.Model):
         self.new_daily_rental_price = self.balance_due / num_days
 
 
+    def cancel_reservation(self):
+        self.is_cancelled = True
+        self.status = "cancelled"
+        self.cancel_token = None
+        self.save(update_fields=["is_cancelled", "status", "cancel_token"])
+
+
+
 
 
     def check_and_cancel_if_overdue(self):

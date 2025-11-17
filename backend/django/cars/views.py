@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from django.contrib.auth import get_user_model
 from django.urls import reverse
+from django.utils import timezone
 from threading import Thread
 from notifications.utils import create_notification
 from .models import Car, Reservation
@@ -164,6 +165,10 @@ class RequestCancelReservationView(generics.GenericAPIView):
         if reservation.status == "completed":
             return Response({"detail": "Reservation is already completed."}, status=400)
 
+        today = timezone.now().date()
+        if today >= reservation.reserved_from.date():
+            return Response({"detail": "You can no longer cancel this reservation because the start has already arrived"})
+
         # Generate token
         token = uuid.uuid4().hex
         reservation.cancel_token = token
@@ -213,13 +218,7 @@ class ConfirmCancelReservationView(generics.GenericAPIView):
         except Reservation.DoesNotExist:
             return Response({"detail": "Invalid or expired token"}, status=400)
 
-        # Cancel reservation
-        reservation.is_cancelled = True
-        reservation.status = "cancelled"
-        reservation.cancel_token = None
-
-
-        reservation.save(update_fields=["is_cancelled", "status", "cancel_token"])
+        reservation.cancel_reservation()
 
         return Response(
             {"message": "Reservation cancelled successfully."},
