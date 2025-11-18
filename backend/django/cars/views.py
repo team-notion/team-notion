@@ -266,6 +266,6 @@ class GuestReserveCarView(generics.CreateAPIView):
             target=send_guest_reservation_email, 
             args=(guest_email, car, reservation.reserved_from, reservation.reserved_to, reservation.reservation_code)
         ).start()
-
+        #use celery later
         
         return reservation
