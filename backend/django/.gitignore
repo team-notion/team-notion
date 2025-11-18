@@ -32,3 +32,8 @@ Thumbs.db
 pip-log.txt
 pip-delete-this-directory.txt
 poetry.lock  # Include if you manage dependencies with poetry and want to commit it
+
+
+#celery
+celerybeat-schedule*
+
