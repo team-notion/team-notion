@@ -14,7 +14,7 @@ from .models import Payment
 
 def async_initialize_payment(payment):
     try:
-        data = initialize_payment(payment.email, payment.amount)
+        data = initialize_payment(payment.email, payment.amount, payment.currency)
         if data.get("status") and data.get("data") and "reference" in data["data"]:
             payment.reference = data["data"]["reference"]
             payment.status = "pending"
@@ -73,6 +73,7 @@ def start_payment(request):
         email=email,
         amount=amount,
         reservation=reservation,
+        currency=reservation.car.currency,        
         status="initialized"
     )
 

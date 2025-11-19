@@ -19,6 +19,7 @@ class Car(models.Model):
     car_type = models.CharField(max_length=100)
     year_of_manufacture = models.PositiveIntegerField(validators=[validate_year], null=True)
     daily_rental_price = models.FloatField(default=0.00)
+    currency = models.CharField(max_length=3, default="NGN")
     rental_terms = models.TextField(blank=True, null=True)
     deposit_percentage = models.FloatField(default=0.00) #add fixed deposit optional column in future
     #available_dates = models.JSONField(blank=True, null=True)  

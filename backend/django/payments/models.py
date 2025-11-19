@@ -17,7 +17,8 @@ class Payment(models.Model):
     reservation = models.ForeignKey(Reservation, on_delete=models.CASCADE, related_name="payments")
     email = models.EmailField()
     amount = models.DecimalField(max_digits=10, decimal_places=2)
-    reference = models.CharField(max_length=100, unique=True)
+    currency = models.CharField(max_length=3, default="NGN")
+    reference = models.CharField(max_length=100, null=True, blank=True)
     verified = models.BooleanField(default=False)
     status = models.CharField(
         max_length=20,

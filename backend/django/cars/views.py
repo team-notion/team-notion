@@ -104,6 +104,8 @@ class CarUpdateView(generics.RetrieveUpdateDestroyAPIView):
         if not user.is_owner:
             return Response({"detail": "Only owners can update cars."},
                             status=status.HTTP_403_FORBIDDEN)
+        
+        kwargs['partial'] = True
         return super().update(request, *args, **kwargs)
 
 #Reservation for authenticated customers

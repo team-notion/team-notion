@@ -8,7 +8,7 @@ load_dotenv()
 
 callback_url = os.getenv("CALLBACK_URL", "http://localhost:8000/api/payments/verify/")
 
-def initialize_payment(email, amount):
+def initialize_payment(email, amount, currency):
     """
     Initialize payment with Paystackc
     amount is in Naira — Paystack expects amount in Kobo (multiply by 100)
@@ -22,6 +22,7 @@ def initialize_payment(email, amount):
 
     data = {
         'email': email,
+        'currency': currency,
         'amount': int(amount) * 100,  # Convert to Kobo
         'callback_url': callback_url,
     }
