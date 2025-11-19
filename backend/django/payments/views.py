@@ -6,29 +6,13 @@ from django.test import Client
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from cars.models import Reservation 
-from .utils import initialize_payment
+from .utils import async_initialize_payment
+from .tasks import async_initialize_payment_task
 from .models import Payment
 
 
 #PS: Use standard logging in production instead of print statements
 
-def async_initialize_payment(payment):
-    try:
-        data = initialize_payment(payment.email, payment.amount, payment.currency)
-        if data.get("status") and data.get("data") and "reference" in data["data"]:
-            payment.reference = data["data"]["reference"]
-            payment.status = "pending"
-            payment.authorization_url = data["data"].get("authorization_url")  
-            payment.save()
-            print("payment successfully initialized")
-        else:
-            payment.status = "failed"
-            payment.save()
-            print("Payment initialization failed:", data)
-    except Exception as e:
-        payment.status = "failed"
-        payment.save()
-        print(f"Payment initialization failed: {str(e)}")
 
 @api_view(['POST'])
 def start_payment(request):
@@ -77,8 +61,9 @@ def start_payment(request):
         status="initialized"
     )
 
-    Thread(target=async_initialize_payment, args=(payment,)).start()
-
+    #Thread(target=async_initialize_payment, args=(payment.id,)).start()
+    async_initialize_payment_task.delay(payment.id)
+    
     return Response({
         'message': 'Payment initialization in progress',
         "redirect_url": f"/api/payments/{payment.id}/",
