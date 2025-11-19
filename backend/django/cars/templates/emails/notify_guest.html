@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Reservation Confirmed</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9fafb;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      background-color: #ffffff;
+      padding: 25px;
+      border-radius: 10px;
+      max-width: 600px;
+      margin: 0 auto;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #1e3a8a;
+    }
+    .details {
+      margin-top: 20px;
+      line-height: 1.6;
+    }
+    .footer {
+      margin-top: 30px;
+      font-size: 13px;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Reservation Confirmed!</h1>
+        <p>Thank you for choosing our service. Your reservation details are below:</p>
+
+        <div class="details">
+            <p><strong>Car:</strong> {{ car }}</p>
+            <p><strong>Reserved From:</strong> {{ reserved_from }}</p>
+            <p><strong>Reserved To:</strong> {{ reserved_to }}</p>
+        </div>
+
+        <div class="reservation-code">
+            <strong>Reservation Code:</strong>Reservation Code: {{ reservation_code }}
+        </div>
+
+        <p>Please keep this code safe, it will be required for payment.</p>
+
+        <div class="footer">
+            &copy; {{ now|date:"Y" }} Notion Rides. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>

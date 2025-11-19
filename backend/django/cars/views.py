@@ -1,26 +1,35 @@
+import uuid
 from rest_framework import generics, permissions, status, serializers    
 #from rest_framework.exceptions import PermissionDenied, NotFound
 from rest_framework.response import Response
 from rest_framework.filters import OrderingFilter
 from django.contrib.auth import get_user_model
-from .models import Car, Reservation
-from .serializers import CarSerializer, ReservationSerializer
+from django.urls import reverse
+from django.utils import timezone
+from threading import Thread
 from notifications.utils import create_notification
+from .models import Car, Reservation
+from .serializers import CarSerializer, AuthReservationSerializer, GuestReservationSerializer
+from .utils import send_guest_reservation_email, send_cancel_confirmation_email
+from .tasks import send_cancel_confirmation_email_task, send_guest_reservation_email_task
+
 
 
 
 User = get_user_model()
 class CarListView(generics.ListAPIView):
-    queryset = Car.objects.filter(is_available=True)
-    serializer_class = CarSerializer
+    authentication_classes = [] #comment this line to restrict unverified (is_active = False) users
     permission_classes = [permissions.AllowAny]
+    queryset = Car.objects.all()
+    serializer_class = CarSerializer
     filter_backends = [OrderingFilter]
     ordering_fields = ['daily_rental_price', 'year_of_manufacture']
     ordering = ['daily_rental_price']
 
 
     def get_queryset(self):
-        queryset = Car.objects.filter(is_available=True)
+
+        queryset = super().get_queryset()
 
         # Filters
         #availability
@@ -76,7 +85,7 @@ class CarCreateView(generics.CreateAPIView):
         serializer.save(owner=self.request.user)
 
 class CarDetailView(generics.RetrieveAPIView):
-    queryset = Car.objects.filter(is_available=True)
+    queryset = Car.objects.all()
     serializer_class = CarSerializer
     permission_classes = [permissions.AllowAny]
 
@@ -87,54 +96,45 @@ class CarUpdateView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        if getattr(user, "is_owner", False):
+        if user.is_owner:
             return Car.objects.filter(owner=user)
         return Car.objects.none()
 
     def update(self, request, *args, **kwargs):
-        if not getattr(request.user, "is_owner", False):
+        user = self.request.user
+        if not user.is_owner:
             return Response({"detail": "Only owners can update cars."},
                             status=status.HTTP_403_FORBIDDEN)
+        
+        kwargs['partial'] = True
         return super().update(request, *args, **kwargs)
 
-
+#Reservation for authenticated customers
 class ReserveCarView(generics.CreateAPIView):
-    serializer_class = ReservationSerializer
+    serializer_class = AuthReservationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
         user = self.request.user
-        car_id = self.request.data.get('car')
         customer_username = self.request.data.get('customer_username', None)
 
-        # Get the car object
-        try:
-            car = Car.objects.get(id=car_id)
-        except Car.DoesNotExist:
-            raise serializers.ValidationError({"detail": "Car not found."})
 
-        # If user is an owner
-        if user.is_owner:
-            if car.owner != user:
-                raise serializers.ValidationError({"detail": "You can only reserve your own cars for customers."})
-
-            if not customer_username:
-                raise serializers.ValidationError({"detail": "Please provide a customer username."})
-
+        if user.is_owner and customer_username:
             try:
                 customer = User.objects.get(username=customer_username)
+                if customer == user:
+                    raise serializers.ValidationError({"customer_username": "You cannot reserve your own car for yourself."})
             except User.DoesNotExist:
                 raise serializers.ValidationError({"detail": "No user found with that username."})
         else:
             customer = user
+            if user.is_owner:
+                raise serializers.ValidationError({"detail": "Owners cannot reserve their own cars."})
 
-        # Check availability
-        if not car.is_available:
-            raise serializers.ValidationError({"detail": "Car is not available for reservation."})
 
-        # Create the reservation
-        reservation = serializer.save(customer=customer, car=car)
-        car.is_available = False
+
+        reservation = serializer.save(customer=customer)
+        car=reservation.car
         car.save()
 
         create_notification(
@@ -148,52 +148,94 @@ class ReserveCarView(generics.CreateAPIView):
 
 
 
-class CancelReservationView(generics.UpdateAPIView):
-    queryset = Reservation.objects.all()  # ✅ Fix: define queryset
-    permission_classes = [permissions.IsAuthenticated]
+class RequestCancelReservationView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
 
-    def update(self, request, *args, **kwargs):
-        reservation = self.get_object()
-        user = request.user
+    def post(self, request):
+        reservation_code = request.data.get("reservation_code")
 
-        # ✅ Ensure only the customer or car owner can cancel
-        if user != reservation.customer and user != reservation.car.owner:
-            return Response(
-                {"detail": "You are not allowed to cancel this reservation."},
-                status=status.HTTP_403_FORBIDDEN
-            )
+        if not reservation_code:
+            return Response({"detail": "Reservation code is required"}, status=400)
 
-        # ✅ Prevent cancelling already cancelled ones
-        if reservation.status == "cancelled":
-            return Response(
-                {"detail": "This reservation has already been cancelled."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+        try:
+            reservation = Reservation.objects.get(reservation_code=reservation_code)
+        except Reservation.DoesNotExist:
+            return Response({"detail": "Invalid reservation code"}, status=404)
 
-        # ✅ Cancel and update car
-        reservation.status = "cancelled"
-        reservation.save()
+        if reservation.is_cancelled:
+            return Response({"detail": "Reservation is already cancelled."}, status=400)
+        
+        if reservation.status == "completed":
+            return Response({"detail": "Reservation is already completed."}, status=400)
 
-        car = reservation.car
-        car.is_available = True
-        car.save()
+        today = timezone.now().date()
+        if today >= reservation.reserved_from.date():
+            return Response({"detail": "You can no longer cancel this reservation because the start has already arrived"})
 
-        create_notification(
-            users=[user, car.owner],
-            message=f"Reservation cancelled for {car}.",
-            status='success'
+        # Generate token
+        token = uuid.uuid4().hex
+        reservation.cancel_token = token
+        reservation.save(update_fields=["cancel_token"])
+
+        # Build confirmation link
+        confirm_url = request.build_absolute_uri(
+            reverse("confirm-cancel-reservation") + f"?token={token}"
         )
+
+
+        if request.user.is_authenticated:
+            email = request.user.email
+        else:
+            email = reservation.guest_email
+
+        Thread(
+            target=send_cancel_confirmation_email, 
+            args=(reservation, confirm_url, email)
+        ).start()
+        """send_cancel_confirmation_email_task.delay(
+            reservation.id,
+            confirm_url,
+            email,
+        )"""
+
+        masked_email = self.mask_email(email)
+
+        return Response(
+            {"message": f"Confirmation email has been sent to {masked_email}"},
+            status=200
+        )
+
+    @staticmethod
+    def mask_email(email):
+        
+        name, domain = email.split("@")
+        return name[:3] + "***@" + domain
+
+class ConfirmCancelReservationView(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+
+    def get(self, request):
+        token = request.query_params.get("token")
+
+        if not token:
+            return Response({"detail": "Token is required"}, status=400)
+
+        try:
+            reservation = Reservation.objects.get(cancel_token=token)
+        except Reservation.DoesNotExist:
+            return Response({"detail": "Invalid or expired token"}, status=400)
+
+        reservation.cancel_reservation()
 
         return Response(
             {"message": "Reservation cancelled successfully."},
-            status=status.HTTP_200_OK
+            status=200
         )
-
 
 
 
 class ReservationsView(generics.ListAPIView):
-    serializer_class = ReservationSerializer
+    serializer_class = AuthReservationSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -204,3 +246,40 @@ class ReservationsView(generics.ListAPIView):
     
 
 
+class GuestReserveCarView(generics.CreateAPIView):
+    serializer_class = GuestReservationSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def perform_create(self, serializer):
+        guest_email = self.request.data.get('guest_email')
+
+        if User.objects.filter(email__iexact=guest_email).exists():
+            raise serializers.ValidationError({
+                "detail": "This email is already registered. Please login to continue."
+            })
+
+        reservation = serializer.save()
+
+        car = reservation.car 
+        car.save()
+
+        create_notification(
+            users=[car.owner],
+            message=f"Guest reservation confirmed for {car}. (Guest: {guest_email})",
+            status='success'
+        )
+
+        Thread(
+            target=send_guest_reservation_email, 
+            args=(guest_email, car, reservation.reserved_from, reservation.reserved_to, reservation.reservation_code)
+        ).start()
+        """send_guest_reservation_email_task.delay(
+            guest_email,
+            car.id,
+            reservation.start_date.isoformat(),
+            reservation.end_date.isoformat(),
+            reservation.code,
+        )"""
+
+        
+        return reservation

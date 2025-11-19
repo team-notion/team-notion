@@ -1,4 +1,6 @@
-import threading
+from threading import Thread
+import os
+from dotenv import load_dotenv
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,10 +8,15 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from django.contrib.auth import get_user_model
 from .serializers import RegisterSerializer, CustomTokenObtainPairSerializer, ProfileSerializer 
 from .utils import send_verification_email, generate_token, verify_token, send_password_reset_email
+from .permissions import IsActiveUser
+from .authentication import AllowInactiveJWTAuthentication
+from .tasks import send_verification_email_task, send_password_reset_email_task
 
+load_dotenv()
 
 User = get_user_model()
 
+frontend_url = os.getenv("FRONTEND_URL", "https://team-notion.netlify.app")
 
 class CustomerRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -17,15 +24,16 @@ class CustomerRegisterView(generics.CreateAPIView):
     user_flags = {}
     def perform_create(self, serializer):
         flags = getattr(self, "user_flags", {}) or {}
-        user = serializer.save(is_active=True, **flags) #set is_active to False to require email verification
+        user = serializer.save(is_active=False, **flags) 
 
 
-        """uid, token = generate_token(user)   
+        uid, token = generate_token(user)   
 
-        verify_link = f"https://team-notion.netlify.app/verify-email/{uid}/{token}/"
+        verify_link = f"{frontend_url}/verify-email/{uid}/{token}/"
 
-        # Run email sending in a background thread
-        threading.Thread(target=send_verification_email, args=(user, verify_link)).start()"""
+
+        Thread(target=send_verification_email, args=(user, verify_link)).start()
+        #send_verification_email_task.delay(user.id, verify_link)
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
@@ -35,19 +43,40 @@ class CustomerRegisterView(generics.CreateAPIView):
         )
 
 class SendVerificationEmailView(APIView):
+    authentication_classes = [AllowInactiveJWTAuthentication]
+    permission_classes = [] 
+
     def post(self, request):
         user = request.user
+
         if not user.is_authenticated:
-            return Response({'error': 'Authentication required'}, status=status.HTTP_401_UNAUTHORIZED)
-
+            return Response(
+                {'error': 'Authentication required'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )
+        
+        if user.is_active:
+            return Response(
+                {'message': 'Email is already verified'}, 
+                status=status.HTTP_200_OK
+            )
+        
         uid, token = generate_token(user)
-        #verify_link = f"{request.scheme}://{request.get_host()}/api/accounts/verify/{uid}/{token}/"
-        verify_link = f"https://team-notion.netlify.app/verify-email/{uid}/{token}/"
-        send_verification_email(user, verify_link)
-        return Response({'message': 'Verification email sent'}, status=status.HTTP_200_OK)
+        #verify_link = f"{request.scheme}://{request.get_host()}/api/accounts/verify/{uid}/{token}/" ---for testing locally
+        verify_link = f"{frontend_url}/verify-email/{uid}/{token}/"
+        
+        Thread(target=send_verification_email, args=(user, verify_link)).start()
+        #send_verification_email_task.delay(user.id, verify_link)
 
+        return Response(
+            {'message': 'Verification email sent'}, 
+            status=status.HTTP_200_OK
+        )
 
 class VerifyEmailView(APIView):
+    authentication_classes = [AllowInactiveJWTAuthentication]
+
+
     def get(self, request, uidb64, token):
         user = verify_token(uidb64, token)
 
@@ -83,7 +112,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsActiveUser]
 
     def get_object(self):
         return self.request.user.profile
@@ -104,8 +133,11 @@ class RequestPasswordResetView(APIView):
 
         uid, token = generate_token(user)
         #reset_link = f"{request.scheme}://{request.get_host()}/api/accounts/reset/{uid}/{token}/"
-        reset_link = f"https://team-notion.netlify.app/reset-password/{uid}/{token}/"
-        send_password_reset_email(user, reset_link)
+        reset_link = f"{frontend_url}/reset-password/{uid}/{token}/"
+        
+        Thread(target=send_password_reset_email, args=(user, reset_link)).start()
+        #send_password_reset_email_task.delay(user.id, reset_link)
+
         return Response({'message': 'Password reset email sent'}, status=status.HTTP_200_OK)
 
 class PasswordResetConfirmView(APIView):

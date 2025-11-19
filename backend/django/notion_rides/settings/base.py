@@ -51,6 +51,8 @@ INSTALLED_APPS = [
     'accounts',
     'cars',
     'notifications',
+    'payments',
+    'core',
 ]
 
 MIDDLEWARE = [
@@ -130,6 +132,12 @@ AUTH_PASSWORD_VALIDATORS = [
 
 AUTH_USER_MODEL = "accounts.User"
 
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.AllowInactiveUserLoginBackend', 
+    'django.contrib.auth.backends.ModelBackend',       
+]
+
+
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
@@ -164,4 +172,25 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
 }
+
+#TIME LIMIT FOR LINK (10 min)
+PASSWORD_RESET_TIMEOUT = 600 
+
+#PAYMENT SETTINGS
+PAYSTACK_SECRET_KEY = os.getenv('PAYSTACK_SECRET_KEY')
+PAYSTACK_PUBLIC_KEY = os.getenv('PAYSTACK_PUBLIC_KEY')
+
+
+#CELERY
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', "redis://localhost:6379/0")
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESEND_URL', "redis://localhost:6379/0")
+
+CELERY_BEAT_SCHEDULE = {
+    "cancel-overdue-deposits-every-15-min": {
+        "task": "cars.tasks.cancel_overdue_deposits_task",
+        "schedule": 900,   # 900 seconds = 15 minutes
+    },
+}
+
+
 

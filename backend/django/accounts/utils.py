@@ -1,15 +1,42 @@
-import os
-import resend
-from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
-from django.conf import settings
+#import os
+#from django.core.mail import EmailMultiAlternatives
+#from django.template.loader import render_to_string
+#from django.conf import settings
+
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth import get_user_model
+from core.utils import send_email
 
 User = get_user_model()
 token_generator = PasswordResetTokenGenerator()
+
+def send_verification_email(user, verify_link):
+    subject = "Verify Your Email – Notion Rides 🚘"
+    context = {"user": user, "verify_link": verify_link}
+
+    send_email(
+        to_email=user.email,
+        subject=subject,
+        template_name="emails/verify_email.html",
+        context=context,
+    )
+    print("Verification email sent")
+
+
+def send_password_reset_email(user, reset_link):
+    subject = "Password Reset – Notion Rides 🔐"
+    context = {"user": user, "reset_link": reset_link}
+
+    send_email(
+        to_email=user.email,
+        subject=subject,
+        template_name="emails/password_reset.html",
+        context=context,
+    )
+    print("Password reset email sent")
+
 
 """def send_verification_email(user, verify_link):
     subject = "Verify Your Email – Notion Rides 🚘"
@@ -30,47 +57,10 @@ def send_password_reset_email(user, reset_link):
 
     msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [user.email])
     msg.attach_alternative(html_content, "text/html")
-    msg.send()"""
+    msg.send()
+    print(f"password reset email sent")
+"""
 
-#resend.api_key = os.getenv("RESEND_API_KEY") 
-
-def send_verification_email(user, verify_link):
-    subject = "Verify Your Email – Notion Rides 🚘"
-    html_content = render_to_string("emails/verify_email.html", {"user": user, "verify_link": verify_link})
-    text_content = f"Hi {user.username}, click the link to verify your email: {verify_link}"
-
-    try:
-        resend.Emails.send({
-            "from": settings.DEFAULT_FROM_EMAIL,  
-            "to": user.email,
-            "subject": subject,
-            "html": html_content,
-            "text": text_content,
-        })
-        print(f"Verification email sent")
-    except Exception as e:
-        import traceback
-        print("⚠️ Failed to send verification email:")
-        traceback.print_exc()
-        
-
-def send_password_reset_email(user, reset_link):
-    subject = "Password Reset Request – Notion Rides 🔐"
-    html_content = render_to_string("emails/password_reset.html", {"user": user, "reset_link": reset_link})
-    text_content = f"Hi {user.username}, click the link to reset your password: {reset_link}"
-
-    try:
-        resend.Emails.send({
-            "from": settings.DEFAULT_FROM_EMAIL,
-            "to": user.email,
-            "subject": subject,
-            "html": html_content,
-            "text": text_content,
-        })
-        print(f"Password reset email sent")
-    except Exception as e:
-        print(f"Failed to send password reset email")
-    
 
 
 
