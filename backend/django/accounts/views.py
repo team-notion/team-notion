@@ -31,9 +31,8 @@ class CustomerRegisterView(generics.CreateAPIView):
 
         verify_link = f"{frontend_url}/verify-email/{uid}/{token}/"
 
-        # Run email sending in a background thread
-        Thread(target=send_verification_email, args=(user, verify_link)).start()
 
+        Thread(target=send_verification_email, args=(user, verify_link)).start()
         #send_verification_email_task.delay(user.id, verify_link)
 
     def create(self, request, *args, **kwargs):

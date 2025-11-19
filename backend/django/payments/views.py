@@ -61,9 +61,9 @@ def start_payment(request):
         status="initialized"
     )
 
-    #Thread(target=async_initialize_payment, args=(payment.id,)).start()
-    async_initialize_payment_task.delay(payment.id)
-    
+    Thread(target=async_initialize_payment, args=(payment.id,)).start()
+    #async_initialize_payment_task.delay(payment.id)
+
     return Response({
         'message': 'Payment initialization in progress',
         "redirect_url": f"/api/payments/{payment.id}/",

@@ -11,6 +11,7 @@ from notifications.utils import create_notification
 from .models import Car, Reservation
 from .serializers import CarSerializer, AuthReservationSerializer, GuestReservationSerializer
 from .utils import send_guest_reservation_email, send_cancel_confirmation_email
+from .tasks import send_cancel_confirmation_email_task, send_guest_reservation_email_task
 
 
 
@@ -191,7 +192,11 @@ class RequestCancelReservationView(generics.GenericAPIView):
             target=send_cancel_confirmation_email, 
             args=(reservation, confirm_url, email)
         ).start()
- 
+        """send_cancel_confirmation_email_task.delay(
+            reservation.id,
+            confirm_url,
+            email,
+        )"""
 
         masked_email = self.mask_email(email)
 
@@ -268,6 +273,13 @@ class GuestReserveCarView(generics.CreateAPIView):
             target=send_guest_reservation_email, 
             args=(guest_email, car, reservation.reserved_from, reservation.reserved_to, reservation.reservation_code)
         ).start()
-        #use celery later
+        """send_guest_reservation_email_task.delay(
+            guest_email,
+            car.id,
+            reservation.start_date.isoformat(),
+            reservation.end_date.isoformat(),
+            reservation.code,
+        )"""
+
         
         return reservation
