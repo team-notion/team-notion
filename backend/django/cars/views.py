@@ -12,7 +12,7 @@ from .models import Car, Reservation
 from .serializers import CarSerializer, AuthReservationSerializer, GuestReservationSerializer
 from .utils import send_guest_reservation_email, send_cancel_confirmation_email
 from .tasks import send_cancel_confirmation_email_task, send_guest_reservation_email_task
-
+from .permissions import IsCarOwner
 
 
 
@@ -92,22 +92,27 @@ class CarDetailView(generics.RetrieveAPIView):
 class CarUpdateView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Car.objects.all()
     serializer_class = CarSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        user = self.request.user
-        if user.is_owner:
-            return Car.objects.filter(owner=user)
-        return Car.objects.none()
+    permission_classes = [permissions.IsAuthenticated, IsCarOwner]
 
     def update(self, request, *args, **kwargs):
-        user = self.request.user
-        if not user.is_owner:
-            return Response({"detail": "Only owners can update cars."},
-                            status=status.HTTP_403_FORBIDDEN)
-        
-        kwargs['partial'] = True
+        kwargs["partial"] = True
         return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        car = self.get_object()
+        
+        has_active_reservations = Reservation.objects.filter(
+            car=car,
+            status__in=["pending", "confirmed"]
+        ).exists()
+
+        if has_active_reservations:
+            return Response(
+                {"detail": "Cannot delete this car. There are pending or confirmed reservations."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return super().destroy(request, *args, **kwargs)
 
 #Reservation for authenticated customers
 class ReserveCarView(generics.CreateAPIView):

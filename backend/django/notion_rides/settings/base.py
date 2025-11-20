@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
     'rest_framework.authtoken',
+    "drf_spectacular",
+    "drf_spectacular_sidecar",
 
     'accounts',
     'cars',
@@ -171,6 +173,8 @@ REST_FRAMEWORK = {
 
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 #TIME LIMIT FOR LINK (10 min)
@@ -194,3 +198,15 @@ CELERY_BEAT_SCHEDULE = {
 
 
 
+SPECTACULAR_SETTINGS = {
+    "TITLE": "Notion Rides API",
+    "DESCRIPTION": "An API for car rentals, reservations, payments, notifications, and more.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "CONTACT": {
+        "name": "Notion Rides Team",
+        "email": "notionrides@gmail.com",
+    },
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": r"/api",
+}

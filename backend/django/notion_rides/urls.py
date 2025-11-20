@@ -21,6 +21,12 @@ from django.conf.urls.static import static
 from accounts.views import CustomTokenObtainPairView
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView,
+)
+
 urlpatterns = [
     path('admin/', admin.site.urls),
 
@@ -31,6 +37,26 @@ urlpatterns = [
     path('api/cars/', include('cars.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/payments/', include('payments.urls')),
+]
+
+
+urlpatterns += [  
+    # Schema
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+
+    # Swagger UI
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+
+    # Redoc
+    path(
+        "api/redoc/",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
+    ),
 ]
 
 
