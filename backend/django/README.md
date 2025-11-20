@@ -5,8 +5,7 @@
 ![Django](https://img.shields.io/badge/Django-5.0-darkgreen)
 ![DRF](https://img.shields.io/badge/DRF-REST%20Framework-red)
 ![Render](https://img.shields.io/badge/Deploy-Render-blueviolet)
-![Docs](https://img.shields.io/badge/Docs-Swagger-blue)
-![License](https://img.shields.io/badge/License-MIT-yellow)
+[![API Documentation](https://img.shields.io/badge/Docs-API-blue)](https://notionrides.onrender.com/api/docs)
 
 
 A production-ready backend API for managing car rentals, authentication, reservations, payments, and notifications.
