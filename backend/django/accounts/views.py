@@ -44,8 +44,8 @@ class CustomerRegisterView(generics.CreateAPIView):
         verify_link = f"{frontend_url}/verify-email/{uid}/{token}/"
 
 
-        Thread(target=send_verification_email, args=(user, verify_link)).start()
-        #send_verification_email_task.delay(user.id, verify_link)
+        #Thread(target=send_verification_email, args=(user, verify_link)).start()
+        send_verification_email_task.delay(user.id, verify_link)
 
     def create(self, request, *args, **kwargs):
         response = super().create(request, *args, **kwargs)
@@ -99,8 +99,8 @@ class SendVerificationEmailView(APIView):
         #verify_link = f"{request.scheme}://{request.get_host()}/api/accounts/verify/{uid}/{token}/" ---for testing locally
         verify_link = f"{frontend_url}/verify-email/{uid}/{token}/"
         
-        Thread(target=send_verification_email, args=(user, verify_link)).start()
-        #send_verification_email_task.delay(user.id, verify_link)
+        #Thread(target=send_verification_email, args=(user, verify_link)).start()
+        send_verification_email_task.delay(user.id, verify_link)
 
         return Response(
             {'message': 'Verification email sent'}, 
@@ -202,8 +202,8 @@ class RequestPasswordResetView(APIView):
         #reset_link = f"{request.scheme}://{request.get_host()}/api/accounts/reset/{uid}/{token}/"
         reset_link = f"{frontend_url}/reset-password/{uid}/{token}/"
         
-        Thread(target=send_password_reset_email, args=(user, reset_link)).start()
-        #send_password_reset_email_task.delay(user.id, reset_link)
+        #Thread(target=send_password_reset_email, args=(user, reset_link)).start()
+        send_password_reset_email_task.delay(user.id, reset_link)
 
         return Response({'message': 'Password reset email sent'}, status=status.HTTP_200_OK)
 

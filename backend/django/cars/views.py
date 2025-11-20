@@ -242,15 +242,15 @@ class RequestCancelReservationView(generics.GenericAPIView):
         else:
             email = reservation.guest_email
 
-        Thread(
+        """Thread(
             target=send_cancel_confirmation_email, 
             args=(reservation, confirm_url, email)
-        ).start()
-        """send_cancel_confirmation_email_task.delay(
+        ).start()"""
+        send_cancel_confirmation_email_task.delay(
             reservation.id,
             confirm_url,
             email,
-        )"""
+        )
 
         masked_email = self.mask_email(email)
 
@@ -343,17 +343,17 @@ class GuestReserveCarView(generics.CreateAPIView):
             status='success'
         )
 
-        Thread(
+        """Thread(
             target=send_guest_reservation_email, 
             args=(guest_email, car, reservation.reserved_from, reservation.reserved_to, reservation.reservation_code)
-        ).start()
-        """send_guest_reservation_email_task.delay(
+        ).start()"""
+        send_guest_reservation_email_task.delay(
             guest_email,
             car.id,
             reservation.start_date.isoformat(),
             reservation.end_date.isoformat(),
             reservation.code,
-        )"""
+        )
 
         
         return reservation
