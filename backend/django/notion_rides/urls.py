@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from accounts.views import CustomTokenObtainPairView
+from core.views import home
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from drf_spectacular.views import (
@@ -28,6 +29,7 @@ from drf_spectacular.views import (
 )
 
 urlpatterns = [
+    path("", home, name="home"),
     path('admin/', admin.site.urls),
 
     path('api/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),

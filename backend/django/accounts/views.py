@@ -1,11 +1,14 @@
-from threading import Thread
 import os
+from threading import Thread
+from django.contrib.auth import get_user_model
+
 from dotenv import load_dotenv
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView
-from django.contrib.auth import get_user_model
+
 from .serializers import RegisterSerializer, CustomTokenObtainPairSerializer, ProfileSerializer 
 from .utils import send_verification_email, generate_token, verify_token, send_password_reset_email
 from .permissions import IsActiveUser
@@ -18,6 +21,15 @@ User = get_user_model()
 
 frontend_url = os.getenv("FRONTEND_URL", "https://team-notion.netlify.app")
 
+
+@extend_schema(
+    request=RegisterSerializer,
+    responses={201: OpenApiExample(
+        'Account Created',
+        value={'message': 'Account created successfully. Please verify your email.'}
+    )},
+    description="Registers a new customer account. The user will receive a verification email to activate the account."
+)
 class CustomerRegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -41,7 +53,29 @@ class CustomerRegisterView(generics.CreateAPIView):
             {'message': 'Account created successfully. Please verify your email.'},
             status=status.HTTP_201_CREATED
         )
+    
 
+@extend_schema(
+    request=RegisterSerializer,
+    responses={201: OpenApiExample(
+        'Account Created',
+        value={'message': 'Account created successfully. Please verify your email.'}
+    )},
+    description="Registers a new owner account. Owners can upload and manage cars."
+)
+class OwnerRegisterView(CustomerRegisterView):
+    user_flags = {'is_owner': True}
+
+
+
+@extend_schema(
+    request=None,
+    responses={200: OpenApiExample(
+        'Verification Sent',
+        value={'message': 'Verification email sent'}
+    )},
+    description="Resend a verification email to the currently authenticated user. Authentication is required."
+)
 class SendVerificationEmailView(APIView):
     authentication_classes = [AllowInactiveJWTAuthentication]
     permission_classes = [] 
@@ -73,6 +107,17 @@ class SendVerificationEmailView(APIView):
             status=status.HTTP_200_OK
         )
 
+@extend_schema(
+    parameters=[
+        OpenApiParameter(name='uidb64', description='User ID in base64', required=True, type=str),
+        OpenApiParameter(name='token', description='Email verification token', required=True, type=str)
+    ],
+    responses={
+        200: OpenApiExample('Email Verified', value={'message': 'Email verified successfully.'}),
+        400: OpenApiExample('Invalid Token', value={'error': 'Invalid or expired token.'})
+    },
+    description="Verifies a user's email using the UID and token from the verification email."
+)
 class VerifyEmailView(APIView):
     authentication_classes = [AllowInactiveJWTAuthentication]
 
@@ -101,15 +146,30 @@ class VerifyEmailView(APIView):
 
 
 
-class OwnerRegisterView(CustomerRegisterView):
-    user_flags = {'is_owner': True}
 
 
-
+@extend_schema(
+    request=CustomTokenObtainPairSerializer,
+    responses={
+        200: OpenApiExample(
+            'JWT Token',
+            value={
+                'refresh': 'your_refresh_token',
+                'access': 'your_access_token'
+            }
+        )
+    },
+    description="Login endpoint that returns JWT access and refresh tokens."
+)
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
 
 
+@extend_schema(
+    request=ProfileSerializer,
+    responses={200: ProfileSerializer},
+    description="Retrieve and update the authenticated user's profile. PATCH allows partial updates."
+)
 class ProfileView(generics.RetrieveUpdateAPIView):
     serializer_class = ProfileSerializer
     permission_classes = [permissions.IsAuthenticated, IsActiveUser]
@@ -119,7 +179,14 @@ class ProfileView(generics.RetrieveUpdateAPIView):
 
 
 
-#PASSWORD RESET VIEWS
+@extend_schema(
+    request=None,
+    responses={200: OpenApiExample(
+        'Password Reset Sent',
+        value={'message': 'Password reset email sent'}
+    )},
+    description="Sends a password reset email to the user with a reset link."
+)
 class RequestPasswordResetView(APIView):
     def post(self, request):
         email = request.data.get('email')
@@ -140,6 +207,19 @@ class RequestPasswordResetView(APIView):
 
         return Response({'message': 'Password reset email sent'}, status=status.HTTP_200_OK)
 
+
+@extend_schema(
+    parameters=[
+        OpenApiParameter(name='uidb64', description='User ID in base64', required=True, type=str),
+        OpenApiParameter(name='token', description='Password reset token', required=True, type=str)
+    ],
+    request=None,
+    responses={200: OpenApiExample(
+        'Password Reset Success',
+        value={'message': 'Password reset successful'}
+    )},
+    description="Confirms password reset using the UID and token. Allows user to set a new password."
+)
 class PasswordResetConfirmView(APIView):
     def post(self, request, uidb64, token):
         user = verify_token(uidb64, token)
