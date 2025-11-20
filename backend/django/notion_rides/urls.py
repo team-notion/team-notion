@@ -19,9 +19,17 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from accounts.views import CustomTokenObtainPairView
+from core.views import home
 from rest_framework_simplejwt.views import TokenRefreshView
 
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+    SpectacularRedocView,
+)
+
 urlpatterns = [
+    path("", home, name="home"),
     path('admin/', admin.site.urls),
 
     path('api/login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
@@ -31,6 +39,26 @@ urlpatterns = [
     path('api/cars/', include('cars.urls')),
     path('api/notifications/', include('notifications.urls')),
     path('api/payments/', include('payments.urls')),
+]
+
+
+urlpatterns += [  
+    # Schema
+    path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
+
+    # Swagger UI
+    path(
+        "api/docs/",
+        SpectacularSwaggerView.as_view(url_name="schema"),
+        name="swagger-ui",
+    ),
+
+    # Redoc
+    path(
+        "api/redoc/",
+        SpectacularRedocView.as_view(url_name="schema"),
+        name="redoc",
+    ),
 ]
 
 
