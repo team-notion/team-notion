@@ -1,58 +1,61 @@
-import { useState, useEffect, use } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
-import EmailIcon from "../../assets/Email Icon.svg";
 import { useNavigate } from "react-router";
 import { getData } from "../lib/apiMethods";
 import CONFIG from "../utils/config";
 import { apiEndpoints } from "../lib/apiEndpoints";
 
-interface VerificationState {
-  status: 'loading' | 'success' | 'error';
-  message?: string;
-}
-
 const EmailVerification = () => {
   const navigate = useNavigate();
-  const { verificationCode } = useParams<{ verificationCode: string }>();
-  const [verificationState, setVerificationState] = useState<VerificationState>({ status: 'loading', message: 'Verifying your email...' });
+  const { uid, token } = useParams();
+  const [status, setStatus] = useState("loading");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
     const verifyEmail = async () => {
-      if (!verificationCode) {
-        setVerificationState({ status: 'error', message: 'Invalid verification link. No verification code found.' });
-        return;
-      }
-
+        
       try {
-        const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.VERIFY_EMAIL}${verificationCode}`);
+        if (!uid || !token) {
+          setErrorMessage('Invalid verification link.');
+          setStatus("error");
+          return;
+        }
+
+        const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.VERIFY_EMAIL}${uid}/${token}`);
+        const errorData = await resp.data.json();
 
         if (resp.status === 200) {
-          setVerificationState({ status: 'success', message: `${resp.data.message} You can now log in.` });
+          setStatus("success");
+          setSuccessMessage(resp.data.message || 'Your email has been verified successfully.');
         }
         else if (resp.status === 400) {
-          const errorData = await resp.data.json();
-          setVerificationState({ status: 'error', message: errorData.detail || 'Invalid or expired verification link.' });
+          setErrorMessage(errorData.detail || errorData.message || 'Invalid or expired verification link.');
+          setStatus("error");
         }
         else if (resp.status === 404) {
-          setVerificationState({ status: 'error', message: 'Verification link not found. Please request a new one.' });
+          setErrorMessage(errorData.detail || errorData.message || 'Verification link not found. Please request a new one.');
+          setStatus("error");
         }
         else {
-          setVerificationState({ status: 'error', message: 'An unexpected error occurred during verification. Please try again later.' });
+          setErrorMessage(errorData.detail || errorData.message || 'An unexpected error occurred during verification. Please try again later.');
+          setStatus("error");
         }
+
+        setTimeout(() => {
+          navigate("/login")
+        }, 2000)
       }
       catch (error) {
-        setVerificationState({ status: 'error', message: 'Failed to verify email. Please check your connection and try again.' });
+        setErrorMessage('Failed to verify email. Please check your connection and try again.');
+        setStatus("error");
       }
     };
 
     verifyEmail();
-  }, [verificationCode]);
-
-  const handleNext = () => {
-    navigate("/login");
-  };
+  }, [uid, token, navigate]);
 
   return (
     // <>
@@ -75,7 +78,7 @@ const EmailVerification = () => {
     // </>
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-        {verificationState.status === "loading" && (
+        {status === "loading" && (
           <div className="space-y-4">
             <Skeleton className="h-16 w-16 rounded-full mx-auto" />
             <Skeleton className="h-8 w-3/4 mx-auto" />
@@ -84,7 +87,7 @@ const EmailVerification = () => {
           </div>
         )}
 
-        {verificationState.status === "success" && (
+        {status === "success" && (
           <>
             <div className="mb-4 flex justify-center">
               <CheckCircle2 className="w-16 h-16 text-green-500" />
@@ -95,19 +98,13 @@ const EmailVerification = () => {
                 Email Verification
               </h1>
               <p className="text-gray-600 text-sm leading-snug">
-                {verificationState.message}
+                {successMessage}
               </p>
-            </div>
-
-            <div className="flex justify-center mt-6">
-              <button type="button" onClick={handleNext} className="px-8 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
-                Go to Login
-              </button>
             </div>
           </>
         )}
 
-        {verificationState.status === "error" && (
+        {status === "error" && (
           <>
             <div className="mb-4 flex justify-center">
               <AlertCircle className="w-16 h-16 text-red-500" />
@@ -118,18 +115,18 @@ const EmailVerification = () => {
                 Verification Failed
               </h1>
               <p className="text-gray-600 text-sm leading-snug">
-                {verificationState.message}
+                {errorMessage}
               </p>
             </div>
 
-            <div className="flex flex-col gap-3 justify-center mt-6">
-              <button type="button" onClick={handleNext} className="px-8 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
+            {/* <div className="flex flex-col gap-3 justify-center mt-6">
+              <button type="button" onClick={} className="px-8 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
                 Go to Login
               </button>
               <button type="button" onClick={() => navigate("/resend-verification")} className="px-8 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
                 Request New Link
               </button>
-            </div>
+            </div> */}
           </>
         )}
       </div>

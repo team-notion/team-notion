@@ -29,7 +29,7 @@ const routes = createBrowserRouter([
     element: <Login />,
   },
   {
-    path: "/verify-email",
+    path: "/verify-email/:uid/:token",
     element: <EmailVerification />,
   },
   {
