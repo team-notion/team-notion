@@ -13,6 +13,7 @@ import CONFIG from "./utils/config";
 import { LOCAL_STORAGE_KEYS } from "./utils/localStorageKeys";
 import { toast } from "sonner";
 import { getData, postData } from "./lib/apiMethods";
+import { useNumberFormatter } from "./utils/formatters";
 
 interface CarPhoto {
   id: number;
@@ -53,7 +54,8 @@ export default function GuestReservation() {
   const [showReservationModal, setShowReservationModal] = useState(false)
   const [showCustomerReservationModal, setShowCustomerReservationModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [currentStep, setCurrentStep] = useState(1)
+  const [currentStep, setCurrentStep] = useState(1);
+  const formatPrice = useNumberFormatter({ decimals: 2 });
   const [formData, setFormData] = useState({
     customerName: user?.username || "",
     phoneNumber: "",
@@ -79,11 +81,8 @@ export default function GuestReservation() {
 
       try {
         setLoading(true);
-        const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
         
-        const resp = await fetch(`${CONFIG.BASE_URL}${apiEndpoints.GET_CAR_DETAILS}${carId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const resp = await fetch(`${CONFIG.BASE_URL}${apiEndpoints.GET_CAR_DETAILS}${carId}`);
 
         if (!resp.ok) {
           throw new Error("Failed to fetch car details");
@@ -283,9 +282,9 @@ export default function GuestReservation() {
           {/* Left Column - Vehicle Details */}
           <div className="lg:col-span-2 space-y-6">
             {/* Image Gallery */}
-            <div className="flex gap-4 items-center lg:items-start justify-center">
-              {/* Main Image */}
-              <div className="flex-1 bg-gray-100 rounded-2xl relative overflow-hidden hidden lg:flex">
+            <div className="flex flex-col lg:flex-row gap-4 h-[20rem] lg:h-[35rem]">
+              {/* Main Image - Takes full width on mobile, most space on desktop */}
+              <div className="flex-1 bg-gray-100 rounded-2xl relative overflow-hidden h-full">
                 {images.length > 0 ? (
                   <img
                     src={images[currentImageIndex]}
@@ -293,7 +292,7 @@ export default function GuestReservation() {
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <div className="w-full h-96 bg-gray-200 flex items-center justify-center">
+                  <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                     <span className="text-gray-500">No image available</span>
                   </div>
                 )}
@@ -302,13 +301,13 @@ export default function GuestReservation() {
                   <>
                     <button
                       onClick={prevImage}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50"
+                      className="absolute left-0 lg:left-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors"
                     >
                       <ChevronLeft className="w-6 h-6 text-gray-800" />
                     </button>
                     <button
                       onClick={nextImage}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md hover:bg-gray-50"
+                      className="absolute right-0 lg:right-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-white rounded-lg flex items-center justify-center shadow-md hover:bg-gray-50 transition-colors"
                     >
                       <ChevronRight className="w-6 h-6 text-gray-800" />
                     </button>
@@ -316,15 +315,17 @@ export default function GuestReservation() {
                 )}
               </div>
 
-              {/* Thumbnails */}
+              {/* Thumbnails - Hidden on mobile, shown on desktop */}
               {images.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-1 gap-3 items-center">
+                <div className="hidden lg:flex flex-col gap-3 h-full overflow-y-auto">
                   {images.map((img, index) => (
                     <button
                       key={index}
                       onClick={() => setCurrentImageIndex(index)}
-                      className={`w-58 h-54 lg:h-40 rounded-lg overflow-hidden border-2 ${
-                        currentImageIndex === index ? "border-[#0066CC]" : "border-gray-200"
+                      className={`w-32 h-24 rounded-lg overflow-hidden border-2 flex-shrink-0 transition-all ${
+                        currentImageIndex === index 
+                          ? "border-[#0066CC] scale-105" 
+                          : "border-gray-200 hover:border-gray-300"
                       }`}
                     >
                       <img
@@ -340,12 +341,12 @@ export default function GuestReservation() {
 
             {/* Vehicle Details */}
             <div className="flex flex-col md:flex-row items-start justify-between gap-4 mt-4">
-              <div className="space-y-4 max-w-md lg:max-w-xl">
-                <h1 className="text-3xl font-semibold text-[#0D183A]">{car.car_type} {car.model ? `- ${car.model}` : ''} {car.year_of_manufacture}</h1>
+              <div className="space-y-4 w-full lg:max-w-xl">
+                <h1 className="text-xl lg:text-2xl font-semibold text-[#0D183A]">{car.car_type} {car.model ? `- ${car.model}` : ''} {car.year_of_manufacture}</h1>
 
                 {/* Specs */}
                 <div className="flex items-center gap-6 text-gray-600">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 text-sm">
                     <p>Mileage: </p>
                     <p>{car.mileage || 'N/A'} miles</p>
                   </div>
@@ -355,7 +356,7 @@ export default function GuestReservation() {
                 <div className="flex items-center gap-2">
                   <div className="flex text-yellow-400">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className="fill fill-amber-300"/>
+                      <Star key={i} className="fill fill-amber-300 size-5 lg:size-6"/>
                     ))}
                   </div>
                   <span className="text-sm text-[#F97316]">(6 reviews)</span>
@@ -378,11 +379,11 @@ export default function GuestReservation() {
                 )}
 
                 {/* Price and Reserve Button */}
-                <div className="pt-4">
-                  <div className="text-2xl font-semibold text-[#0D183A]">₦ {car.daily_rental_price?.toLocaleString()}/day</div>
+                <div className="lg:pt-4">
+                  <div className="text-lg lg:text-xl font-medium text-[#0D183A]">₦ {formatPrice(car.daily_rental_price)}/day</div>
                   <button 
                   onClick={handleReserveClick}
-                  className="px-8 py-3 mt-4 bg-[#F97316] text-sm lg:text-base text-white rounded-xl hover:bg-orange-600 font-medium cursor-pointer">
+                  className="px-4 lg:px-8 py-3 mt-4 bg-[#F97316] text-sm lg:text-base text-white rounded-xl hover:bg-orange-600 font-medium cursor-pointer">
                     Reserve Now
                   </button>
                 </div>
@@ -390,7 +391,7 @@ export default function GuestReservation() {
 
                 {/* Right Column - Vehicle Information */}
              
-              <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4 w-[95%] sm:w-[80%] mx-auto lg:mx-0 md:w-auto mt-10 md:mt-0">
+              <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-4 w-full sm:w-[95%] md:w-[18rem] mx-auto lg:mx-0 mt-10 md:mt-0">
                 <h2 className="text-xl font-semibold text-[#0D183A] border-b border-gray-200 pb-4">Vehicle Information</h2>
 
                 <div className="space-y-3">

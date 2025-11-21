@@ -143,7 +143,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "../components/ui/carousel"
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ChevronLeft, ChevronRight, ImageOff, Star, Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiEndpoints } from "./lib/apiEndpoints";
@@ -151,6 +151,8 @@ import CONFIG from "./utils/config";
 import { LOCAL_STORAGE_KEYS } from "./utils/localStorageKeys";
 import { Button } from "react-day-picker";
 import { FiEdit } from "react-icons/fi";
+import { getData } from "./lib/apiMethods";
+import { useNumberFormatter } from "./utils/formatters";
 
 interface CarPhoto {
   id: number;
@@ -199,8 +201,10 @@ const VehicleCardSkeleton = () => (
 );
 
 const CarCard = ({ car }: CarCardProps) => {
+  const navigate = useNavigate();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+  const formatPrice = useNumberFormatter({ decimals: 2 });
 
   const formatAvailableDates = (dates: string[]) => {
     if (!dates || dates.length === 0) return "Not specified";
@@ -309,25 +313,25 @@ const CarCard = ({ car }: CarCardProps) => {
           </>
         )}
       </div>
-      <CardHeader className="px-3 xl:px-4">
-        <div className="flex flex-col lxl:flex-row items-start justify-between">
-          <CardTitle className="text-xl font-semibold">{car.car_type} {car.model ? `- ${car.model}` : ""} {car.year_of_manufacture}</CardTitle>
+      <CardHeader className="px-2 xl:px-4">
+        <div className="flex items-start justify-between">
+          <CardTitle className="text-lg font-semibold">{car.car_type} {car.model ? `- ${car.model}` : ""} {car.year_of_manufacture}</CardTitle>
         </div>
       </CardHeader>
-      <CardContent className="px-3 xl:px-4">
+      <CardContent className="px-2 xl:px-4">
         <div className="flex items-center gap-1">
-          <span className="text-sm font-semibold">Mileage</span>
-          <span className="text-sm font-semibold">{car.mileage} miles</span>
+          <span className="text-sm font-medium">Mileage</span>
+          <span className="text-sm font-medium">{car.mileage} miles</span>
         </div>
 
-        <div className="flex gap-2 items-center justify-between">
-          <div className="text-right">
-            <span className="text-lg font-semibold text-gray-600">₦{car.daily_rental_price}</span>
+        <div className="flex flex-col md:flex-row gap-2 items-start md:items-center justify-between mt-2">
+          <div className="flex gap-1 items-center">
+            <span className="text-sm lg:text-base font-semibold text-gray-600">₦{formatPrice(car.daily_rental_price)}</span>
             <span className="text-gray-600 text-sm font-semibold">per day</span>
           </div>
-          <Link to={`/reservation/${car.id}`} className="block w-[8rem] bg-[#F97316] text-white px-6 py-2.5 rounded-xl cursor-pointer hover:bg-orange-600 text-center mt-4" >
+          <button onClick={() => navigate(`/reservation/${car.id}`)} className="block w-[8rem] bg-[#F97316] text-white px-6 py-2.5 rounded-xl cursor-pointer hover:bg-orange-600 text-center" >
             Rent now
-          </Link>
+          </button>
         </div>
       </CardContent>
     </Card>
@@ -346,23 +350,13 @@ export function CarouselSpacing() {
       setLoading(true);
       
       try {
-        const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+        const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_ALL_CARS}`);
 
-        const resp = await fetch(`${CONFIG.BASE_URL}${apiEndpoints.GET_ALL_CARS}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (!resp.ok) {
-          throw new Error("Failed to fetch cars");
-        }
-        
-        const car = await resp.json();
-
-        if (car && Array.isArray(car.results)) {
-          setVehicles(car.results);
+        if (resp?.data?.results) {
+          setVehicles(resp?.data?.results);
         } else {
           throw new Error('Unexpected response format');
-        }
+        } 
 
       }
       catch (err) {
@@ -403,7 +397,7 @@ export function CarouselSpacing() {
             </CarouselItem>
           ) : (
             vehicles.map((car) => (
-                <CarouselItem key={car.id} className="pl-2 sm:pl-3 basis-5/6 sm:basis-1/2 lg:basis-2/7">
+                <CarouselItem key={car.id} className="pl-2 sm:pl-3 basis-[91%] sm:basis-1/2 lg:basis-2/6 xl:basis-2/7">
                   <div className="p-1">
                     <CarCard car={car} />
                   </div>

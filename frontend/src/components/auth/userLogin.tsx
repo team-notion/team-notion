@@ -47,55 +47,81 @@ const UserLogin = () => {
         password: data.password,
       });
 
-      if (resp) {
+      // if (!resp.ok) {
+      //   const errorMessage = await resp.json();
+      //   throw new Error(errorMessage.message || errorMessage.detail || "Login failed");
+      // }
 
-        const { access, refresh, is_owner } = resp;
-        const token = access;
-
-        if (!access) {
-          throw new Error("No access token received from server");
+      if (resp.status === 200) {
+        const { access, refresh, is_owner } = resp?.data;
+  
+        if (!access || !refresh) {
+          throw new Error("No access or refresh token received from server");
         }
-          
-        const decoded = decodeJWT(token);
-          
-        let userProfile: any;
-
+  
         try {
-          userProfile = await getDataWithToken(`${CONFIG.BASE_URL}${apiEndpoints.GET_USER_PROFILE}`, access);
-          
+          const userProfile = await getDataWithToken(`${CONFIG.BASE_URL}${apiEndpoints.GET_USER_PROFILE}`, access);
+
+          const user = userProfile.data;
+
+          const userData = {
+            id: user?.id,
+            email: data.email,
+            userType: is_owner ? "business" : "customer",
+            username: user?.username,
+            profile_image: user?.profile_image,
+            first_name: user?.first_name,
+            last_name: user?.last_name,
+            phone_no: user?.phone_no,
+            country_code: user?.country_code,
+          };
+    
+          login(access, refresh, userData, data.rememberMe || false);
         }
         catch (err: any) {
           const profileErrorMessage = err?.response?.data?.message || err?.response?.data?.detail || err.message || err?.response?.detail || err?.response?.data?.detail || "Failed to fetch user profile";
           toast.error(profileErrorMessage);
         }
-
+  
         
-        const userData = {
-          id: userProfile?.id,
-          email: userProfile?.email,
-          userType: is_owner ? "business" : "customer",
-          username: userProfile?.username,
-          profile_image: userProfile?.profile_image,
-          first_name: userProfile?.first_name,
-          last_name: userProfile?.last_name,
-          phone_no: userProfile?.phone_no,
-          country_code: userProfile?.country_code,
-        };
-
-        login(access, userData, data.rememberMe || false);
-
+  
         
         if (is_owner === true) {
           navigate("/business-dashboard");
         } else {
           navigate("/");
         }
-      } else {
-        toast.error(resp.message || resp?.detail || "Login failed");
       }
+
+
     }
     catch (err: any) {
-      toast.error(err.message);
+      const errData = err?.response?.data;
+
+      if (errData) {
+        if (typeof errData === 'object') {
+          Object.keys(errData).forEach((key) => {
+            if (Array.isArray(errData[key]) && errData[key].length > 0) {
+              errData[key].forEach((message: string) => {
+                if (key === 'non_field_errors') {
+                  toast.error(message);
+                }
+                else {
+                  toast.error(`${key.charAt(0).toUpperCase() + key.slice(1)}: ${message}`);
+                }
+              });
+            } else {
+              toast.error(errData[key]);
+            }
+          });
+        }
+        else {
+          toast.error(errData.detail || errData.non_field_errors?.[0] || 'An unknown error occurred. Please try again.');
+        }
+      }
+      else {
+        toast.error('An unknown error occurred. Please try again.');
+      }
     }
     finally {
       setLoading(false);
@@ -130,7 +156,7 @@ const UserLogin = () => {
         <div className="mb-4">
           <label className="block text-sm font-medium mb-2">Password</label>
           <div className="relative">
-            <input type={showPassword ? "text" : "password"} {...register("password")} placeholder="Enter password" required className={`bg-[#E9ECF2] text-[#5C5C5C] text-sm border ${errors.password ? "border-[#F71414] focus:border-[#F71414]" : "border-gray-300 focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200"} p-2 w-full rounded-md focus:outline-none pr-10`} />
+            <input type={showPassword ? "text" : "password"} {...register("password")} required placeholder="Enter password" className={`bg-[#E9ECF2] text-[#5C5C5C] text-sm border ${errors.password ? "border-[#F71414] focus:border-[#F71414]" : "border-gray-300 focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200"} p-2 w-full rounded-md focus:outline-none pr-10`} />
             <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-600 cursor-pointer" >
               {showPassword ? ( <PiEyeSlashDuotone size={20} /> ) : ( <PiEyeDuotone size={20} /> )}
             </button>

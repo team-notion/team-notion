@@ -34,8 +34,8 @@ const Signup = () => {
       email,
       ...formData 
     }));
-    // setCurrentStep(3);
-    navigate('/login');
+    setCurrentStep(3);
+    // navigate('/login');
     console.log("Business signup completed, moving to next step");
   }
 
@@ -45,8 +45,8 @@ const Signup = () => {
       email,
       ...formData 
     }));
-    // setCurrentStep(3);
-    navigate('/login');
+    setCurrentStep(3);
+    // navigate('/login');
     console.log("Customer signup completed, moving to next step");
   }
 

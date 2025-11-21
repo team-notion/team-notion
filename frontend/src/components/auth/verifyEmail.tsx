@@ -48,7 +48,7 @@ const VerifyEmail = ({ email, userType, details, setDetails, currentStep, setCur
         <h1 className="text-2xl font-semibold text-[#000000] mb-4">
           Email verification
         </h1>
-        <p className="text-gray-600 text-sm md:text-base leading-snug lg:w-[65%] mx-auto">
+        <p className="text-gray-600 text-sm leading-snug lg:w-[65%] mx-auto">
           We sent a verification email to {details.email} Please follow the instructions in the mail to verify your email
         </p>
       </div>
@@ -56,7 +56,7 @@ const VerifyEmail = ({ email, userType, details, setDetails, currentStep, setCur
       <div className="space-y-4 mx-auto">
         {/* <VerificationInput onChange={setCode} /> */}
 
-        <p className="text-sm text-center text-gray-500">
+        {/* <p className="text-sm text-center text-gray-500">
           {
             timeLeft > 0
             ? (
@@ -68,12 +68,9 @@ const VerifyEmail = ({ email, userType, details, setDetails, currentStep, setCur
                 <>
                   Didn't get a code? <span className="text-[#175CD3] cursor-pointer hover:underline">Click to resend</span>
                 </>
-              // <button type="button" onClick={handleNext} className="px-8 py-2 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
-              //   Resend mail
-              // </button>
               )
           }
-        </p>
+        </p> */}
       </div>
 
       <div className="flex justify-center mt-4">

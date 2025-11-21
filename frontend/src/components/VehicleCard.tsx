@@ -3,6 +3,7 @@ import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "./ui/card";
 import { ChevronLeft, ChevronRight, ImageOff, Pencil, Trash2 } from "lucide-react";
 import { FiEdit } from "react-icons/fi";
+import { useNumberFormatter } from "./utils/formatters";
 
 interface CarPhoto {
   id: number;
@@ -40,6 +41,7 @@ interface VehicleCardProps {
 const VehicleCard = ({ data, onEdit, onDelete }: VehicleCardProps) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+  const formatPrice = useNumberFormatter({ decimals: 2 });
 
   const images = data.photos
   .map((photo) => {
@@ -122,44 +124,44 @@ const VehicleCard = ({ data, onEdit, onDelete }: VehicleCardProps) => {
   const hasMultipleImages = images.length > 1;
 
   return (
-    <Card className="w-full rounded-2xl hover:shadow-md overflow-hidden hover:scale-[1.02] transition-transform duration-200 h-[34.375rem] py-0 ease-in-out">
+    <Card className="w-full rounded-2xl hover:shadow-md overflow-hidden hover:scale-[1.02] transition-transform duration-200 h-[30rem] py-0 ease-in-out">
       <div className="relative overflow-hidden bg-gray-200 h-[12.5rem] flex-shrink-0">
         <div className="relative w-full h-full flex items-center justify-center bg-gray-100">
           {currentImage ? (
             <img src={currentImage} alt={data?.car_type} className="w-full h-full object-cover" loading="lazy" onError={() => handleImageError(currentImageIndex)} crossOrigin="anonymous" />
           ) : (
             <div className="flex flex-col items-center justify-center h-full bg-gray-100">
-              <ImageOff className="w-12 h-12 text-gray-400 mb-2" />
+              <ImageOff className="w-8 h-8 lg:w-12 lg:h-12 text-gray-400 mb-2" />
               <p className="text-sm text-gray-500">No images available</p>
             </div>
           )}
         </div>
 
-        <div className="absolute top-4 right-4">
-          <span className={`${statusStyles[status as keyof typeof statusStyles]} px-6 py-2 rounded-full text-sm font-normal`}>{status}</span>
+        <div className="absolute top-2 right-2 sm:top-4 sm:right-4">
+          <span className={`${statusStyles[status as keyof typeof statusStyles]} px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-normal`}>{status}</span>
         </div>
 
         {hasMultipleImages && (
           <>
-            <button onClick={goToPreviousImage} className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black p-2 rounded-full group-hover:opacity-100 transition-opacity duration-200 z-20" aria-label="Previous image" >
-              <ChevronLeft className="w-5 h-5" />
+            <button onClick={goToPreviousImage} className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black p-1 sm:p-2 rounded-full group-hover:opacity-100 transition-opacity duration-200 z-20" aria-label="Previous image" >
+              <ChevronLeft className="w-4 h-4 lg:w-5 lg:h-5" />
             </button>
-            <button onClick={goToNextImage} className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black p-2 rounded-full group-hover:opacity-100 transition-opacity duration-200 z-20" aria-label="Next image" >
-              <ChevronRight className="w-5 h-5" />
+            <button onClick={goToNextImage} className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black p-1 sm:p-2 rounded-full group-hover:opacity-100 transition-opacity duration-200 z-20" aria-label="Next image" >
+              <ChevronRight className="w-4 h-4 lg:w-5 lg:h-5" />
             </button>
           </>
         )}
       </div>
-      <CardHeader className="px-3 xl:px-4">
-        <div className="flex flex-col lxl:flex-row items-start justify-between">
-          <CardTitle className="text-xl font-medium">{data.car_type} {data.model ? `- ${data.model}` : ""} {data.year_of_manufacture}</CardTitle>
+      <CardHeader className="px-3 xl:px-4 py-3 xl:py-4">
+        <div className="flex flex-col xl:flex-row items-start justify-between gap-1">
+          <CardTitle className="text-lg lg:text-xl font-medium">{data.car_type} {data.model ? `- ${data.model}` : ""} {data.year_of_manufacture}</CardTitle>
           <div className="text-right">
-            <span className="text-lg font-medium text-blue-600">₦{data.daily_rental_price}</span>
-            <span className="text-blue-600 text-sm">per day</span>
+            <span className="text-base font-medium text-blue-600">₦{formatPrice(data.daily_rental_price)}</span>
+            <span className="text-blue-600 text-xs lg:text-sm">/day</span>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="px-3 xl:px-4">
+      <CardContent className="px-3 xl:px-4 flex-1 space-y-2">
         <div className="flex justify-between items-center">
           <span className="text-sm">License Plate</span>
           <span className="text-sm font-medium">{data.license}</span>

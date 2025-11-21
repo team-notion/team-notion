@@ -3,7 +3,7 @@ export enum apiEndpoints {
   LOGIN = '/login/',
   BUSINESS_SIGNUP = '/accounts/register/owner/',
   USER_SIGNUP = '/accounts/register/customer/',
-  VERIFY_EMAIL = '/email/veriffication-notification',
+  VERIFY_EMAIL = '/accounts/verify/',
   RESET_PASSWORD = '/accounts/reset/',
   REQUEST_PASSWORD_RESET = '/accounts/password-reset/',
 
@@ -16,7 +16,7 @@ export enum apiEndpoints {
   UPDATE_USER_PROFILE = '/accounts/profile',
 
   // CARS
-  GET_ALL_CARS = '/cars/',
+  GET_ALL_CARS = '/cars',
   ADD_CAR = '/cars/create/',
   GET_ALL_CARS_BY_OWNER_ID = '/cars/?owner_id=',
   GET_CAR_DETAILS = '/cars/',
@@ -29,4 +29,7 @@ export enum apiEndpoints {
   UPDATE_RESERVATION = '/cars/reserve/:id',
   CANCEL_RESERVATION = '/cars/reserve/:id/cancel',
 
+  // NOTIFICATIONS
+  GET_NOTIFICATIONS = '/notifications',
+  UPDATE_NOTIFICATIONS = '/notifications/:id',
 }

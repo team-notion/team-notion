@@ -4,6 +4,8 @@ import { useNavigate } from "react-router"
 import { IoIosNotificationsOutline } from "react-icons/io";
 import { useAuth } from "./lib/authContext";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import NotificationBell from "./NotificationBell";
+import UserAvatar from "./UserAvatar";
 
 interface HeaderProps {
   sidebarOpen: boolean
@@ -61,20 +63,11 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen }) => {
 
         {/* Right section */}
         <div className="flex items-center gap-4 ml-auto pr-6 divide-x divide-neutral-200">
-          <button className="relative p-2 text-gray-600 hover:text-gray-500 hover:cursor-pointer">
-            <IoIosNotificationsOutline className="size-6" />
-            <span className="absolute top-1.5 right-2.5 h-1.5 w-1.5 bg-red-500 rounded-full" />
-          </button>
-          <div className="flex items-center gap-3">
+          <NotificationBell />
+          <UserAvatar />
+          {/* <div className="flex items-center gap-3"> */}
             {/* <img src={user?.profileImage || 'User'} alt={user?.name || 'user'} className="w-8 h-8 rounded-full border border-[#EAECF0] relative" /> */}
-            <Avatar className="h-10 w-10 cursor-pointer border border-[#F97316] hover:border-orange-600 transition-colors">
-              <AvatarImage src={getAvatarUrl() || undefined} alt={user?.username || 'User'} />
-              <AvatarFallback className="bg-[#F97316] text-white font-semibold text-sm">
-                {getUserInitials()}
-              </AvatarFallback>
-            </Avatar>
-            <span className="hidden sm:block text-sm text-[#344054] leading-5 font-normal">{user?.username || 'User'}</span>
-          </div>
+          {/* </div> */}
         </div>
       </div>
     </header>

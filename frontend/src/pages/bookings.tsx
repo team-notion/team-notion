@@ -5,6 +5,10 @@ import { apiEndpoints } from '../components/lib/apiEndpoints';
 import CONFIG from '../components/utils/config';
 import { LOCAL_STORAGE_KEYS } from '../components/utils/localStorageKeys';
 import { toast } from 'sonner';
+import Navbar from '@/components/home/Navbar';
+import Footer from '@/components/home/Footer';
+import Loader from '@/components/ui/Loader/Loader';
+import { RefreshCcw, SquarePen, Trash2 } from 'lucide-react';
 
 interface Booking {
   id: string;
@@ -128,17 +132,6 @@ const Bookings = () => {
         cell: ({ row }) => <span className="font-medium text-[#344054]">{row.original.id}</span>,
       },
       {
-        accessorKey: "customer",
-        header: "CUSTOMER",
-        cell: ({ row }) => (
-          <div className="flex flex-col">
-            <span className="font-medium text-[#344054]">{row.original.customer.name}</span>
-            <span className="text-xs text-[#667085]">{row.original.customer.email}</span>
-            <span className="text-xs text-[#667085]">{row.original.customer.phone}</span>
-          </div>
-        ),
-      },
-      {
         accessorKey: "vehicle",
         header: "VEHICLE",
         cell: ({ row }) => (
@@ -150,7 +143,7 @@ const Bookings = () => {
       },
       {
         accessorKey: "date",
-        header: "DATE",
+        header: "RESERVATION TIME",
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="text-[#344054]">
@@ -188,21 +181,33 @@ const Bookings = () => {
         id: "actions",
         header: "ACTIONS",
         cell: ({ row }) => (
-          <div className="flex space-x-2">
+          <div className="flex space-x-2.5">
             <button 
               onClick={() => handleViewDetails(row.original)}
               className="text-[#667085] hover:text-[#344054] cursor-pointer text-sm font-medium"
             >
-              View
+              <SquarePen size={16} />
             </button>
-            {row.original.status === 'Reserved' && (
+            <button 
+              onClick={() => handleViewDetails(row.original)}
+              className="text-[#9333EA] hover:text-[#832fd1] cursor-pointer text-sm font-medium"
+            >
+              <RefreshCcw size={16} />
+            </button>
+            <button 
+              onClick={() => handleViewDetails(row.original)}
+              className="text-[#FE130A] hover:text-[#e81109] cursor-pointer text-sm font-medium"
+            >
+              <Trash2 size={16} />
+            </button>
+            {/* {row.original.status === 'Reserved' && (
               <button 
                 onClick={() => handleUpdateStatus(row.original.id, 'Paid')}
                 className="text-green-600 hover:text-green-800 cursor-pointer text-sm font-medium"
               >
                 Mark Paid
               </button>
-            )}
+            )} */}
           </div>
         ),
       },
@@ -236,40 +241,50 @@ const Bookings = () => {
   const pageCount = Math.ceil(bookings.length / pagination.pageSize);
 
 
+  if (loading) {
+    return <div className="flex justify-center items-center h-dvh">
+      <Loader type="tailSpin" color="#175CD3" height={40} width={40} />
+    </div>;
+  }
+
   return (
-<div className='space-y-6 px-0 lg:px-4'>
-  <div>
-    <h1 className='text-2xl font-semibold text-black leading-9'>Dashboard</h1>
-  </div>
+    <div className='min-h-screen bg-[#F5F5F5]'>
+      <Navbar />
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8 py-8 ">
+        <div>
+          <h1 className='text-2xl font-semibold text-black leading-9'>Bookings</h1>
+        </div>
 
-  <TransactionTable columns={columns} data={bookings} pageCount={pageCount} pageSize={pagination.pageSize} pageIndex={pagination.pageIndex} isLoading={false} onPaginationChange={setPagination} totalItems={bookings.length} />
+        <TransactionTable columns={columns} data={bookings} pageCount={pageCount} pageSize={pagination.pageSize} pageIndex={pagination.pageIndex} isLoading={false} onPaginationChange={setPagination} totalItems={bookings.length} />
 
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-600">Total Bookings</h3>
-          <p className="text-2xl font-bold text-gray-900">{bookings.length}</p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-600">Active</h3>
-          <p className="text-2xl font-bold text-green-600">
-            {bookings.filter(b => b.status === 'In Progress').length}
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-600">Pending Payment</h3>
-          <p className="text-2xl font-bold text-yellow-600">
-            {bookings.filter(b => b.status === 'Reserved').length}
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <h3 className="text-sm font-medium text-gray-600">Completed</h3>
-          <p className="text-2xl font-bold text-blue-600">
-            {bookings.filter(b => b.status === 'Completed').length}
-          </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 my-6">
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <h3 className="text-sm font-medium text-gray-600">Total Bookings</h3>
+            <p className="text-2xl font-bold text-gray-900">{bookings.length}</p>
+          </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <h3 className="text-sm font-medium text-gray-600">Active</h3>
+            <p className="text-2xl font-bold text-green-600">
+              {bookings.filter(b => b.status === 'In Progress').length}
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <h3 className="text-sm font-medium text-gray-600">Pending Payment</h3>
+            <p className="text-2xl font-bold text-yellow-600">
+              {bookings.filter(b => b.status === 'Reserved').length}
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-lg border border-gray-200">
+            <h3 className="text-sm font-medium text-gray-600">Completed</h3>
+            <p className="text-2xl font-bold text-blue-600">
+              {bookings.filter(b => b.status === 'Completed').length}
+            </p>
+          </div>
         </div>
       </div>
 
-</div>
+      <Footer />
+    </div>
   )
 }
 

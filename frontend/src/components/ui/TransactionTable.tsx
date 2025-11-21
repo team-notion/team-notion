@@ -80,7 +80,7 @@ export function TransactionTable<T extends object>({
         )}
       </div>
       <div className="overflow-x-auto w-full">
-        <div className="min-w-[1000px]">
+        <div className="min-w-[64rem]">
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
               <Loader type="bars" color="#175CD3" height={40} width={40} />
