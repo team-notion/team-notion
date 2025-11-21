@@ -103,8 +103,6 @@ const CarInventory = () => {
         } else {
           throw new Error('Unexpected response format');
         }
-
-        console.log("Fetched cars:", data);
       }
       catch (err) {
         console.error("Error fetching vehicles:", err);

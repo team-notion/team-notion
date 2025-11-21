@@ -5,14 +5,14 @@ import Navbar from './Navbar'
 
 const Layout = ({ children }) => {
   return (
-    <div className='flex flex-col min-h-screen bg-white'>
-        <Navbar />
+    <div className='flex flex-col h-screen bg-white'>
+      <Navbar />
 
-         <main className='flex-1 w-full'>
-          {children}
-        </main>
+      <main className='flex-1 w-full'>
+        {children}
+      </main>
 
-        <Footer />
+      <Footer />
     </div>
   )
 }

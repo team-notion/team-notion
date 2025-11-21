@@ -79,7 +79,7 @@ export function AvailabilitySection({ availableDates }: AvailabilitySectionProps
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="max-w-md">
       <CollapsibleTrigger className="flex items-center justify-between gap-10 lg:gap-40 p-4 hover:bg-gray-50 cursor-pointer border-b border-gray-200 rounded-md w-full">
-        <h3 className="text-xl lg:text-2xl font-medium text-black">Availability</h3>
+        <h3 className="text-lg lg:text-xl font-medium text-black">Availability</h3>
         <ChevronDown className={`w-5 lg:w-8 h-5 lg:h-8 text-black transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </CollapsibleTrigger>
       <CollapsibleContent>
@@ -192,20 +192,20 @@ export function RentalTermsSection({ rentalTerms = '' }: RentalTermsSectionProps
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="">
       <CollapsibleTrigger className="flex items-center justify-between gap-10 lg:gap-40 p-4 hover:bg-gray-50 cursor-pointer max-w-md border-b border-gray-200 rounded-md w-full">
-        <h3 className="text-xl lg:text-2xl font-medium text-black">Rental Terms</h3>
+        <h3 className="text-lg lg:text-xl font-medium text-black">Rental Terms</h3>
         <ChevronDown className={`w-5 lg:w-8 h-5 lg:h-8 text-black transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </CollapsibleTrigger>
       <CollapsibleContent>
-        <div className="p-4 space-y-6">
-          <div className="space-y-4 text-sm text-black leading-relaxed">
+        <div className="p-2 lg:p-4 space-y-6">
+          <div className="space-y-4 text-sm text-gray-600">
             {termsParagraphs.length > 0 ? (
               termsParagraphs.map((paragraph, index) => (
-                <p key={index} className="text-justify">
+                <p key={index} className="text-left leading-7 break-words whitespace-normal">
                   {paragraph}
                 </p>
               ))
             ) : (
-              <p className="text-justify text-gray-500 italic">
+              <p className="text-justify leading-7 text-gray-500 italic break-words whitespace-normal">
                 {displayTerms}
               </p>
             )}

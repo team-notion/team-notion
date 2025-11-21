@@ -81,24 +81,24 @@ axiosInstance.interceptors.response.use(
 );
 
 export const getData = async (url: string, config?: AxiosRequestConfig) => {
-  const { data } = await axiosInstance.get(
+  const resp = await axiosInstance.get(
     url,
     config,
   );
-  return data;
+  return resp;
 };
 
 export const postData = async (url: string, reqBody: any, config?: AxiosRequestConfig) => {
-  const { data } = await axiosInstance.post(
+  const resp = await axiosInstance.post(
     url,
     reqBody,
     config,
   );
-  return data;
+  return resp;
 };
 
 export const patchData = async (url: string, reqBody: any, config?: AxiosRequestConfig) => {
-  const { data } = await axiosInstance.patch(
+  const resp = await axiosInstance.patch(
     url,
     reqBody,
     {
@@ -110,28 +110,28 @@ export const patchData = async (url: string, reqBody: any, config?: AxiosRequest
       },
     }
   );
-  return data;
+  return resp;
 };
 
 export const putData = async (url: string, reqBody: any, config?: AxiosRequestConfig) => {
-  const { data } = await axiosInstance.put(
+  const resp = await axiosInstance.put(
     url,
     reqBody,
     config,
   );
-  return data;
+  return resp;
 };
 
 export const deleteData = async (url: string, config?: AxiosRequestConfig) => {
-  const { data } = await axiosInstance.delete(
+  const resp = await axiosInstance.delete(
     url,
     config,
   );
-  return data;
+  return resp;
 };
 
 export const getDataWithToken = async (url: string, token: string, config?: AxiosRequestConfig) => {
-  const { data } = await axios.get(url, {
+  const resp = await axios.get(url, {
     ...config,
     headers: {
       ...config?.headers,
@@ -140,5 +140,5 @@ export const getDataWithToken = async (url: string, token: string, config?: Axio
       'Authorization': `Bearer ${token}`
     }
   });
-  return data;
+  return resp;
 };

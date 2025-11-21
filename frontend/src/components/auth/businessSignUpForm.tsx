@@ -65,7 +65,9 @@ const BusinessSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
         ...data,
         userType: "business"
       }
-      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.BUSINESS_SIGNUP}`, userData);
+      const response = await postData(`${CONFIG.BASE_URL}${apiEndpoints.BUSINESS_SIGNUP}`, userData);
+
+      const resp = response.data;
 
       if (resp) {
         toast.success(resp?.message);
@@ -91,15 +93,41 @@ const BusinessSignUpForm = ({ details, setDetails, currentStep, setCurrentStep, 
       }
     }
     catch (err: any) {
-      toast.error(err?.response?.message);
+      // toast.error(err?.response?.message);
 
-      if (err?.response?.errors) {
-        setBackendErrors(err.response.errors);
-      }
+      // if (err?.response?.errors) {
+      //   setBackendErrors(err.response.errors);
+      // }
 
       if (data.password !== data.confirmPassword) {
         toast.error("Passwords do not match!");
         return;
+      }
+      const errData = err?.response?.data;
+
+      if (errData) {
+        if (typeof errData === 'object') {
+          Object.keys(errData).forEach((key) => {
+            if (Array.isArray(errData[key]) && errData[key].length > 0) {
+              errData[key].forEach((message: string) => {
+                if (key === 'non_field_errors') {
+                  toast.error(message);
+                }
+                else {
+                  toast.error(`${key.charAt(0).toUpperCase() + key.slice(1)}: ${message}`);
+                }
+              });
+            } else {
+              toast.error(errData[key]);
+            }
+          });
+        }
+        else {
+          toast.error(errData.detail || errData.non_field_errors?.[0] || 'An unknown error occurred. Please try again.');
+        }
+      }
+      else {
+        toast.error('An unknown error occurred. Please try again.');
       }
     }
     finally {
