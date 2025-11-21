@@ -25,11 +25,15 @@ const EmailVerification = () => {
         }
 
         const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.VERIFY_EMAIL}${uid}/${token}`);
+
+        console.log(resp);
         const errorData = await resp.data.json();
+
+        console.log(resp.status);
 
         if (resp.status === 200) {
           setStatus("success");
-          setSuccessMessage(resp.data.message || 'Your email has been verified successfully.');
+          setSuccessMessage(resp.data.message || resp.data.detail || 'Your email has been verified successfully.');
         }
         else if (resp.status === 400) {
           setErrorMessage(errorData.detail || errorData.message || 'Invalid or expired verification link.');
