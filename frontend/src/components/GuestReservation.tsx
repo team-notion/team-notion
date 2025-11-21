@@ -151,9 +151,11 @@ export default function GuestReservation() {
         guest_phone: formData.phoneNumber,
       };
 
-      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.MAKE_A_RESERVATION}`, reservationData, {
+      const response = await postData(`${CONFIG.BASE_URL}${apiEndpoints.MAKE_A_RESERVATION}`, reservationData, {
         headers: {'Content-Type': 'application/json'}
       });
+
+      const resp = response.data;
 
       if (resp) {
         setShowReservationModal(false);
@@ -188,9 +190,11 @@ export default function GuestReservation() {
         customer_username: formData?.customerName,
       };
 
-      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.MAKE_A_RESERVATION}`, reservationDataWithCar, {
+      const response = await postData(`${CONFIG.BASE_URL}${apiEndpoints.MAKE_A_RESERVATION}`, reservationDataWithCar, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      const resp = response.data;
 
       if (resp) {
         setShowCustomerReservationModal(false);

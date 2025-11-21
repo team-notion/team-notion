@@ -36,9 +36,11 @@ const BusinessProfile = () => {
       const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
 
       try {
-        const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_USER_PROFILE}`, {
+        const response = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_USER_PROFILE}`, {
           headers: { Authorization: `Bearer ${token}` },
         })
+
+        const resp = response.data;
 
         if (resp) {
           const userData = resp;
@@ -82,9 +84,11 @@ const BusinessProfile = () => {
         last_name: profileData.last_name,
       };
 
-      const resp = await patchData(`${CONFIG.BASE_URL}${apiEndpoints.UPDATE_USER_PROFILE}`, updateData, {
+      const response = await patchData(`${CONFIG.BASE_URL}${apiEndpoints.UPDATE_USER_PROFILE}`, updateData, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      const resp = response.data;
 
       if (resp) {
         toast.success("Profile updated successfully");
