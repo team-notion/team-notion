@@ -28,7 +28,7 @@ const EmailVerification = () => {
 
         console.log(resp);
         console.log(resp.status);
-        const errorData = await resp.data.json();
+        const errorData = await resp.data;
 
 
         if (resp.status === 200) {
