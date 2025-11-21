@@ -27,9 +27,9 @@ const EmailVerification = () => {
         const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.VERIFY_EMAIL}${uid}/${token}`);
 
         console.log(resp);
+        console.log(resp.status);
         const errorData = await resp.data.json();
 
-        console.log(resp.status);
 
         if (resp.status === 200) {
           setStatus("success");
@@ -60,6 +60,8 @@ const EmailVerification = () => {
 
     verifyEmail();
   }, [uid, token, navigate]);
+
+  console.log(status);
 
   return (
     // <>
