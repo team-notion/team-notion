@@ -49,7 +49,9 @@ const [loading, setLoading] = useState(false);
       const userData = {
         ...data,
       }
-      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.RESET_PASSWORD}`, userData);
+      const response = await postData(`${CONFIG.BASE_URL}${apiEndpoints.RESET_PASSWORD}`, userData);
+
+      const resp = response.data;
 
       if (resp.message === 'Business owner registered successfully.') {
         toast.success(resp?.message);

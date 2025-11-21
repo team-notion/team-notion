@@ -75,9 +75,11 @@ const ProfileManagement = () => {
       const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
 
       try {
-        const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_USER_PROFILE}`, {
+        const response = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_USER_PROFILE}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        const resp = response.data;
 
         if (resp) {
           const userData = resp;
@@ -145,9 +147,11 @@ const ProfileManagement = () => {
         country_or_region: profileData.countryOrRegion,
       };
 
-      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.UPDATE_USER_PROFILE}`, updateData, {
+      const response = await postData(`${CONFIG.BASE_URL}${apiEndpoints.UPDATE_USER_PROFILE}`, updateData, {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      const resp = response.data;
 
       if (resp) {
         toast.success("Profile updated successfully");

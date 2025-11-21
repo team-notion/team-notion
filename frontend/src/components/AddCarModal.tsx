@@ -229,9 +229,11 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
       if (isEditMode && carData) {
         const updateEndpoint = apiEndpoints.UPDATE_CAR.replace(':id', carData.id.toString());
 
-        const resp = await putData(`${CONFIG.BASE_URL}${updateEndpoint}`, payload, {
+        const response = await putData(`${CONFIG.BASE_URL}${updateEndpoint}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
+
+        const resp = response.data;
 
         if (resp) {
           toast.success(resp?.message || 'Vehicle updated successfully');
@@ -243,9 +245,11 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
         }
       }
       else {
-        const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.ADD_CAR}`, payload, {
+        const response = await postData(`${CONFIG.BASE_URL}${apiEndpoints.ADD_CAR}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
+
+        const resp = response.data;
   
         if (resp) {
           toast.success(resp?.message || 'Vehicle added successfully');
