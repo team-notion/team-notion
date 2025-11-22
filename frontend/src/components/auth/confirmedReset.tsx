@@ -18,27 +18,25 @@ const ConfirmedReset = ({ details, setDetails }: ConfirmedResetPasswordProps) =>
   };
 
   return (
-    <AuthLayout>
-      <div className="max-w-md flex flex-col items-center justify-center p-4 lg:p-8">
-        {details.status === 'error' ? (
-          <OctagonX className="mx-auto text-red-500 mb-4 size-20" />
-        ) : (
-          <CircleCheck className="mx-auto text-[#10B981] mb-4 size-20" />
-        )}
+    <div className="max-w-md flex flex-col items-center justify-center p-4 lg:p-8">
+      {details.status === 'error' ? (
+        <OctagonX className="mx-auto text-red-500 mb-4 size-20" />
+      ) : (
+        <CircleCheck className="mx-auto text-[#10B981] mb-4 size-20" />
+      )}
 
-        <div className="text-center mb-2">
-          <div className="text-xl lg:text-2xl font-medium text-[#000000] mb-4">
-            {details.message}
-          </div>
-        </div>
-
-        <div className="flex justify-center mt-4">
-          <button type="button" onClick={handleNext} className="px-8 py-2 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
-            Login
-          </button>
+      <div className="text-center mb-2">
+        <div className="text-xl lg:text-2xl font-medium text-[#000000] mb-4">
+          {details.message}
         </div>
       </div>
-    </AuthLayout>
+
+      <div className="flex justify-center mt-4">
+        <button type="button" onClick={handleNext} className="px-8 py-2 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
+          Login
+        </button>
+      </div>
+    </div>
   )
 }
 
