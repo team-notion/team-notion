@@ -81,22 +81,22 @@ const UserResetPassword = () => {
       if (resp.status === 200) {
         setStatus("success");
         setSuccessMessage(resp.data.message || resp.data.detail || 'Your email has been verified successfully.');
-        setDetails(prev => ({ ...prev, status: status, message: successMessage }));
+        setDetails(prev => ({ ...prev, status: status, message: successMessage || resp.data.message }));
         setCurrentStep(2);
       }
       else if (resp.status === 400) {
         setErrorMessage(errorData.detail || errorData.message || 'Invalid or expired verification link.');
-        setDetails(prev => ({ ...prev, status: status, message: errorMessage }));
+        setDetails(prev => ({ ...prev, status: status, message: errorMessage || errorData.detail }));
         setStatus("error");
       }
       else if (resp.status === 404) {
         setErrorMessage(errorData.detail || errorData.message || 'Verification link not found. Please request a new one.');
-        setDetails(prev => ({ ...prev, status: status, message: errorMessage }));
+        setDetails(prev => ({ ...prev, status: status, message: errorMessage || errorData.detail }));
         setStatus("error");
       }
       else {
         setErrorMessage(errorData.detail || errorData.message || 'An unexpected error occurred during verification. Please try again later.');
-        setDetails(prev => ({ ...prev, status: status, message: errorMessage }));
+        setDetails(prev => ({ ...prev, status: status, message: errorMessage || errorData.detail }));
         setStatus("error");
       }
     }
