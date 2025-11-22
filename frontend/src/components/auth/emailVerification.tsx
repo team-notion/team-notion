@@ -16,7 +16,6 @@ const EmailVerification = () => {
 
   useEffect(() => {
     const verifyEmail = async () => {
-        
       try {
         if (!uid || !token) {
           setErrorMessage('Invalid verification link.');

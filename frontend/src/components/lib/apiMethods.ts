@@ -59,11 +59,17 @@ axiosInstance.interceptors.request.use(
 
     config.headers.secureddata = "getall";
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    else {
-      delete config.headers.Authorization;
+    // if (token) {
+    //   config.headers.Authorization = `Bearer ${token}`;
+    // }
+    // else {
+    //   delete config.headers.Authorization;
+    // }
+    if (!config.headers.Authorization) {
+      const token = getToken();
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
