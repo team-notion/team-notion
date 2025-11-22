@@ -11,8 +11,6 @@ interface ConfirmedResetPasswordProps {
 const ConfirmedReset = ({ details, setDetails }: ConfirmedResetPasswordProps) => {
   const navigate = useNavigate();
 
-  console.log(details);
-
   const handleNext = () => {
     navigate("/login");
   };
@@ -26,7 +24,7 @@ const ConfirmedReset = ({ details, setDetails }: ConfirmedResetPasswordProps) =>
       )}
 
       <div className="text-center mb-2">
-        <div className="text-xl lg:text-2xl font-medium text-[#000000] mb-4">
+        <div className="text-lg lg:text-xl font-medium text-[#000000] mb-4">
           {details.message}
         </div>
       </div>
