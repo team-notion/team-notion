@@ -573,7 +573,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [sessionTimeoutId]);
 
 
-  const login = useCallback((token: string, refreshToken: string, userData: User, rememberMe: boolean = false) => {
+  const login = useCallback((token: string, refreshToken: string, userData: any, rememberMe: boolean = false) => {
     setStorage(LOCAL_STORAGE_KEYS.TOKEN, token, rememberMe);
     setStorage(LOCAL_STORAGE_KEYS.REFRESH_TOKEN, refreshToken, rememberMe);
     setStorage(LOCAL_STORAGE_KEYS.IS_USER_EXIST, "true", rememberMe);

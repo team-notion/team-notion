@@ -39,7 +39,7 @@ interface NotificationProfviderProps {
   pollingInterval?: number;
 }
 
-export function NotificationProvider({ children, pollingInterval = 30000 }: NotificationProfviderProps) {
+export function NotificationProvider({ children, pollingInterval = 60000 }: NotificationProfviderProps) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const { isAuthenticated } = useAuth();

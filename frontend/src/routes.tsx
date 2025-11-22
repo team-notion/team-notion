@@ -14,6 +14,8 @@ import BusinessProfile from "./pages/businessProfile";
 import ForgotPassword from "./pages/forgotPassword";
 import Bookings from "./pages/bookings";
 import EmailVerification from "./components/auth/emailVerification";
+import RequestVerificationEmail from "./components/auth/requestVerificationEmail";
+import UserResetPassword from "./components/auth/userResetPassword";
 
 const routes = createBrowserRouter([
   {
@@ -33,8 +35,16 @@ const routes = createBrowserRouter([
     element: <EmailVerification />,
   },
   {
-    path: "/reset-password",
+    path: "/request-verification-email",
+    element: <RequestVerificationEmail />,
+  },
+  {
+    path: "/password-reset",
     element: <ForgotPassword />,
+  },
+  {
+    path: "/reset-password",
+    element: <UserResetPassword />,
   },
   {
     path: "/forgot-password",

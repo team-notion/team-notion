@@ -16,7 +16,6 @@ const EmailVerification = () => {
 
   useEffect(() => {
     const verifyEmail = async () => {
-        
       try {
         if (!uid || !token) {
           setErrorMessage('Invalid verification link.');
@@ -25,11 +24,7 @@ const EmailVerification = () => {
         }
 
         const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.VERIFY_EMAIL}${uid}/${token}`);
-
-        console.log(resp);
-        console.log(resp.status);
         const errorData = await resp.data;
-
 
         if (resp.status === 200) {
           setStatus("success");
@@ -50,7 +45,7 @@ const EmailVerification = () => {
 
         setTimeout(() => {
           navigate("/login")
-        }, 2000)
+        }, 3000)
       }
       catch (error) {
         setErrorMessage('Failed to verify email. Please check your connection and try again.');

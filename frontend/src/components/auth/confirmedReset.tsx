@@ -1,41 +1,44 @@
-import { EmailIcon } from "@/assets";
-import { CircleCheck } from "lucide-react";
-import { Dispatch, SetStateAction } from "react";
+import { CircleCheck, OctagonX } from "lucide-react";
 import { useNavigate } from "react-router";
+import AuthLayout from "../layout/authlayout";
+import { Dispatch, SetStateAction } from "react";
 
-interface ConfirmPasswordResetProps {
-  email: string;
+interface ConfirmedResetPasswordProps {
   details: any;
   setDetails: Dispatch<SetStateAction<any>>;
-  currentStep: number;
-  setCurrentStep: Dispatch<SetStateAction<number>>;
-  onNext?: () => void;
 }
 
-const ConfirmedReset = ({ email, details, setDetails, currentStep, setCurrentStep, onNext, }: ConfirmPasswordResetProps) => {
-const navigate = useNavigate();
+const ConfirmedReset = ({ details, setDetails }: ConfirmedResetPasswordProps) => {
+  const navigate = useNavigate();
 
-const handleNext = () => {
-    if (onNext) {
-      navigate("/login");
-    }
+  console.log(details);
+
+  const handleNext = () => {
+    navigate("/login");
   };
+
   return (
-<>
-  <CircleCheck className="mx-auto mb-4 w-16 h-16" />
+    <AuthLayout>
+      <div className="max-w-md flex flex-col items-center justify-center p-4 lg:p-8">
+        {details.status === 'error' ? (
+          <OctagonX className="mx-auto text-red-500 mb-4 size-20" />
+        ) : (
+          <CircleCheck className="mx-auto text-[#10B981] mb-4 size-20" />
+        )}
 
-  <div className="text-center mb-8">
-    <h1 className="text-3xl font-semibold text-[#000000] mb-4">
-        Password reset successful
-    </h1>
-  </div>
+        <div className="text-center mb-2">
+          <div className="text-xl lg:text-2xl font-medium text-[#000000] mb-4">
+            {details.message}
+          </div>
+        </div>
 
-  <div className="flex justify-center mt-4">
-    <button type="button" onClick={handleNext} className="px-8 py-2 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
-      Go to Login
-    </button>
-  </div>
-</>
+        <div className="flex justify-center mt-4">
+          <button type="button" onClick={handleNext} className="px-8 py-2 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
+            Login
+          </button>
+        </div>
+      </div>
+    </AuthLayout>
   )
 }
 
