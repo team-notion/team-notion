@@ -47,10 +47,6 @@ const routes = createBrowserRouter([
     element: <UserResetPassword />,
   },
   {
-    path: "/forgot-password",
-    element: <ForgotPassword />,
-  },
-  {
       path: "/",
       element: <LandingPage />
   },

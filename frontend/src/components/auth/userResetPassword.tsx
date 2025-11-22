@@ -1,5 +1,5 @@
 import { register } from 'module';
-import React, { Dispatch, SetStateAction, useState } from 'react'
+import React, { Dispatch, SetStateAction, useEffect, useState } from 'react'
 import { PiEyeSlashDuotone, PiEyeDuotone } from 'react-icons/pi';
 import z from 'zod';
 import PhoneNumberInput from '../ui/PhoneNumberInput';
@@ -12,6 +12,7 @@ import CONFIG from '../utils/config';
 import AuthLayout from '../layout/authlayout';
 import { useNavigate, useParams } from 'react-router';
 import ConfirmedReset from './confirmedReset';
+import Loader from '../ui/Loader/Loader';
 
 const resetPasswordSchema = z.object({
   newPassword: z.string().min(8, "Password must be at least 8 characters"),
@@ -28,10 +29,12 @@ const UserResetPassword = () => {
   const [details, setDetails] = useState({});
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("loading");
+  const [linkValid, setLinkValid] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [errorMessage, setErrorMessage] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+  const [verifyingLink, setVerifyingLink] = useState(true);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const { register, handleSubmit, formState: { errors }, } = useForm<ResetPasswordFormData>({
@@ -43,6 +46,25 @@ const UserResetPassword = () => {
     },
   });
 
+  useEffect(() => {
+    const verifyResetLink = async () => {
+      if (!uid || !token) {
+        setErrorMessage('Invalid password reset link.');
+        setStatus("error");
+        setLinkValid(false);
+        setVerifyingLink(false);
+        setDetails({ status: "error", message: "Invalid password reset link." });
+        setCurrentStep(2);
+        return;
+      }
+
+      setLinkValid(true);
+      setVerifyingLink(false);
+    };
+
+    verifyResetLink();
+  }, [uid, token]);
+
   const onSubmit = async (data: ResetPasswordFormData) => {
     setLoading(true);
 
@@ -53,7 +75,7 @@ const UserResetPassword = () => {
         return;
       }
       
-      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.RESET_PASSWORD}${uid}/${token}`, { password: data.newPassword });
+      const resp = await postData(`${CONFIG.BASE_URL}${apiEndpoints.RESET_PASSWORD}${uid}/${token}/`, { password: data.newPassword });
       const errorData = await resp.data;
 
       if (resp.status === 200) {
@@ -103,6 +125,27 @@ const UserResetPassword = () => {
       setLoading(false);
     }
   };
+
+
+  if (verifyingLink) {
+    return (
+      <AuthLayout>
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader type="tailSpin" color="#175CD3" height={40} width={40} />
+        </div>
+      </AuthLayout>
+    );
+  }
+
+
+  if (!linkValid && currentStep === 1) {
+    return (
+      <AuthLayout>
+        <ConfirmedReset details={details} setDetails={setDetails} />
+      </AuthLayout>
+    );
+  }
+
 
   return (
     <AuthLayout>
