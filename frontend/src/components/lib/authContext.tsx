@@ -307,7 +307,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback,
 import { LOCAL_STORAGE_KEYS } from '../utils/localStorageKeys';
 import { decodeJWT } from '../utils/decoder';
 import { toast } from 'sonner';
-import { getData } from './apiMethods';
+import { getData, postData } from './apiMethods';
 import CONFIG from '../utils/config';
 import { apiEndpoints } from './apiEndpoints';
 
@@ -426,9 +426,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return false;
       }
 
-      const response = await getData(`${CONFIG.BASE_URL}${apiEndpoints.REFRESH_TOKEN}`, {
-        data: JSON.stringify({ refresh: refreshToken }),
-      });
+      const response = await postData(`${CONFIG.BASE_URL}${apiEndpoints.REFRESH_TOKEN}`, { refresh: refreshToken });
 
       if (response.status !== 200) {
         if (response.status === 401) {

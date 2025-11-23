@@ -2,6 +2,39 @@ import { useState } from "react"
 import { useReactTable, getCoreRowModel, flexRender, ColumnDef, PaginationState, SortingState, getSortedRowModel, OnChangeFn, } from "@tanstack/react-table";
 import { TablePagination } from "../TablePagination";
 import Loader from "../ui/Loader/Loader";
+import { Inbox } from "lucide-react";
+import { Skeleton } from "./skeleton";
+
+const EmptyState = ({ title = "No data found", description = "There are no items to display at the moment." }: { title?: string; description?: string; }) => (
+  <div className="flex flex-col items-center justify-center py-12 px-4">
+    <div className="bg-gray-100 rounded-full p-4 mb-4">
+      <Inbox className="w-8 h-8 text-gray-400" />
+    </div>
+    <h3 className="text-lg font-medium text-gray-900 mb-2">{title}</h3>
+    <p className="text-sm text-gray-500 text-center max-w-sm">
+      {description}
+    </p>
+  </div>
+);
+
+// Table Skeleton Component
+const TableSkeleton = ({ rows = 5, columns = 6 }: {  rows?: number; columns?: number; }) => (
+  <div className="space-y-3 p-6">
+    <div className="flex gap-4 pb-4 border-b border-gray-200">
+      {Array.from({ length: columns }).map((_, idx) => (
+        <Skeleton key={`header-${idx}`} className="h-5 flex-1" />
+      ))}
+    </div>
+    
+    {Array.from({ length: rows }).map((_, rowIdx) => (
+      <div key={`row-${rowIdx}`} className="flex gap-4 items-center py-3">
+        {Array.from({ length: columns }).map((_, colIdx) => (
+          <Skeleton key={`cell-${rowIdx}-${colIdx}`} className="h-12 flex-1" />
+        ))}
+      </div>
+    ))}
+  </div>
+);
 
 export type TransactionTableProps<T extends object> = {
   data: T[];
@@ -18,6 +51,8 @@ export type TransactionTableProps<T extends object> = {
   buttonText?: string;
   buttonVariant?: 'primary' | 'secondary' | 'danger';
   onButtonClick?: () => void;
+  emptyStateTitle?: string;
+  emptyStateDescription?: string;
 };
 
 export function TransactionTable<T extends object>({
@@ -35,6 +70,8 @@ export function TransactionTable<T extends object>({
   buttonText = "Action",
   buttonVariant = 'secondary',
   onButtonClick,
+  emptyStateTitle,
+  emptyStateDescription,
 }: TransactionTableProps<T>) {
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -72,20 +109,31 @@ export function TransactionTable<T extends object>({
   return (
     <div className="bg-white rounded-lg border border-[#EAECF0] mt-8 w-full overflow-hidden">
       <div className='flex flex-col lg:flex-row items-start lg:items-center justify-between p-6 gap-4'>
-        <h2 className="text-lg font-medium text-[#344054] leading-6 font-[Inter]">{title}</h2>
-        {showButton && (
+        <div>
+          <h2 className="text-lg font-medium text-[#344054] leading-6 font-[Inter]">{title}</h2>
+          {!isLoading && totalItems > 0 && (
+            <p className="text-sm text-gray-500 mt-1">
+              Showing {data.length} of {totalItems} {totalItems === 1 ? 'item' : 'items'}
+            </p>
+          )}
+        </div>
+        {showButton && onButtonClick && totalItems > 0 && !isLoading && (
           <button onClick={onButtonClick} className={buttonStyles[buttonVariant]} >
             {buttonText}
           </button>
         )}
       </div>
       <div className="overflow-x-auto w-full">
-        <div className="min-w-[64rem]">
-          {isLoading ? (
-            <div className="flex justify-center items-center h-64">
-              <Loader type="bars" color="#175CD3" height={40} width={40} />
-            </div>
-          ) : (
+        {isLoading ? (
+          <TableSkeleton rows={pageSize} columns={columns.length} />
+        )
+        : data.length === 0 ?
+        (
+          <EmptyState title={emptyStateTitle} description={emptyStateDescription} />
+        )
+        :
+        (
+          <div className="min-w-[64rem]">
             <table className="w-full">
               <thead>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -123,41 +171,35 @@ export function TransactionTable<T extends object>({
                 ))}
               </thead>
               <tbody className="border-b border-[#EAECF0]">
-                {table.getRowModel().rows.length > 0 ? (
-                  table.getRowModel().rows.map((row) => (
-                    <tr
-                      key={row.id}
-                      className="text-left items-start justify-start text-sm font-light text-[#667085] hover:bg-[#EAECF0] border-b border-[#EAECF0] hover:border hover:border-[#EAECF0]"
-                    >
-                      {row.getVisibleCells().map((cell) => (
-                        <td key={cell.id} className="px-6 py-5 lg:min-w-[140px]">
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </td>
-                      ))}
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={columns.length} className="px-6 py-5 text-center text-gray-500">
-                      No transactions found
-                    </td>
+                {table.getRowModel().rows.map((row) => (
+                  <tr
+                    key={row.id}
+                    className="text-left items-start justify-start text-sm font-light text-[#667085] hover:bg-[#EAECF0] border-b border-[#EAECF0] hover:border hover:border-[#EAECF0]"
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="px-6 py-5 lg:min-w-[140px]">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
                   </tr>
-                )}
+                ))}
               </tbody>
             </table>
-          )}
+          </div>
+        )}
+      </div>
+      {!isLoading && data.length > 0 && pageCount > 1 && (
+        <div className="px-6 py-4">
+          <TablePagination
+            currentPage={pageIndex + 1}
+            totalPages={pageCount}
+            totalItems={totalItems}
+            itemsPerPage={pageSize}
+            onPageChange={(page) => onPaginationChange({ pageIndex: page - 1, pageSize })}
+            onItemsPerPageChange={(size) => onPaginationChange({ pageIndex: 0, pageSize: size })}
+          />
         </div>
-      </div>
-      <div className="px-6 py-4">
-        <TablePagination
-          currentPage={pageIndex + 1}
-          totalPages={pageCount}
-          totalItems={totalItems}
-          itemsPerPage={pageSize}
-          onPageChange={(page) => onPaginationChange({ pageIndex: page - 1, pageSize })}
-          onItemsPerPageChange={(size) => onPaginationChange({ pageIndex: 0, pageSize: size })}
-        />
-      </div>
+      )}
     </div>
   )
 }
