@@ -87,6 +87,8 @@ const RequestVerificationEmail = () => {
 
         setTimeout(() => navigate('/login'), 3000);
       }
+
+      sessionStorage.removeItem('temp_verification_token');
     }
     catch (err: any) {
       const errData = err?.response?.data;
