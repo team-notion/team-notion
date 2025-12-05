@@ -63,6 +63,21 @@ class CarSerializer(serializers.ModelSerializer):
                 photo_serializer.save(car=car)
         
         return car
+    def update(self, instance, validated_data):
+        photos_data = validated_data.pop("photos", None)
+
+        # Update car fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        # Replace photos if provided
+        if photos_data is not None:
+            instance.photos.all().delete()
+            for photo_data in photos_data:
+                CarPhotoSerializer().create({**photo_data, "car": instance})
+
+        return instance
 
 class BaseReservationValidator:
     # Updated to accept car instance directly (instead of car_id)
