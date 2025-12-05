@@ -16,6 +16,9 @@ import Bookings from "./pages/bookings";
 import EmailVerification from "./components/auth/emailVerification";
 import RequestVerificationEmail from "./components/auth/requestVerificationEmail";
 import UserResetPassword from "./components/auth/userResetPassword";
+import { Notifications } from "./pages/notifications";
+import BusinessNotifications from "./pages/businessNotifications";
+import PaymentVerification from "./pages/paymentsVerification";
 
 const routes = createBrowserRouter([
   {
@@ -67,6 +70,14 @@ const routes = createBrowserRouter([
     element: <Bookings />,
   },
   {
+    path: "/notifications",
+    element: <Notifications />,
+  },
+  {
+    path: '/payments/verify',
+    element: <PaymentVerification />,
+  },
+  {
     path: "/",
     element: <BusinessDashboardLayout />,
     children: [
@@ -85,6 +96,10 @@ const routes = createBrowserRouter([
       {
         path: "settings",
         element: <BusinessProfile />,
+      },
+      {
+        path: "business-notifications",
+        element: <BusinessNotifications />,
       },
     ],
   },

@@ -6,6 +6,12 @@ import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import SelectDate from './SelectDate';
+import AvailableCarsCarousel from './AvailableCarsCarousel';
+import { toast } from 'sonner';
+import { apiEndpoints } from './lib/apiEndpoints';
+import { getData, postData } from './lib/apiMethods';
+import CONFIG from './utils/config';
+import { LOCAL_STORAGE_KEYS } from './utils/localStorageKeys';
 
 interface CreateReservationModalProps {
   isOpen: boolean;
@@ -16,7 +22,8 @@ interface CreateReservationModalProps {
 interface FormData {
   customerName: string;
   email: string;
-  selectedCar: string;
+  selectedCarId: number | null;
+  selectedCar: any;
   pickupLocation: string;
   pickupDate?: Date;
   returnDate?: Date;
@@ -25,24 +32,51 @@ interface FormData {
 
 const CreateReservationModal = ({ isOpen, onClose, onConfirm }: CreateReservationModalProps) => {
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, watch, setValue, control, reset, formState: { errors, isValid }, getValues, trigger } = useForm({});
 
   const [formData, setFormData] = useState<FormData>({
     customerName: '',
     email: '',
-    selectedCar: '',
+    selectedCarId: null,
+    selectedCar: null,
     pickupLocation: '',
     pickupDate: undefined,
     returnDate: undefined,
     notes: '',
   });
 
-  const handleInputChange = (field: keyof FormData, value: string | Date | undefined) => {
+  const handleInputChange = (field: keyof FormData, value: string | Date | undefined | number | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleSelectCar = (carId: number, car: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      selectedCarId: carId,
+      selectedCar: car,
+    }))
+  }
+
   const handleNext = () => {
-    if (currentStep < 4) {
+    if (currentStep === 1) {
+      if (!formData.customerName.trim() || !formData.email.trim()) {
+        toast.error("Please fill in all customer information")
+        return
+      }
+    } else if (currentStep === 2) {
+      if (!formData.selectedCarId) {
+        toast.error("Please select a car")
+        return
+      }
+    } else if (currentStep === 3) {
+      if (!formData.pickupDate || !formData.returnDate) {
+        toast.error("Please select pickup and return dates")
+        return
+      }
+    }
+    
+    if (currentStep < 3) {
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -58,7 +92,8 @@ const CreateReservationModal = ({ isOpen, onClose, onConfirm }: CreateReservatio
     setFormData({
       customerName: '',
       email: '',
-      selectedCar: '',
+      selectedCarId: null,
+      selectedCar: null,
       pickupLocation: '',
       pickupDate: undefined,
       returnDate: undefined,
@@ -66,6 +101,106 @@ const CreateReservationModal = ({ isOpen, onClose, onConfirm }: CreateReservatio
     });
     onClose();
   };
+
+
+  const handleFinish = async () => {
+    // Validate all required fields
+    if (!formData.selectedCarId) {
+      toast.error("Please select a car");
+      return;
+    }
+    if (!formData.pickupDate || !formData.returnDate) {
+      toast.error("Please select pickup and return dates");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+
+    try {
+      // Format dates as YYYY-MM-DD for the API
+      const formattedPickupDate = formData.pickupDate.toISOString();
+      const formattedReturnDate = formData.returnDate.toISOString();
+
+      // Prepare the reservation data
+      const reservationData = {
+        car: formData.selectedCarId,
+        reserved_from: formattedPickupDate,
+        reserved_to: formattedReturnDate,
+        customer_username: formData.customerName,
+        customer_email: formData.email,
+        pickup_location: formData.pickupLocation,
+        notes: formData.notes,
+      };
+
+      // Make the API call
+      const reservationResponse = await postData(`${CONFIG.BASE_URL}${apiEndpoints.MAKE_A_RESERVATION}`, reservationData , {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const reservationResp = reservationResponse.data.results;
+
+      console.log(reservationResp.data.results);
+
+      if (reservationResponse.status === 200 || reservationResponse.status === 201) {
+        const initilizePaymentData = {
+          reservation_code: reservationResp.reservation_code,
+          amount: reservationResp.deposit_amount,
+        }
+
+        const paymentInitResponse = await postData(`${CONFIG.BASE_URL}${apiEndpoints.INITIALIZE_PAYMENTS}`, initilizePaymentData, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+
+        const paymentInitResp = paymentInitResponse.data.results;
+
+        if (paymentInitResp.status === 200 || paymentInitResp.status === 201) {
+          const paymentId = paymentInitResp.payment_id;
+
+          const completePaymentResponse = await getData(`${CONFIG.BASE_URL}${apiEndpoints.COMPLETE_PAYMENTS.replace(':id', paymentId)}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+
+          const { authorization_url, payment_id } = completePaymentResponse.data.results;
+
+          sessionStorage.setItem('pending_payment_id', paymentId);
+          sessionStorage.setItem('reservation_code', reservationResp.reservation_code);
+
+          window.location.href = authorization_url;
+        }
+        
+
+        toast.success("Reservation created successfully!");
+      }
+
+      
+      handleCancel();
+      onConfirm();
+
+    }
+    catch (err: any) {
+      const errData = err?.response?.data;
+
+      if (errData && typeof errData === 'object') {
+        Object.keys(errData).forEach((key) => {
+          if (Array.isArray(errData[key]) && errData[key].length > 0) {
+            errData[key].forEach((message: string) => {
+              toast.error(message);
+            });
+          } else {
+            toast.error(errData[key]);
+          }
+        });
+      } else {
+        toast.error("Failed to create reservation. Please try again.");
+      }
+    }
+    finally {
+      setIsSubmitting(false);
+    }
+  };
+
 
   return (
     <dialog open={isOpen} className='modal'>
@@ -85,17 +220,18 @@ const CreateReservationModal = ({ isOpen, onClose, onConfirm }: CreateReservatio
           <div className="px-2 lg:px-6 py-8">
             <div className="flex items-center justify-center mb-8">
               <div className="flex items-center">
-                <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-semibold ${ currentStep >= 1 ? "bg-[#1E3A8A] text-white" : "bg-gray-200 text-gray-500" }`} >
-                  1
-                </div>
-                <div className={`w-9 lg9 md:w-10 md:h-10-24 h-0.5 mx-2 ${ currentStep >= 2 ? "bg-[#1E3A8A]" : "bg-gray-300" }`} />
-                <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-semibold ${ currentStep >= 2 ? "bg-[#1E3A8A] text-white" : "bg-gray-200 text-gray-500" }`} >
-                  2
-                </div>
-                <div className={`w-9 lg9 md:w-10 md:h-10-24 h-0.5 mx-2 ${ currentStep >= 3 ? "bg-[#1E3A8A]" : "bg-gray-300" }`} />
-                <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-semibold ${ currentStep >= 3 ? "bg-[#1E3A8A] text-white" : "bg-gray-200 text-gray-500" }`} >
-                  3
-                </div>
+                  {[1, 2, 3].map((step, idx) => (
+                    <div key={step} className="flex items-center">
+                      <div className={`w-9 h-9 md:w-10 md:h-10 lg:w-12 lg:h-12 rounded-full flex items-center justify-center font-semibold ${
+                        currentStep >= step ? 'bg-[#1E3A8A] text-white' : 'bg-gray-200 text-gray-500'
+                      }`}>
+                        {step}
+                      </div>
+                      {idx < 3 && (
+                        <div className={`w-9 h-0.5 mx-2 ${currentStep > step ? 'bg-[#1E3A8A]' : 'bg-gray-300'}`} />
+                      )}
+                    </div>
+                  ))}
               </div>
             </div>
 
@@ -134,8 +270,10 @@ const CreateReservationModal = ({ isOpen, onClose, onConfirm }: CreateReservatio
                   </div>
                 </div>
 
+                <AvailableCarsCarousel pickupDate={formData.pickupDate} returnDate={formData.returnDate} selectedCarId={formData.selectedCar} onSelectCar={handleSelectCar} />
+
                 <div className="space-y-6">
-                  <Controller
+                  {/* <Controller
                     name="category"
                     control={control}
                     render={({ field }) => (
@@ -149,7 +287,7 @@ const CreateReservationModal = ({ isOpen, onClose, onConfirm }: CreateReservatio
                         handleChange={(newValue) => field.onChange(newValue?.value) }
                       />
                     )}
-                  />
+                  /> */}
 
                   <div>
                     <label className="block text-sm font-medium text-black mb-2">Pickup Location</label>
@@ -207,11 +345,11 @@ const CreateReservationModal = ({ isOpen, onClose, onConfirm }: CreateReservatio
               </>
             ) : (
               <>
-                <button onClick={handleBack} className={`${currentStep === 3 ? 'hidden' : 'flex'} px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer`} >
+                <button onClick={handleBack} className={`flex px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer`} >
                   Back
                 </button>
-                <button onClick={currentStep === 3 ? handleCancel : handleNext} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
-                  {currentStep === 3 ? 'Finish' : 'Next'}
+                <button onClick={currentStep === 3 ? handleFinish : handleNext} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" disabled={isSubmitting} >
+                  {isSubmitting ? 'Creating...' : (currentStep === 3 ? 'Create Reservation' : 'Next')}
                 </button>
               </>
             )}

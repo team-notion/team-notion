@@ -82,7 +82,7 @@ const VehicleCard = ({ data, onEdit, onDelete }: VehicleCardProps) => {
   const formatDuration = (hours: number | null) => {
     if (!hours) return "Not specified";
     const days = Math.round(hours / 24);
-    return `${days}${days === 1 ? "day" : "days"}`;
+    return `${days}${days === 1 ? " day" : " days"}`;
   };
 
   const getCurrentImage = () => {
@@ -124,8 +124,8 @@ const VehicleCard = ({ data, onEdit, onDelete }: VehicleCardProps) => {
   const hasMultipleImages = images.length > 1;
 
   return (
-    <Card className="w-full rounded-2xl hover:shadow-md overflow-hidden hover:scale-[1.02] transition-transform duration-200 h-[30rem] py-0 ease-in-out">
-      <div className="relative overflow-hidden bg-gray-200 h-[12.5rem] flex-shrink-0">
+    <Card className="w-full rounded-2xl hover:shadow-md overflow-hidden hover:scale-[1.02] transition-transform duration-200 flex flex-col h-full pt-0 pb-2 gap-2 ease-in-out">
+      <div className="relative overflow-hidden bg-gray-200 aspect-[4/3] sm:aspect-video md:aspect-[16/10] lg:aspect-video flex-shrink-0">
         <div className="relative w-full h-full flex items-center justify-center bg-gray-100">
           {currentImage ? (
             <img src={currentImage} alt={data?.car_type} className="w-full h-full object-cover" loading="lazy" onError={() => handleImageError(currentImageIndex)} crossOrigin="anonymous" />
@@ -138,7 +138,7 @@ const VehicleCard = ({ data, onEdit, onDelete }: VehicleCardProps) => {
         </div>
 
         <div className="absolute top-2 right-2 sm:top-4 sm:right-4">
-          <span className={`${statusStyles[status as keyof typeof statusStyles]} px-2 sm:px-4 py-1 sm:py-1.5 rounded-full text-xs sm:text-sm font-normal`}>{status}</span>
+          <span className={`${statusStyles[status as keyof typeof statusStyles]} px-2 sm:px-4 py-1 rounded-full text-xs font-normal`}>{status}</span>
         </div>
 
         {hasMultipleImages && (
@@ -152,38 +152,38 @@ const VehicleCard = ({ data, onEdit, onDelete }: VehicleCardProps) => {
           </>
         )}
       </div>
-      <CardHeader className="px-3 xl:px-4 py-3 xl:py-4">
-        <div className="flex flex-col xl:flex-row items-start justify-between gap-1">
-          <CardTitle className="text-lg lg:text-xl font-medium">{data.car_type} {data.model ? `- ${data.model}` : ""} {data.year_of_manufacture}</CardTitle>
-          <div className="text-right">
+      <CardHeader className="px-3 xl:px-4 py-1.5">
+        <div className="flex flex-col xl:flex-row items-start justify-between gap-0.5">
+          <CardTitle className="text-lg font-medium">{data.car_type} {data.model ? `- ${data.model}` : ""} {data.year_of_manufacture}</CardTitle>
+          <div className="text-left xl:text-right flex-shrink-0">
             <span className="text-base font-medium text-blue-600">₦{formatPrice(data.daily_rental_price)}</span>
             <span className="text-blue-600 text-xs lg:text-sm">/day</span>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="px-3 xl:px-4 flex-1 space-y-2">
+      <CardContent className="px-3 xl:px-4 py-0 flex-1 space-y-2 sm:space-y-2.5">
         <div className="flex justify-between items-center">
           <span className="text-sm">License Plate</span>
           <span className="text-sm font-medium">{data.license}</span>
         </div>
-        <div className="flex justify-between items-center mt-2">
+        <div className="flex justify-between items-center">
           <span className="text-sm">Duration for guest reservation</span>
           <span className="text-sm font-medium">{formatDuration(data.duration_non_paid_in_hours)}</span>
         </div>
-        <div className="flex justify-between items-center mt-2">
-          <span className="text-sm">Availability date</span>
-          <span className="text-sm font-medium">{formatAvailableDates(data.available_dates)}</span>
+        <div className="flex justify-between items-center">
+          <span className="text-sm">Availability</span>
+          <span className="text-sm font-medium">{data?.is_available === true ? 'Available' : 'Not available'}</span>
         </div>
 
         {data.location && (
-          <div className="flex justify-between items-center mt-2">
+          <div className="flex justify-between items-center">
             <span className="text-sm">Location</span>
             <span className="text-sm font-medium">{data.location}</span>
           </div>
         )}
 
         {data.features && data.features.length > 0 && (
-          <div className="text-sm mt-2">
+          <div className="text-sm mt-1">
             <span className="text-sm">Features</span>
             <div className="flex flex-wrap gap-1">
               {data.features.slice(0, 3).map((feature, idx) => (
@@ -200,12 +200,12 @@ const VehicleCard = ({ data, onEdit, onDelete }: VehicleCardProps) => {
           </div>
         )}
       </CardContent>
-      <CardFooter className="flex justify-between gap-2 lg:gap-4 pt-0">
-        <Button onClick={onEdit} className="bg-orange-500 hover:bg-orange-600 text-white h-12 w-[6.5rem] text-lg rounded-2xl cursor-pointer">
+      <CardFooter className="flex justify-between gap-2 lg:gap-4 pt-0 px-3 xl:px-4">
+        <Button onClick={onEdit} className="bg-orange-500 hover:bg-orange-600 text-white text-sm rounded-lg cursor-pointer">
           <FiEdit className="h-6 w-6" />
           Edit
         </Button>
-        <Button onClick={onDelete} variant="outline" className="h-12 w-12 border-2 border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-2xl p-0 bg-transparent cursor-pointer" >
+        <Button onClick={onDelete} variant="outline" className="h-10 w-10 border-2 border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg p-0 bg-transparent cursor-pointer" >
           <Trash2 className="h-6 w-6" />
         </Button>
       </CardFooter>

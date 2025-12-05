@@ -5,16 +5,17 @@ import { IoImageOutline } from "react-icons/io5";
 import { PiMoneyWavy } from "react-icons/pi";
 import { PencilIcon } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import z from "zod";
-import { postData, putData } from "./lib/apiMethods";
+import { patchData, postData } from "./lib/apiMethods";
 import { apiEndpoints } from "./lib/apiEndpoints";
 import CONFIG from "./utils/config";
 import { LOCAL_STORAGE_KEYS } from "./utils/localStorageKeys";
 import { toast } from "sonner";
-import SelectDate from "./SelectDate";
-import SelectMultipleDates from "./SelectMultipleDates";
+// import SelectDate from "./SelectDate";
+// import SelectMultipleDates from "./SelectMultipleDates";
 import { uploadMultipleImages } from "./utils/imageUpload";
+import SelectDropdown from "./SelectDropdown";
 
 const addCarSchema = z.object({
   car_type: z.string().min(2, "Car type is required"),
@@ -24,8 +25,10 @@ const addCarSchema = z.object({
   license: z.string().min(1, "License plate is required"),
   mileage: z.number().min(0, "Mileage is required"),
   model: z.string().min(1, "Model is required"),
-  available_dates: z.array(z.string()).min(1, "Availability dates required"),
+  // available_dates: z.array(z.string()).min(1, "Availability dates required"),
+  is_available: z.boolean().default(true),
   duration_non_paid: z.string().min(1, "Duration is required"),
+  duration_unit: z.string().min(1, 'Duration unit is required'),
   daily_rental_price: z.number().min(0, "Price is required"),
   deposit: z.number().min(0, "Deposit is required"),
   deposit_percentage: z.number().min(0).max(100),
@@ -50,7 +53,7 @@ interface Car {
   car_type: string;
   year_of_manufacture: number;
   daily_rental_price: number;
-  available_dates: string[];
+  // available_dates: string[];
   rental_terms: string;
   deposit: number;
   deposit_percentage: number;
@@ -61,6 +64,7 @@ interface Car {
   mileage: number | null;
   model: string | null;
   duration_non_paid_in_hours: number | null;
+  duration_unit: string;
   features: string[] | null;
 }
 
@@ -75,11 +79,14 @@ interface AddCarModalProps {
 const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' }: AddCarModalProps) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [uploadingImages, setUploadingImages] = useState<number | null>(null);
+  // const [uploadingImages, setUploadingImages] = useState<number | null>(null);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
+  const [photoPreviewUrls, setPhotoPreviewUrls] = useState<string[]>([]);
   const isEditMode = mode === 'edit' && carData !== null;
 
-  const { register, handleSubmit, watch, formState: { errors }, reset, setValue, trigger } = useForm({
+  const { register, handleSubmit, watch, control, formState: { errors }, reset, setValue, trigger } = useForm({
     resolver: zodResolver(addCarSchema),
     mode: 'onChange',
     defaultValues: {
@@ -90,8 +97,10 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
       license: '',
       mileage: 0,
       model: '',
-      available_dates: [],
+      is_available: true,
+      // available_dates: [],
       duration_non_paid: '',
+      duration_unit: '',
       daily_rental_price: 0,
       deposit: 0,
       deposit_percentage: 25,
@@ -101,9 +110,10 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
     },
   });
 
+
   useEffect(() => {
     if (isEditMode && carData) {
-      const formattedDates = carData.available_dates.map(date => date.split('T')[0]);
+      // const formattedDates = carData.available_dates.map(date => date.split('T')[0]);
 
       setValue('car_type', carData.car_type);
       setValue('year_of_manufacture', carData.year_of_manufacture);
@@ -112,11 +122,26 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
       setValue('license', carData.license);
       setValue('mileage', carData.mileage || 0);
       setValue('model', carData.model || '');
-      setValue('available_dates', formattedDates);
+      setValue('is_available', carData.is_available !== false);
+      // setValue('available_dates', formattedDates);
 
       const hours = carData.duration_non_paid_in_hours || 0;
-      const days = Math.ceil(hours / 24);
-      setValue('duration_non_paid', `${days} day${days !== 1 ? 's' : ''}`);
+      let durationValue = '';
+      let durationUnit = 'day';
+    
+      if (hours >= 24 * 30) {
+        durationValue = Math.ceil(hours / (24 * 30)).toString();
+        durationUnit = 'month';
+      } else if (hours >= 24 * 7) {
+        durationValue = Math.ceil(hours / (24 * 7)).toString();
+        durationUnit = 'week';
+      } else {
+        durationValue = Math.ceil(hours / 24).toString();
+        durationUnit = 'day';
+      }
+    
+      setValue('duration_non_paid', durationValue);
+      setValue('duration_unit', durationUnit);
       
       setValue('daily_rental_price', carData.daily_rental_price);
       setValue('deposit', carData.deposit);
@@ -124,22 +149,43 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
       setValue('features', carData.features || []);
       setValue('rental_terms', carData.rental_terms);
       
-      const photos = carData.photos.map(photo => ({
-        image_url: photo.image_url || photo.photo || ''
-      }));
-      setValue('photos', photos);
+      // const photos = carData.photos.map(photo => ({
+      //   image_url: photo.image_url || photo.photo || ''
+      // }));
+      // setValue('photos', photos);
+
+
+      const existingUrls = carData.photos
+        .filter(photo => photo.image_url || photo.photo)
+        .map(photo => ({
+          image_url: photo.image_url || photo.photo || ''
+        }));
+      
+      setValue('photos', existingUrls);
+      setExistingImageUrls(carData.photos.map(photo => photo.image_url || photo.photo || ''));
     }
   }, [isEditMode, carData, setValue]);
 
   const formData = watch();
   const selectedFeatures = watch('features');
-  const available_dates = watch('available_dates');
+  // const available_dates = watch('available_dates');
 
   const features = [
     'GPS Navigation', 'USB Charging', 'Android Auto',
     'Leather Seats', 'Cruise Control', 'Keyless Entry',
     'Apple Carplay', 'Heated Seats', 'Bluetooth',
     'Parking Sensors', 'Backup Camera', 'Sunroof'
+  ];
+
+  const durationUnitOptions = [
+    { value: "day", label: "Day(s)" },
+    { value: "week", label: "Week(s)" },
+    { value: "month", label: "Month(s)" },
+  ];
+
+  const availabilityOptions = [
+    { value: true, label: "Available" },
+    { value: false, label: "Not Available" },
   ];
 
   const handleFeatureToggle = (feature: string) => {
@@ -151,7 +197,8 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
     }
   };
 
-  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -165,34 +212,45 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
       return;
     }
 
-    try {
-      setUploadingImages(index);
+    const newFiles = [...photoFiles];
     
-      const uploadResult = await uploadMultipleImages([file]);
-      const imageUrl = Array.isArray(uploadResult) ? uploadResult[0] : uploadResult;
-    
-      const currentPhotos = watch('photos') || [];
-      const newPhotos = [...currentPhotos];
-    
-      if (newPhotos[index]) {
-        newPhotos[index] = { image_url: imageUrl };
-      } else {
-        newPhotos[index] = { image_url: imageUrl };
-      }
-    
-      setValue('photos', newPhotos.filter(photo => photo.image_url));
-    
-      const newFiles = [...photoFiles];
+    // If replacing an existing file at this index
+    if (newFiles[index]) {
       newFiles[index] = file;
-      setPhotoFiles(newFiles);
+    } else {
+      // Add new file
+      newFiles[index] = file;
+    }
     
-      // toast.success('Image uploaded successfully!');
+    setPhotoFiles(newFiles);
     
+    // For edit mode, we keep track of which images are new vs existing
+    if (isEditMode) {
+      // Remove the existing URL from this position if it exists
+      const newExistingUrls = [...existingImageUrls];
+      if (newExistingUrls[index]) {
+        newExistingUrls[index] = '';
+      }
+      setExistingImageUrls(newExistingUrls);
+    }
+  };
+
+
+  const uploadAllImages = async (): Promise<string[]> => {
+    if (photoFiles.length === 0) {
+      // In edit mode, return existing URLs that haven't been replaced
+      return existingImageUrls.filter(url => url !== '');
+    }
+
+    setUploadingImages(true);
+    try {
+      const uploadedUrls = await uploadMultipleImages(photoFiles.filter(file => file !== undefined));
+      return uploadedUrls;
     } catch (error: any) {
-      console.error('Upload error:', error);
-      toast.error(error.message || 'Failed to upload image');
+      toast.error(error.message || 'Failed to upload images');
+      throw error;
     } finally {
-      setUploadingImages(null);
+      setUploadingImages(false);
     }
   };
 
@@ -203,35 +261,78 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
     const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
     
     try {
+      // // Upload all images at once
+      let imageUrls: string[] = [];
+      
+      if (photoFiles.length > 0) {
+        imageUrls = await uploadAllImages();
+        
+        // In edit mode, combine new URLs with existing ones that weren't replaced
+        if (isEditMode) {
+          const combinedUrls = existingImageUrls.map(url => {
+            return url !== '' ? url : imageUrls.shift() || '';
+          });
+          // Add any remaining new URLs
+          combinedUrls.push(...imageUrls);
+          imageUrls = combinedUrls.filter(url => url !== '');
+        }
+      } else if (isEditMode) {
+        // Use existing URLs in edit mode when no new files are added
+        imageUrls = existingImageUrls.filter(url => url !== '');
+      } else {
+        // For add mode, we need at least one image
+        if (data.photos.length === 0) {
+          toast.error('Please add at least one photo');
+          setLoading(false);
+          return;
+        }
+        imageUrls = data.photos.map(photo => photo.image_url);
+      }
 
-      const formattedDates = data.available_dates.map(date => {
-        return `${date}T00:00:00Z`;
-      });
+      const durationValueNum = parseInt(data.duration_non_paid) || 0;
+      let durationInHours = durationValueNum * 24; // Default to days
+    
+      if (data.duration_unit === 'week') {
+        durationInHours = durationValueNum * 24 * 7;
+      } else if (data.duration_unit === 'month') {
+        durationInHours = durationValueNum * 24 * 30;
+      }
 
       const payload = {
         car_type: data.car_type,
         year_of_manufacture: data.year_of_manufacture,
         daily_rental_price: data.daily_rental_price,
-        available_dates: formattedDates,
+        is_available: data.is_available,
+        // available_dates: formattedDates,
         rental_terms: data.rental_terms,
         deposit: data.deposit,
         deposit_percentage: data.deposit_percentage,
         license: data.license,
-        photos: data.photos,
+        photos: imageUrls.map(url => ({ image_url: url })),
         color: data.color,
         location: data.location,
         mileage: data.mileage,
         model: data.model,
-        duration_non_paid_in_hours: parseInt(data.duration_non_paid) || 0,
+        duration_non_paid_in_hours: durationInHours,
         features: data.features,
       };
+
+      console.log(payload);
+      console.log(carData)
 
       if (isEditMode && carData) {
         const updateEndpoint = apiEndpoints.UPDATE_CAR.replace(':id', carData.id.toString());
 
-        const response = await putData(`${CONFIG.BASE_URL}${updateEndpoint}`, payload, {
+        console.log(updateEndpoint);
+        console.log(token);
+
+        console.log(payload)
+        const response = await patchData(`${CONFIG.BASE_URL}${updateEndpoint}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
+
+        console.log(payload)
+        console.log(response)
 
         const resp = response.data;
 
@@ -277,7 +378,7 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
       case 1:
         isValid = await trigger([
           'car_type', 'model', 'year_of_manufacture', 'color', 
-          'location', 'license', 'mileage', 'available_dates'
+          'location', 'license', 'mileage', 'is_available', /* 'available_dates' */
         ]);
         break;
       case 2:
@@ -286,7 +387,14 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
         ]);
         break;
       case 3:
-        isValid = await trigger(['photos']);
+        // isValid = await trigger(['photos']);
+        // break;
+        const hasImages = photoFiles.length > 0 || (isEditMode && existingImageUrls.length > 0);
+        if (hasImages) {
+          isValid = true;
+        } else {
+          toast.error('Please add at least one photo');
+        }
         break;
     }
 
@@ -303,16 +411,40 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
   };
 
   const handleFinish = async () => {
-    const isValid = await trigger();
-    if (isValid) {
-      await handleSubmit(onSubmit)();
-    } else {
-      Object.keys(errors).forEach(key => {
-        const error = errors[key as keyof typeof errors];
-        if (error?.message) {
-          toast.error(error.message as string);
-        }
-      });
+    const hasNewImages = photoFiles.some(file => file !== undefined);
+    const hasExistingImages = isEditMode && existingImageUrls.some(url => url !== '');
+    const hasFormImages = watch('photos') && watch('photos')!.length > 0;
+
+    if (!hasNewImages && !hasExistingImages && !hasFormImages) {
+      toast.error('Please add at least one photo');
+      return;
+    }
+
+    try {
+      const isValid = await trigger([
+        'car_type', 'model', 'year_of_manufacture', 'color',
+        'location', 'license', 'mileage', 'is_available',
+        'duration_non_paid', 'duration_unit',
+        'daily_rental_price', 'deposit', 'rental_terms'
+      ]);
+
+      if (!isValid) {
+        Object.keys(errors).forEach(key => {
+          const error = errors[key as keyof typeof errors];
+          if (error?.message) {
+            toast.error(error.message as string);
+          }
+        });
+        return;
+      }
+
+      const formValues = watch();
+      const formData: AddCarFormData = {
+        ...formValues,
+        is_available: formValues.is_available ?? true
+      };
+      await onSubmit(formData);
+    } catch (error) {
     }
   };
 
@@ -325,8 +457,28 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
   const handleCancel = () => {
     setCurrentStep(1);
     setPhotoFiles([]);
+    setExistingImageUrls([]);
     reset();
     onClose();
+  };
+
+
+  const getImagePreview = (index: number) => {
+    // First check if there's a new file selected
+    if (photoFiles[index]) {
+      return URL.createObjectURL(photoFiles[index]);
+    }
+    
+    // Then check if there's an existing image URL (edit mode)
+    if (isEditMode && existingImageUrls[index]) {
+      return existingImageUrls[index];
+    }
+    
+    return null;
+  };
+
+  const hasImageAtIndex = (index: number) => {
+    return photoFiles[index] !== undefined || (isEditMode && existingImageUrls[index] !== undefined);
   };
 
 
@@ -417,19 +569,46 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
                         {errors.mileage && <p className="text-red-500 text-xs mt-1">{errors.mileage.message}</p>}
                       </div>
                       <div>
-                        {/* <label className="block text-sm font-medium text-black mb-2">Availability dates</label> */}
-                        <SelectMultipleDates
-                          label="Availability dates"
-                          value={available_dates}
-                          onChange={(dates: string[]) => setValue('available_dates', dates)}
-                          minDate={new Date()}
-                          placeholder="Select available dates"
+                        <label className="block text-sm font-medium text-black mb-2">Select Availability</label>
+                        <Controller
+                          name='is_available' 
+                          control={control} 
+                          render={({ field }) => {
+                            return (
+                              <SelectDropdown
+                                name='is_available'
+                                control={control}
+                                className="w-full"
+                                placeholder="Select availability"
+                                options={availabilityOptions}
+                                defaultValue={watch('is_available')}
+                                handleChange={(selectedAvailability) => { setValue('is_available', selectedAvailability?.value === true) }}
+                              />
+                            )
+                          }}
                         />
-                        {errors.available_dates && <p className="text-red-500 text-xs mt-1">{errors.available_dates.message}</p>}
+                        {errors.is_available && <p className="text-red-500 text-xs mt-1">{errors.is_available.message}</p>}
                       </div>
                       <div className="col-span-1">
-                        <label className="block text-sm font-medium text-black mb-2">Duration non-paid guest reservation</label>
-                        <input type="text" placeholder="e.g, 1 day" {...register('duration_non_paid')} className=" text-[#5C5C5C] text-sm border border-gray-300 px-4 py-3 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
+                        <label className="block text-sm font-medium text-black mb-2">Reservation Duration for Guest</label>
+                        <div className="grid grid-cols-2 gap-3">
+                          <input type="text" placeholder="e.g, 1" {...register('duration_non_paid')} className=" text-[#5C5C5C] text-sm border border-gray-300 px-4 py-3 rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
+                          <Controller
+                            name='duration_unit' 
+                            control={control}
+                            render={({ field }) => (
+                              <SelectDropdown
+                                name='duration_unit'
+                                control={control}
+                                className="w-full"
+                                placeholder="Day"
+                                options={durationUnitOptions}
+                                defaultValue={durationUnitOptions.find(option => option.value === field.value) || null}
+                                handleChange={(selectedOption) => field.onChange(selectedOption?.value)}
+                              />
+                            )}
+                          />
+                        </div>
                         {errors.duration_non_paid && <p className="text-red-500 text-xs mt-1">{errors.duration_non_paid.message}</p>}
                       </div>
                     </div>
@@ -494,7 +673,7 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {[0, 1, 2, 3, 4].map((index) => {
+                      {/* {[0, 1, 2, 3, 4].map((index) => {
                         const currentPhotos = watch('photos') || [];
                         const existingPhoto = currentPhotos[index];
         
@@ -523,6 +702,40 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
                               </div>
                             )}
                           </label>
+                        );
+                      })} */}
+
+                      {[0, 1, 2, 3, 4].map((index) => {
+                        const imagePreview = getImagePreview(index);
+                        const hasImage = hasImageAtIndex(index);
+                        
+                        return (
+                          <div key={index} className="relative aspect-video lg:aspect-square border-2 border-gray-300 rounded-xl flex items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors overflow-hidden">
+                            {hasImage ? (
+                              <>
+                                <img src={imagePreview || ''} alt={`Photo ${index}`} className="w-full h-full object-cover" onError={(e) => { e.currentTarget.style.display = 'none'; }} />
+                                {/* <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all duration-200 flex items-center justify-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => removeImage(index)}
+                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                  >
+                                    <IoIosClose size={20} />
+                                  </button>
+                                  <label htmlFor={`photo-${index}`} className="cursor-pointer">
+                                    <span className="text-white text-sm opacity-0 hover:opacity-100">Change</span>
+                                  </label>
+                                </div> */}
+                                <input type="file" id={`photo-${index}`} accept="image/*" className="hidden" onChange={(e) => handleImageSelect(e, index)} disabled={uploadingImages}/>
+                              </>
+                            ) : (
+                              <label htmlFor={`photo-${index}`} className="flex flex-col items-center justify-center text-gray-400 cursor-pointer w-full h-full">
+                                <input type="file" id={`photo-${index}`} accept="image/*" className="hidden" onChange={(e) => handleImageSelect(e, index)} disabled={uploadingImages}/>
+                                <IoImageOutline className="w-8 h-8 mb-2" />
+                                <span className="text-xs">Add Photo</span>
+                              </label>
+                            )}
+                          </div>
                         );
                       })}
                     </div>
@@ -554,8 +767,13 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
                           {/* Main large image */}
                           <div className="lg:col-span-2">
                             <div className="aspect-video lg:aspect-[16/10] border border-gray-300 rounded-xl flex items-center justify-center bg-gray-100 overflow-hidden">
-                              {photoFiles[0] ? (
+                              {/* {photoFiles[0] ? (
                                 <img src={URL.createObjectURL(photoFiles[0])} alt="Main car" className="w-full h-full object-cover"/>
+                              ) : (
+                                <IoImageOutline className="w-20 h-20 text-gray-400" />
+                              )} */}
+                              {getImagePreview(0) ? (
+                                <img src={getImagePreview(0) || ''} alt="Main car" className="w-full h-full object-cover"/>
                               ) : (
                                 <IoImageOutline className="w-20 h-20 text-gray-400" />
                               )}
@@ -564,10 +782,19 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
 
                           {/* Side thumbnails */}
                           <div className="grid grid-cols-1 gap-4">
-                            {[1, 2, 3, 4].map((index) => (
+                            {/* {[1, 2, 3, 4].map((index) => (
                               <div key={index} className="relative aspect-video lg:aspect-7/2 border border-gray-300 rounded-xl flex items-center justify-center bg-gray-100 overflow-hidden">
                                 {photoFiles[index] ? (
                                   <img src={URL.createObjectURL(photoFiles[index])} alt={`Photo ${index}`} className="w-full h-full object-cover rounded-xl" />
+                                ) : (
+                                  <IoImageOutline className="w-12 h-12 text-gray-400" />
+                                )}
+                              </div>
+                            ))} */}
+                            {[1, 2, 3, 4].map((index) => (
+                              <div key={index} className="relative aspect-video lg:aspect-7/2 border border-gray-300 rounded-xl flex items-center justify-center bg-gray-100 overflow-hidden">
+                                {getImagePreview(index) ? (
+                                  <img src={getImagePreview(index) || ''} alt={`Photo ${index}`} className="w-full h-full object-cover rounded-xl" />
                                 ) : (
                                   <IoImageOutline className="w-12 h-12 text-gray-400" />
                                 )}
@@ -622,15 +849,19 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
                             <p className="text-xs text-gray-600">{formData.year_of_manufacture}</p>
                           </div>
                           <div className='flex gap-1 items-center'>
-                            <p className="text-xs font-semibold text-black">Available Dates: </p>
-                            <p className="text-xs text-gray-600">{Array.isArray(formData.available_dates) ? formData.available_dates.join(', ') : 'No dates selected'}</p>
+                            <p className="text-xs font-semibold text-black">Availability: </p>
+                            <p className="text-xs text-gray-600">
+                              {formData.is_available ? 'Available' : 'Not Available'}
+                            </p>
+                            {/* <p className="text-xs text-gray-600">{Array.isArray(formData.available_dates) ? formData.available_dates.join(', ') : 'No dates selected'}</p> */}
                           </div>
                         </div>
 
                         <div className='space-y-4'>
                           <div className='flex gap-1 items-center'>
                             <p className="text-xs font-semibold text-black">Reservation duration for Guest: </p>
-                            <p className="text-xs text-gray-600">{formData.duration_non_paid}</p>
+                            {/* <p className="text-xs text-gray-600">{formData.duration_non_paid}</p> */}
+                            <p className="text-xs text-gray-600">{formData.duration_non_paid} {formData.duration_unit}(s)</p>
                           </div>
                         </div>
                       </div>
@@ -680,12 +911,14 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
                           <PencilIcon className="w-4 h-4 text-orange-500" />
                         </button>
                       </div>
-                      <div className='space-y-2 gap-2 mt-4'>
+                      <div className='space-y-2 gap-2 mt-4 text-sm'>
                         {formData.rental_terms}
                       </div>
                     </div>
                   </div>
                 )}
+
+                
               </form>
             </div>
 
@@ -693,27 +926,24 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
             <div className="sticky bg-white bottom-0 px-6 py-4 flex items-center justify-end gap-4">
               {currentStep === 1 ? (
                 <>
-                  <button onClick={handleCancel} className="px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer" >
+                  <button type="button" onClick={handleCancel} className="px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer" >
                     Cancel
                   </button>
-                  <button onClick={handleNext} disabled={loading} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
+                  <button type="button" onClick={handleNext} disabled={loading} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
                     Next
                   </button>
                 </>
               ) : (
                 <>
-                  <button onClick={handleBack} className={`${currentStep === 4 ? 'hidden' : 'flex'} px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer`} >
+                  <button type="button" onClick={handleBack} className={`${currentStep === 4 ? 'hidden' : 'flex'} px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer`} >
                     Back
                   </button>
-                  {/* <button onClick={handleFinish} disabled={loading} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
-                    {loading ? 'Submitting...' : currentStep === 4 ? 'Finish' : 'Next'}
-                  </button> */}
                   {currentStep === 4 ? (
-                    <button type="submit" onClick={handleFinish} disabled={loading} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-orange-600 font-medium cursor-pointer disabled:opacity-50">
-                      {loading ? 'Submitting...' : 'Finish'}
+                    <button type="submit" onClick={handleFinish} disabled={loading || uploadingImages} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-orange-600 font-medium cursor-pointer disabled:opacity-50">
+                      {loading ? 'Submitting...' : uploadingImages ? 'Uploading Images...' : 'Finish'}
                     </button>
                   ) : (
-                    <button onClick={handleNext} disabled={loading} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer">
+                    <button type="button" onClick={handleNext} disabled={loading} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer">
                       Next
                     </button>
                   )}

@@ -3,14 +3,19 @@ import ActionModal from "@/components/ActionModal";
 import AddCarModal from "@/components/AddCarModal";
 import CarInventoryCard from "@/components/carInventoryCard";
 import { apiEndpoints } from "@/components/lib/apiEndpoints";
+import { getData } from "@/components/lib/apiMethods";
+import { useAuth } from "@/components/lib/authContext";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Skeleton } from "@/components/ui/skeleton";
 import CONFIG from "@/components/utils/config";
 import { LOCAL_STORAGE_KEYS } from "@/components/utils/localStorageKeys";
 import VehicleCard from "@/components/VehicleCard";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@radix-ui/react-dropdown-menu";
 import { ChevronDownIcon, LayoutGrid, List, Plus, SearchIcon } from 'lucide-react';
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
+import { toast } from "sonner";
 
 interface CarPhoto {
   id: number;
@@ -37,9 +42,18 @@ interface Car {
   model: string | null;
   duration_non_paid_in_hours: number | null;
   features: string[] | null;
+  duration_unit: string;
 }
 
 const ITEMS_PER_PAGE = 20;
+
+const VehicleInventoryCardSkeleton = () => (
+  <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <Skeleton className="h-4 w-24 mb-4" />
+    <Skeleton className="h-8 w-32 mb-2" />
+    <Skeleton className="h-4 w-40" />
+  </div>
+);
 
 const VehicleCardSkeleton = () => (
   <div className="w-full rounded-3xl overflow-hidden shadow-lg h-[800px] bg-gray-200 animate-pulse">
@@ -57,17 +71,65 @@ const VehicleCardSkeleton = () => (
 );
 
 const CarInventory = () => {
+  const { user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const [loading, setLoading] = useState(false);
   const [vehicles, setVehicles] = useState<Car[]>([]);
-  const [filteredVehicles, setFilteredVehicles] = useState<Car[]>([]);
+  const [totalCars, setTotalCars] = useState(0);
+  const [rentedCars, setRentedCars] = useState(0);
+  const [availableCars, setAvailableCars] = useState(0);
+  // const [filteredVehicles, setFilteredVehicles] = useState<Car[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false);
   const [selectedCarId, setSelectedCarId] = useState<number | null>(null);
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"make" | "model" | "year">("make");
+  
+  
+  const searchTerm = searchParams.get('search') || '';
+  const sortBy = (searchParams.get('sort') as "make" | "model" | "year") || "make";
+  const currentPage = parseInt(searchParams.get('page') || '1', 10);
+  const availabilityFilter = searchParams.get("availability") || "all";
+
+  const handleSearchChange = (value: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (value) {
+      newParams.set('search', value);
+    }
+    else {
+      newParams.delete('search');
+    }
+    newParams.set('page', '1');
+    setSearchParams(newParams);
+  }
+
+
+  const handleSortChange = (value: "make" | "model" | "year") => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("sort", value);
+    newParams.set("page", "1"); // Reset to page 1 on sort change
+    setSearchParams(newParams);
+  };
+
+
+  const handlePageChange = (page: number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", page.toString());
+    setSearchParams(newParams);
+  };
+
+
+  const handleAvailabilityChange = (value: string) => {
+    const newParams = new URLSearchParams(searchParams);
+    if (value === "all") {
+      newParams.delete("availability");
+    } else {
+      newParams.set("availability", value);
+    }
+    newParams.set("page", "1");
+    setSearchParams(newParams);
+  };
 
 
   const getCurrentUserId = () => {
@@ -80,32 +142,40 @@ const CarInventory = () => {
       setLoading(true);
       
       try {
-        const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
-        const userId = getCurrentUserId();
+        const userId = user?.id || localStorage.getItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID);
 
-        if (!userId) {
-          throw new Error("User ID not found");
-        }
+        const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_ALL_CARS_BY_OWNER_ID}${userId}`);
 
-        const resp = await fetch(`${CONFIG.BASE_URL}${apiEndpoints.GET_ALL_CARS_BY_OWNER_ID}${userId}`, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        if (!resp.ok) {
-          throw new Error("Failed to fetch cars");
-        }
-        
-        const data = await resp.json();
-
-        if (data && Array.isArray(data.results)) {
-          setVehicles(data.results);
-          setFilteredVehicles(data.results);
-        } else {
-          throw new Error('Unexpected response format');
+        if (resp.status === 200) {
+          const cars = resp?.data?.results;
+  
+          if (cars && Array.isArray(cars)) {
+            const totalCount = resp?.data?.count;
+            const rentedCount = cars.filter((car: any) => !car.is_available).length;
+            const availableCount = cars.filter((car: any) => car.is_available).length;
+  
+            setTotalCars(totalCount);
+            setRentedCars(rentedCount);
+            setAvailableCars(availableCount);
+            setVehicles(cars);
+          }
         }
       }
-      catch (err) {
-        console.error("Error fetching vehicles:", err);
+      catch (err: any) {
+        const errData = err?.response?.data;
+
+        if (errData && typeof errData === 'object') {
+          Object.keys(errData).forEach((key) => {
+            if (Array.isArray(errData[key]) && errData[key].length > 0) {
+              errData[key].forEach((message: string) => {
+                toast.error(message);
+              });
+            }
+            else {
+              toast.error(errData[key]);
+            }
+          });
+        }
       }
       finally {
         setLoading(false);
@@ -116,7 +186,7 @@ const CarInventory = () => {
   }, []);
 
 
-  useEffect(() => {
+  const filteredVehicles = useMemo(() => {
     let filtered = vehicles;
 
     if (searchTerm) {
@@ -127,6 +197,12 @@ const CarInventory = () => {
       );
     }
 
+    if (availabilityFilter === "available") {
+      filtered = filtered.filter((car) => car.is_available);
+    } else if (availabilityFilter === "rented") {
+      filtered = filtered.filter((car) => !car.is_available);
+    }
+
     // Sort
     filtered.sort((a, b) => {
       if (sortBy === "make") return a.car_type.localeCompare(b.car_type);
@@ -135,9 +211,8 @@ const CarInventory = () => {
       return 0;
     });
 
-    setFilteredVehicles(filtered);
-    setCurrentPage(1);
-  }, [searchTerm, sortBy, vehicles]);
+    return filtered;
+  }, [searchTerm, sortBy, vehicles, availabilityFilter]);
 
 
   // Pagination
@@ -175,15 +250,27 @@ const CarInventory = () => {
 
         if (data && Array.isArray(data.results)) {
           setVehicles(data.results);
-          setFilteredVehicles(data.results);
         } else {
           throw new Error('Unexpected response format');
         }
 
         console.log("Fetched cars:", data);
       }
-      catch (err) {
-        console.error("Error fetching vehicles:", err);
+      catch (err: any) {
+        const errData = err?.response?.data;
+
+        if (errData && typeof errData === 'object') {
+          Object.keys(errData).forEach((key) => {
+            if (Array.isArray(errData[key]) && errData[key].length > 0) {
+              errData[key].forEach((message: string) => {
+                toast.error(message);
+              });
+            }
+            else {
+              toast.error(errData[key]);
+            }
+          });
+        }
       }
       finally {
         setLoading(false);
@@ -229,14 +316,14 @@ const CarInventory = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        <CarInventoryCard data={{ title: "Total Fleet", type: "total fleet", value: 30 }} />
-        <CarInventoryCard data={{ title: "Rented Cars", type: "rented cars", value: 20 }} />
-        <CarInventoryCard data={{ title: "Available Cars", type: "available cars", value: 8 }} />
+        <CarInventoryCard data={{ title: "Total Fleet", type: "total fleet", value: `${totalCars}` }} />
+        <CarInventoryCard data={{ title: "Rented Cars", type: "rented cars", value: `${rentedCars}` }} />
+        <CarInventoryCard data={{ title: "Available Cars", type: "available cars", value: `${availableCars}` }} />
       </div>
 
       <div className='bg-white p-4 rounded-lg shadow-sm'>
         <InputGroup>
-          <InputGroupInput placeholder="Search cars by make, model or plate number" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className='outline-0 focus-visible:outline-0 focus-within:ring-0 focus:ring-0 focus:outline-0' />
+          <InputGroupInput placeholder="Search cars by make, model or plate number" value={searchTerm} onChange={(e) => handleSearchChange(e.target.value)} className='outline-0 focus-visible:outline-0 focus-within:ring-0 focus:ring-0 focus:outline-0' />
           <InputGroupAddon>
             <SearchIcon />
           </InputGroupAddon>
@@ -248,9 +335,9 @@ const CarInventory = () => {
                 </InputGroupButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="[--radius:0.95rem] bg-white shadow-md p-1 rounded-sm z-10">
-                <DropdownMenuItem onClick={() => setSortBy("make")} className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Make</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("model")} className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Model</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("year")} className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Year</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSortChange("make")} className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Make</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSortChange("model")} className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Model</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleSortChange("year")} className='py-1 px-2 rounded-sm hover:bg-neutral-200 cursor-pointer'>Year</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </InputGroupAddon>
@@ -263,11 +350,23 @@ const CarInventory = () => {
         ))}
       </div> */}
 
+      <div className="flex gap-2 flex-wrap">
+        <button onClick={() => handleAvailabilityChange("all")} className={`px-4 py-2 rounded-lg text-sm transition-colors ${ availabilityFilter === "all" ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200" }`} >
+          All Cars
+        </button>
+        <button onClick={() => handleAvailabilityChange("available")} className={`px-4 py-2 rounded-lg text-sm transition-colors ${ availabilityFilter === "available" ? "bg-green-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200" }`} >
+          Available
+        </button>
+        <button onClick={() => handleAvailabilityChange("rented")} className={`px-4 py-2 rounded-lg text-sm transition-colors ${ availabilityFilter === "rented" ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200" }`} >
+          Rented
+        </button>
+      </div>
+
       {/* Loading State */}
       {loading ? (
         <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`}>
           {Array.from({ length: ITEMS_PER_PAGE }).map((_, i) => (
-            <VehicleCardSkeleton key={i} />
+            <VehicleInventoryCardSkeleton key={i} />
           ))}
         </div>
       ) : filteredVehicles.length === 0 ? (
@@ -280,7 +379,7 @@ const CarInventory = () => {
       ) : (
         <>
           {/* Vehicles Grid/List */}
-          <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6`}>
+          <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6`}>
             {paginatedVehicles.map((vehicle) => (
               <VehicleCard
                 key={vehicle.id}
@@ -298,7 +397,7 @@ const CarInventory = () => {
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
-                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                       className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
                     />
                   </PaginationItem>
@@ -313,7 +412,7 @@ const CarInventory = () => {
                       return (
                         <PaginationItem key={pageNum}>
                           <PaginationLink
-                            onClick={() => setCurrentPage(pageNum)}
+                            onClick={() => handlePageChange(pageNum)}
                             isActive={isActive}
                             className="cursor-pointer"
                           >
@@ -329,7 +428,7 @@ const CarInventory = () => {
 
                   <PaginationItem>
                     <PaginationNext
-                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                       className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
                     />
                   </PaginationItem>

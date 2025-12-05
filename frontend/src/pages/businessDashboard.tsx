@@ -48,6 +48,7 @@ interface Booking {
     days: number
   }
   payment: number
+  rentalValue: number
   status: "Reserved" | "Paid" | "In Progress"
 }
 
@@ -69,6 +70,7 @@ const sampleBookings: Booking[] = [
       days: 7,
     },
     payment: 840,
+    rentalValue: 0,
     status: "Reserved",
   },
   {
@@ -88,6 +90,7 @@ const sampleBookings: Booking[] = [
       days: 5,
     },
     payment: 325,
+    rentalValue: 0,
     status: "Paid",
   },
   {
@@ -107,6 +110,7 @@ const sampleBookings: Booking[] = [
       days: 4,
     },
     payment: 220,
+    rentalValue: 0,
     status: "In Progress",
   },
 ]
@@ -204,8 +208,21 @@ const BusinessDashboard = () => {
 
                 carDetails = carResp?.data;
               }
-              catch (err) {
-                console.error('Failed to fetch car details:', err);
+              catch (err: any) {
+                const errData = err?.response?.data;
+
+                if (errData && typeof errData === 'object') {
+                  Object.keys(errData).forEach((key) => {
+                    if (Array.isArray(errData[key]) && errData[key].length > 0) {
+                      errData[key].forEach((message: string) => {
+                        toast.error(message);
+                      });
+                    }
+                    else {
+                      toast.error(errData[key]);
+                    }
+                  });
+                }
               }
 
               // Calculate rental days
@@ -222,34 +239,6 @@ const BusinessDashboard = () => {
                   year: 'numeric' 
                 });
               };
-
-              // return {
-              //   id: booking.reservation_code || `RES-${booking.id}`,
-              //   customer: {
-              //     name: customerDetails?.first_name && customerDetails?.last_name 
-              //       ? `${customerDetails.first_name} ${customerDetails.last_name}`
-              //       : customerDetails?.username || 'N/A',
-              //     email: customerDetails?.email || 'N/A',
-              //     phone: customerDetails?.phone_no 
-              //       ? `${customerDetails.country_code || ''} ${customerDetails.phone_no}`
-              //       : 'N/A',
-              //   },
-              //   vehicle: {
-              //     name: carDetails?.car_type 
-              //       ? `${carDetails.year_of_manufacture || ''} ${carDetails.car_type}`.trim()
-              //       : 'N/A',
-              //     code: carDetails?.license || 'N/A',
-              //   },
-              //   date: {
-              //     start: formatDate(booking.reserved_from),
-              //     end: formatDate(booking.reserved_to),
-              //     days: rentalDays,
-              //   },
-              //   payment: carDetails?.daily_rental_price 
-              //     ? carDetails.daily_rental_price * rentalDays
-              //     : 0,
-              //   status: booking.has_paid_deposit ? 'Paid' : 'Reserved',
-              // };
 
 
               return {
@@ -270,7 +259,10 @@ const BusinessDashboard = () => {
                   end: formatDate(booking.reserved_to),
                   days: rentalDays,
                 },
-                payment: carDetails?.daily_rental_price 
+                payment: booking?.amount_paid 
+                  ? booking.amount_paid
+                  : 0,
+                rentalValue: carDetails?.daily_rental_price 
                   ? carDetails.daily_rental_price * rentalDays
                   : 0,
                 status: booking.has_paid_deposit ? 'Paid' : 'Reserved',
@@ -330,8 +322,8 @@ const BusinessDashboard = () => {
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-medium text-[#344054]">{row.original.customer.name}</span>
-            <span className="text-xs text-[#667085]">{row.original.customer.email}</span>
-            <span className="text-xs text-[#667085]">{row.original.customer.phone}</span>
+            {/* <span className="text-xs text-[#667085]">{row.original.customer.email}</span>
+            <span className="text-xs text-[#667085]">{row.original.customer.phone}</span> */}
           </div>
         ),
       },
@@ -339,6 +331,7 @@ const BusinessDashboard = () => {
         accessorKey: "vehicle",
         header: "VEHICLE",
         cell: ({ row }) => (
+
           <div className="flex flex-col">
             <span className="font-medium text-[#344054]">{row.original.vehicle.name}</span>
             <span className="text-xs text-[#667085]">{row.original.vehicle.code}</span>
@@ -361,6 +354,11 @@ const BusinessDashboard = () => {
         accessorKey: "payment",
         header: "PAYMENT",
         cell: ({ row }) => <span className="font-medium text-[#344054]">₦ {row.original.payment.toLocaleString()}</span>,
+      },
+      {
+        accessorKey: "rentalValue",
+        header: "RENTAL VALUE",
+        cell: ({ row }) => <span className="font-medium text-[#344054]">₦ {row.original?.rentalValue.toLocaleString()}</span>,
       },
       {
         accessorKey: "status",
@@ -390,7 +388,7 @@ const BusinessDashboard = () => {
     [],
   )
 
-  const pageCount = Math.ceil(sampleBookings.length / pagination.pageSize)
+  const pageCount = Math.ceil(sampleBookings.length / pagination.pageSize);
   
   return (
     <div className='space-y-6 px-0 lg:px-4'>
@@ -451,7 +449,7 @@ const BusinessDashboard = () => {
               <BusinessDashboardActionCard type="fleet" fleetCount={totalCars} onClick={() => navigate("/car-inventory")} />
             </>  
           )}
-          <BusinessDashboardActionCard type="add-car" onClick={() => { setIsAddCarModalOpen(true); console.log("Add Car Clicked"); }} />
+          <BusinessDashboardActionCard type="add-car" onClick={() => { setIsAddCarModalOpen(true); }} />
       </div>
 
       <TransactionTable title='Recent Bookings' showButton={true} buttonText="View all booking" columns={columns} data={bookings} pageCount={pageCount} pageSize={pagination.pageSize} pageIndex={pagination.pageIndex} isLoading={bookingsLoading} onPaginationChange={setPagination} totalItems={totalBookings} emptyStateTitle="No bookings yet" emptyStateDescription="You don't have any bookings yet. When customers make reservations, they'll appear here." onButtonClick={() => navigate('/reservation-management')} />

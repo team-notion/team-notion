@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router';
-import { LogOut, Menu, Settings, User, X } from 'lucide-react';
+import { LogIn, LogOut, Menu, Settings, User, X } from 'lucide-react';
 import { useAuth } from '../lib/authContext';
 import NotificationBell from '../NotificationBell';
 import UserAvatarMenu from '../UserAvatarMenu';
@@ -11,7 +11,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
 
-  const links = [
+  const links: Array<{ id: number; url: string; text: string; show?: boolean }> = [
     {
       id: 1,
       url: "/",
@@ -26,7 +26,7 @@ const Navbar = () => {
       id: 3,
       url: "/bookings",
       text: "Bookings",
-      show: isAuthenticated && user?.username && user.username !== 'User' && user?.userType === 'customer'
+      show: isAuthenticated && !!user?.username && user.username !== 'User' && user?.userType === 'customer'
     },
     // {
     //   id: 4,
@@ -77,6 +77,14 @@ const Navbar = () => {
       navigate('/business-dashboard');
     } else {
       return;
+    }
+  }
+
+  const handleNotificationBellClick = () => {
+    if (user?.userType === 'business' || user?.userType === 'owner') {
+      navigate('/business-notifications');
+    } else if (user?.userType === 'customer' || user?.userType === 'inidividual') {
+      navigate('/notifications');
     }
   }
 
@@ -231,7 +239,7 @@ const Navbar = () => {
             <div className="hidden md:flex items-center space-x-3 lg:space-x-4 flex-shrink-0">
               {isAuthenticated ? (
                 <>
-                  <NotificationBell />
+                  <NotificationBell onClick={handleNotificationBellClick} />
                   <UserAvatarMenu showDashboard={true} onLogout={() => setOpen(false)} />
                 </>
               ) : (
@@ -307,7 +315,7 @@ const Navbar = () => {
                         <p className="text-xs text-gray-500 truncate max-w-[150px]">{user?.email}</p>
                       </div>
                     </div>
-                    <NotificationBell />
+                    <NotificationBell onClick={handleNotificationBellClick} />
                   </div>
                   {user?.userType === 'business' && (
                     <button onClick={() => { handleDashboard(); setOpen(false); }} className="w-full px-4 py-2.5 text-left text-gray-700 hover:bg-gray-50 rounded-lg transition-colors flex items-center" >
@@ -326,10 +334,17 @@ const Navbar = () => {
                       <span className="text-sm font-medium">Profile</span>
                     </button>
                   )}
-                  <button onClick={() => { handleLogout(); setOpen(false); }} className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center" >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span className="text-sm font-medium">Log out</span>
-                  </button>
+                  {!isAuthenticated && !user?.username && user?.username === 'User' ? (
+                    <button onClick={() => { navigate('/login'); setOpen(false); }} className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center" >
+                      <LogIn className="mr-2 h-4 w-4" />
+                      <span className="text-sm font-medium">Log in</span>
+                    </button>
+                  ) : (
+                    <button onClick={() => { handleLogout(); setOpen(false); }} className="w-full px-4 py-2.5 text-left text-red-600 hover:bg-red-50 rounded-lg transition-colors flex items-center" >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span className="text-sm font-medium">Log out</span>
+                    </button>
+                  )}
                 </>
               ) : (
                 <>
