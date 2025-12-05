@@ -60,8 +60,8 @@ const CustomDropdown: React.FC<CustomDropdownProps> = ({
   const sizeClasses = {
     xs: "h-8 text-xs px-3",
     sm: "h-10 text-sm px-4",
-    md: "h-12 text-base px-4",
-    lg: "h-14 text-lg px-5",
+    md: "h-12 text-sm px-4",
+    lg: "h-14 text-sm px-5",
   };
 
   return (

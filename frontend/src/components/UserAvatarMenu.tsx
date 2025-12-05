@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router"
-import { LogOut, User, Settings } from "lucide-react"
+import { LogIn, LogOut, User, Settings } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { useAuth } from "./lib/authContext";
@@ -11,9 +11,7 @@ interface UserAvatarMenuProps {
 
 const UserAvatarMenu = ({ showDashboard = true, onLogout }: UserAvatarMenuProps) => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-
-  console.log(user)
+  const { isAuthenticated, user, logout } = useAuth();
 
   const getUserInitials = () => {
     if (!user) return 'U';
@@ -86,10 +84,18 @@ const UserAvatarMenu = ({ showDashboard = true, onLogout }: UserAvatarMenuProps)
           <span className="text-sm">Profile</span>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
-          <LogOut className="mr-2 h-4 w-4" />
-          <span className="text-sm">Log out</span>
-        </DropdownMenuItem>
+        {!isAuthenticated && !user ? (
+          <DropdownMenuItem onClick={() => navigate('/login')} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+            <LogIn className="mr-2 h-4 w-4" />
+            <span className="text-sm">Log in</span>
+          </DropdownMenuItem>
+        )
+        : (
+          <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50">
+            <LogOut className="mr-2 h-4 w-4" />
+            <span className="text-sm">Log out</span>
+          </DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )

@@ -63,7 +63,7 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen }) => {
 
         {/* Right section */}
         <div className="flex items-center gap-4 ml-auto pr-6 divide-x divide-neutral-200">
-          <NotificationBell />
+          <NotificationBell onClick={() => navigate('/business-notifications')} />
           <UserAvatar />
           {/* <div className="flex items-center gap-3"> */}
             {/* <img src={user?.profileImage || 'User'} alt={user?.name || 'user'} className="w-8 h-8 rounded-full border border-[#EAECF0] relative" /> */}

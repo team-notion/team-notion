@@ -375,38 +375,40 @@ export function CarouselSpacing() {
   
   
   return (
-    <Carousel className="w-full">
-      <CarouselContent className="lg:-ml-1 -ml-2 sm:-ml-3">
-        {loading ? (
-              Array.from({ length: 3 }).map((_, index) => (
-              <CarouselItem key={index} className="pl-2 sm:pl-3 basis-5/6 sm:basis-1/2 lg:basis-2/7">
-                <div className="p-1">
-                  <VehicleCardSkeleton />
-                </div>
-              </CarouselItem>
-            ))
-          ) : vehicles.length === 0 ?(
-            <CarouselItem className="pl-2 sm:pl-3 basis-full">
-              <div className="p-1">
-                <div className="flex flex-col items-center justify-center py-12 bg-white rounded-lg">
-                  <ImageOff className="size-12 text-gray-300 mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-700">No cars available</h3>
-                  <p className="text-gray-500 mt-1">Check back later for new listings</p>
-                </div>
-              </div>
-            </CarouselItem>
-          ) : (
-            vehicles.map((car) => (
-                <CarouselItem key={car.id} className="pl-2 sm:pl-3 basis-[91%] sm:basis-1/2 lg:basis-2/6 xl:basis-2/7">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <Carousel className="w-full">
+        <CarouselContent className="lg:-ml-1 -ml-2 sm:-ml-3">
+          {loading ? (
+                Array.from({ length: 3 }).map((_, index) => (
+                <CarouselItem key={index} className="pl-2 sm:pl-3 basis-5/6 sm:basis-1/2 lg:basis-2/7">
                   <div className="p-1">
-                    <CarCard car={car} />
+                    <VehicleCardSkeleton />
                   </div>
                 </CarouselItem>
               ))
-          )}
-      </CarouselContent>
-      <CarouselPrevious className="hidden sm:flex" />
-      <CarouselNext className="hidden sm:flex" />
-    </Carousel>
+            ) : vehicles.length === 0 ?(
+              <CarouselItem className="pl-2 sm:pl-3 basis-full">
+                <div className="p-1">
+                  <div className="flex flex-col items-center justify-center py-12 bg-white rounded-lg">
+                    <ImageOff className="size-12 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-700">No cars available</h3>
+                    <p className="text-gray-500 mt-1">Check back later for new listings</p>
+                  </div>
+                </div>
+              </CarouselItem>
+            ) : (
+              vehicles.map((car) => (
+                  <CarouselItem key={car.id} className="pl-2 sm:pl-3 basis-[91%] sm:basis-1/2 lg:basis-2/6 xl:basis-2/7">
+                    <div className="p-1">
+                      <CarCard car={car} />
+                    </div>
+                  </CarouselItem>
+                ))
+            )}
+        </CarouselContent>
+        <CarouselPrevious className="hidden sm:flex" />
+        <CarouselNext className="hidden sm:flex" />
+      </Carousel>
+    </div>
   )
 }

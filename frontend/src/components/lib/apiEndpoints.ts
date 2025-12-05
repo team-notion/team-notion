@@ -21,7 +21,7 @@ export enum apiEndpoints {
   ADD_CAR = '/cars/create/',
   GET_ALL_CARS_BY_OWNER_ID = '/cars/?owner_id=',
   GET_CAR_DETAILS = '/cars/',
-  UPDATE_CAR = '/cars/:id/manage',
+  UPDATE_CAR = '/cars/:id/manage/',
   DELETE_CAR = '/cars/',
 
   // RESERVATIONS
@@ -33,4 +33,9 @@ export enum apiEndpoints {
   // NOTIFICATIONS
   GET_NOTIFICATIONS = '/notifications',
   UPDATE_NOTIFICATIONS = '/notifications/:id',
+
+  // PAYMENTS
+  INITIALIZE_PAYMENTS = '/payments/start/',
+  COMPLETE_PAYMENTS = '/payments/:id',
+  VERIFY_PAYMENTS = '/payments/verify/?reference=',
 }
