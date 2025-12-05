@@ -15,8 +15,9 @@ const PaymentVerification = () => {
   useEffect(() => {
     const verifyPayment = async () => {
       try {
-        const paymentId = sessionStorage.getItem('pending_payment_id');
+        const trxref = searchParams.get('trxref');
         const reference = searchParams.get('reference');
+        const paymentId = sessionStorage.getItem('pending_payment_id');
         
         if (!paymentId) {
           toast.error('Payment information not found');
@@ -30,7 +31,7 @@ const PaymentVerification = () => {
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        const resp = response.data.results;
+        const resp = response.data;
 
         if (response.status === 200 || response.status === 201) {
           toast.success(resp?.message || 'Payment successful! Your reservation is confirmed.');

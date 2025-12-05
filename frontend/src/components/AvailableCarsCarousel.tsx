@@ -8,6 +8,7 @@ import { getData } from "./lib/apiMethods"
 import { useNumberFormatter } from "./utils/formatters"
 import { toast } from "sonner"
 import { useAuth } from "./lib/authContext"
+import { LOCAL_STORAGE_KEYS } from "./utils/localStorageKeys"
 
 interface CarPhoto {
   id: number
@@ -63,13 +64,20 @@ const AvailableCarsCarousel = ({ pickupDate, returnDate, selectedCarId, onSelect
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set())
   const formatPrice = useNumberFormatter({ decimals: 2 })
 
+  const getCurrentUserId = () => {
+    const userData = localStorage.getItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID) || user?.id;
+    return userData;
+  };
+
   useEffect(() => {
     const fetchAvailableCars = async () => {
       setLoading(true)
 
       try {
+        const userId = getCurrentUserId();
+        const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
         // Build query params for date filtering if dates are provided
-        let url = `${CONFIG.BASE_URL}${apiEndpoints.GET_ALL_CARS}`
+        let url = `${CONFIG.BASE_URL}${apiEndpoints.GET_ALL_CARS_BY_OWNER_ID}${userId}`
         const params = new URLSearchParams()
 
         if (pickupDate) {
@@ -83,16 +91,12 @@ const AvailableCarsCarousel = ({ pickupDate, returnDate, selectedCarId, onSelect
           url += `?${params.toString()}`
         }
 
-        const resp = await getData(url)
+        const resp = await getData(url, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
 
         if (resp?.data?.results) {
           let filteredCars = resp.data.results
-
-          if (user?.userType === "business" && user.id) {
-            console.log(user?.id);
-            console.log(user?.userType)
-            filteredCars = filteredCars.filter((car: Car) => car.owner === user.username)
-          }
 
           setVehicles(filteredCars)
         }
