@@ -139,39 +139,37 @@ const CreateReservationModal = ({ isOpen, onClose, onConfirm }: CreateReservatio
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      const reservationResp = reservationResponse.data.results;
+      const reservationResp = reservationResponse.data;
 
-      console.log(reservationResp.data.results);
+      console.log(reservationResponse)
+      console.log(reservationResp.data);
 
       if (reservationResponse.status === 200 || reservationResponse.status === 201) {
         const initilizePaymentData = {
           reservation_code: reservationResp.reservation_code,
-          amount: reservationResp.deposit_amount,
+          amount: Number(reservationResp.deposit_amount),
         }
 
         const paymentInitResponse = await postData(`${CONFIG.BASE_URL}${apiEndpoints.INITIALIZE_PAYMENTS}`, initilizePaymentData, {
           headers: { Authorization: `Bearer ${token}` }
         })
 
-        const paymentInitResp = paymentInitResponse.data.results;
+        const paymentInitResp = paymentInitResponse.data;
 
-        if (paymentInitResp.status === 200 || paymentInitResp.status === 201) {
+        if (paymentInitResponse.status === 200 || paymentInitResponse.status === 201) {
           const paymentId = paymentInitResp.payment_id;
 
           const completePaymentResponse = await getData(`${CONFIG.BASE_URL}${apiEndpoints.COMPLETE_PAYMENTS.replace(':id', paymentId)}`, {
             headers: { Authorization: `Bearer ${token}` }
           })
 
-          const { authorization_url, payment_id } = completePaymentResponse.data.results;
+          const { authorization_url, payment_id } = completePaymentResponse.data;
 
           sessionStorage.setItem('pending_payment_id', paymentId);
           sessionStorage.setItem('reservation_code', reservationResp.reservation_code);
 
           window.location.href = authorization_url;
         }
-        
-
-        toast.success("Reservation created successfully!");
       }
 
       
