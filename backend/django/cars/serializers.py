@@ -131,7 +131,7 @@ class AuthReservationSerializer(serializers.ModelSerializer, BaseReservationVali
     class Meta:
         model = Reservation
         fields = ['id', 'car', 'reservation_code', 'customer', 'customer_username', 'reserved_from', 'reserved_to', 'has_paid_deposit', 'amount_paid', 'deposit_amount', 'balance_due', 'customer_email', 'status']
-        read_only_fields = ['customer', 'reservation_code', 'has_paid_deposit', 'amount_paid', 'deposit_amount', 'balance_due', 'customer_email']
+        read_only_fields = ['customer', 'reservation_code', 'has_paid_deposit', 'amount_paid', 'deposit_amount', 'balance_due', 'customer_email', 'status']
 
     
     
@@ -157,7 +157,7 @@ class GuestReservationSerializer(serializers.ModelSerializer, BaseReservationVal
 
     class Meta:
         model = Reservation
-        fields = ['id', 'car', 'guest_email', 'reservation_code', 'reserved_from', 'reserved_to', 'deposit_amount', 'has_paid_deposit', 'amount_paid', 'deposit_amount', 'balance_due', 'customer_email', 'status']
+        fields = ['id', 'car', 'guest_email', 'reservation_code', 'reserved_from', 'reserved_to', 'deposit_amount', 'has_paid_deposit', 'amount_paid', 'deposit_amount', 'balance_due', 'customer_email']
         read_only_fields = ['has_paid_deposit', 'reservation_code', 'amount_paid', 'deposit_amount', 'balance_due', 'customer_email']
 
     def validate(self, attrs):
