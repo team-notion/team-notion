@@ -81,6 +81,9 @@ class CarSerializer(serializers.ModelSerializer):
 
 class BaseReservationValidator:
     # Updated to accept car instance directly (instead of car_id)
+    
+    customer_email = serializers.SerializerMethodField()
+
     def validate_car_instance(self, car):
         # If car is actually an ID (safety check), fetch the instance
         if isinstance(car, int):
@@ -96,6 +99,9 @@ class BaseReservationValidator:
             raise serializers.ValidationError("This car is currently not available.")
 
         return car
+    
+    def get_customer_email(self, obj):
+        return obj.customer_email
     
     def validate_dates(self, car, reserved_from, reserved_to):
         if reserved_from >= reserved_to:
@@ -124,9 +130,11 @@ class AuthReservationSerializer(serializers.ModelSerializer, BaseReservationVali
 
     class Meta:
         model = Reservation
-        fields = ['id', 'car', 'reservation_code', 'customer', 'customer_username', 'reserved_from', 'reserved_to', 'has_paid_deposit', 'amount_paid', 'deposit_amount', 'balance_due']
-        read_only_fields = ['customer', 'reservation_code', 'has_paid_deposit', 'amount_paid', 'deposit_amount', 'balance_due']
+        fields = ['id', 'car', 'reservation_code', 'customer', 'customer_username', 'reserved_from', 'reserved_to', 'has_paid_deposit', 'amount_paid', 'deposit_amount', 'balance_due', 'customer_email']
+        read_only_fields = ['customer', 'reservation_code', 'has_paid_deposit', 'amount_paid', 'deposit_amount', 'balance_due', 'customer_email']
 
+    
+    
     def create(self, validated_data):
         validated_data.pop('customer_username', None)  # Remove extra field before creation
         return super().create(validated_data)
@@ -149,8 +157,8 @@ class GuestReservationSerializer(serializers.ModelSerializer, BaseReservationVal
 
     class Meta:
         model = Reservation
-        fields = ['id', 'car', 'guest_email', 'reservation_code', 'reserved_from', 'reserved_to', 'deposit_amount', 'has_paid_deposit', 'amount_paid', 'deposit_amount', 'balance_due']
-        read_only_fields = ['has_paid_deposit', 'reservation_code', 'amount_paid', 'deposit_amount', 'balance_due']
+        fields = ['id', 'car', 'guest_email', 'reservation_code', 'reserved_from', 'reserved_to', 'deposit_amount', 'has_paid_deposit', 'amount_paid', 'deposit_amount', 'balance_due', 'customer_email']
+        read_only_fields = ['has_paid_deposit', 'reservation_code', 'amount_paid', 'deposit_amount', 'balance_due', 'customer_email']
 
     def validate(self, attrs):
         car = attrs.get('car')  # DRF already gives Car instance

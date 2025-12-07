@@ -138,7 +138,11 @@ class Reservation(models.Model):
                 )
         super().save(*args, **kwargs)
 
-
+    @property
+    def customer_email(self):
+        return self.guest_email or self.customer.email
+        
+        
     def generate_unique_code(self):
         chars = string.ascii_uppercase + string.digits
         while True:
@@ -191,4 +195,7 @@ class Reservation(models.Model):
         verbose_name = 'Reservation'
         verbose_name_plural = 'Reservations'
 
+
+
+    
 
