@@ -322,17 +322,10 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
 
       if (isEditMode && carData) {
         const updateEndpoint = apiEndpoints.UPDATE_CAR.replace(':id', carData.id.toString());
-
-        console.log(updateEndpoint);
-        console.log(token);
-
-        console.log(payload)
+        
         const response = await patchData(`${CONFIG.BASE_URL}${updateEndpoint}`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
-
-        console.log(payload)
-        console.log(response)
 
         const resp = response.data;
 

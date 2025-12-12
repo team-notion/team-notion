@@ -1,27 +1,13 @@
-import { X, AlertCircle, CheckCircle2, Users, Calendar, UserRound } from "lucide-react"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useForm, Controller } from "react-hook-form"
-import SelectDate from "./SelectDate"
-import SelectDropdown from "./SelectDropdown"
-import { useState } from "react"
-import PhoneNumberInput from "./ui/PhoneNumberInput"
-import { z } from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { toast } from "sonner"
-
-export interface ReservationFormData {
-  customerName: string
-  phoneNumber: string
-  email: string
-  pickupDate: string
-  returnDate: string
-  driverName: string
-  driverLastName: string
-  dateOfBirth: string
-  issueDate: string
-  issuingCountry: string
-  licenseClass: string
-}
+import { X, Calendar, Mail, Phone, User } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import SelectDate from "./SelectDate";
+import { toast } from "sonner";
+import { postData } from "./lib/apiMethods";
+import CONFIG from "./utils/config";
+import { apiEndpoints } from "./lib/apiEndpoints";
 
 interface Car {
   id: number;
@@ -30,355 +16,127 @@ interface Car {
   year_of_manufacture: number;
   daily_rental_price: number;
   deposit: number;
+  reserved_ranges?: { from: string; to: string }[];
 }
 
-// Warning Modal
-interface WarningModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onSignUp: () => void
-  onContinue: () => void
-}
-
-export function WarningModal({ isOpen, onClose, onSignUp, onContinue }: WarningModalProps) {
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent 
-        onInteractOutside={(e) => e.preventDefault()} 
-        onEscapeKeyDown={(e) => e.preventDefault()}
-        className="sm:max-w-3xl p-0 gap-0">
-        <div className="px-2 py-4 lg:p-10 space-y-4">
-          <div className="flex justify-center">
-            <div className="w-12 h-12 lg:w-16 lg:h-16 rounded-full border-4 border-[#F97316] flex items-center justify-center">
-              <AlertCircle className="size-8 text-[#F97316]" />
-            </div>
-          </div>
-
-          <DialogHeader>
-            <DialogTitle className="text-2xl lg:text-3xl font-medium text-center text-[#0D183A]">Warning</DialogTitle>
-          </DialogHeader>
-
-          <div className="space-y-3 text-sm text-gray-700">
-            <p className="text-center">You are currently using a guest account. Which means:</p>
-            <ol className="list-decimal list-inside space-y-2 pl-2">
-              <li>Any reservation made will be soft reserved ( can be overruled )</li>
-              <li>You will not be able to pay for the reservation until you sign up or log into your account</li>
-              <li>
-                Account holders have priority over rentals ( i.e They can take your spot once they pay the rental fee )
-              </li>
-              <li>
-                If payment has not been made within a specified time period. If payment has not been made by then, your
-                reservation will be cancelled.
-              </li>
-            </ol>
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <button
-              onClick={onSignUp}
-              className="flex-1 px-4 py-2 border-2 border-[#F97316] text-[#F97316] rounded-lg hover:bg-orange-50 font-medium cursor-pointer"
-            >
-              Sign up
-            </button>
-            <button
-              onClick={onContinue}
-              className="flex-1 px-4 py-2 bg-[#F97316] text-white rounded-lg hover:bg-orange-600 font-medium cursor-pointer"
-            >
-              Continue
-            </button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-// Customer Info Form Component
-interface CustomerFormData {
-  customerName: string
-  phoneNumber: string
-  email: string
-  pickupDate: string
-  returnDate: string
-}
-
-interface CustomerInfoFormProps {
-  formData: CustomerFormData
-  onFormChange: (data: Partial<CustomerFormData>) => void
-}
-
-function CustomerInfoForm({ formData, onFormChange }: CustomerInfoFormProps) {
-  return (
-    <>
-      <div 
-        className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-gray-600" />
-          <h3 className="font-semibold text-[#0D183A]">Customer information</h3>
-        </div>
-        <p className="text-sm text-gray-600">Enter customer detail</p>
-      </div>
-
-      <div className="space-y-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Customer Name</label>
-          <input
-            type="text"
-            placeholder="Enter customer name"
-            value={formData.customerName}
-            onChange={(e) => onFormChange({ customerName: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066CC]"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Phone number</label>
-          <input
-            type="tel"
-            placeholder="000-0000-0000"
-            value={formData.phoneNumber}
-            onChange={(e) => onFormChange({ phoneNumber: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066CC]"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-          <input
-            type="email"
-            placeholder="www.hotel@gmail.com"
-            value={formData.email}
-            onChange={(e) => onFormChange({ email: e.target.value })}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066CC]"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Pick up date</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="MM/DD/YYYY"
-                value={formData.pickupDate}
-                onChange={(e) => onFormChange({ pickupDate: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066CC]"
-              />
-              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Return date</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="MM/DD/YYYY"
-                value={formData.returnDate}
-                onChange={(e) => onFormChange({ returnDate: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066CC]"
-              />
-              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  )
-}
-
-// Driver Info Form Component
-interface DriverFormData {
-  driverName: string
-  driverLastName: string
-  dateOfBirth: string
-  issueDate: string
-  issuingCountry: string
-  licenseClass: string
-}
-
-interface DriverInfoFormProps {
-  formData: DriverFormData
-  onFormChange: (data: Partial<DriverFormData>) => void
-}
-
-function DriverInfoForm({ formData, onFormChange }: DriverInfoFormProps) {
-  return (
-    <>
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Users className="w-5 h-5 text-gray-600" />
-          <h3 className="font-semibold text-[#0D183A]">Driver information</h3>
-        </div>
-        <p className="text-sm text-gray-600">Enter driver detail</p>
-      </div>
-
-      <div className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Name / Last Name</label>
-            <input
-              type="text"
-              placeholder="First name"
-              value={formData.driverName}
-              onChange={(e) => onFormChange({ driverName: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066CC]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">&nbsp;</label>
-            <input
-              type="text"
-              placeholder="Last name"
-              value={formData.driverLastName}
-              onChange={(e) => onFormChange({ driverLastName: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066CC]"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Date of Birth</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="MM/DD/YYYY"
-                value={formData.dateOfBirth}
-                onChange={(e) => onFormChange({ dateOfBirth: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066CC]"
-              />
-              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Issue Date</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="MM/DD/YYYY"
-                value={formData.issueDate}
-                onChange={(e) => onFormChange({ issueDate: e.target.value })}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066CC]"
-              />
-              <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            </div>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Issuing Country</label>
-            <input
-              type="text"
-              placeholder="Enter issuing country"
-              value={formData.issuingCountry}
-              onChange={(e) => onFormChange({ issuingCountry: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066CC]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Driver's License Class</label>
-            <input
-              type="text"
-              placeholder="Enter license class"
-              value={formData.licenseClass}
-              onChange={(e) => onFormChange({ licenseClass: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#0066CC]"
-            />
-          </div>
-        </div>
-      </div>
-    </>
-  )
+interface GuestReservationModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  car: Car;
 }
 
 
-
-
-// Reservation Modal (Multi-step)
-interface ReservationModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onNext: (reservationData: any) => void
-  onBack: () => void
-  car: Car
-}
-
-
-const reservationSchema = z.object({
-  customerName: z.string().min(2, "Customer name must be at least 2 characters"),
-  email: z.string().email("Please enter a valid email address"),
-  phone: z.string().min(10, "Please enter a valid phone number"),
+const guestReservationSchema = z.object({
+  customerName: z.string().min(2, "Name is required (minimum 2 characters)"),
+  email: z.string().email("Valid email is required"),
+  phone: z.string().min(10, "Valid phone number is required"),
+  selectedCarId: z.number({ message: "Vehicle selection is required" }),
+  selectedCar: z.any().optional(),
   pickupDate: z.date({ message: "Pickup date is required" }),
   returnDate: z.date({ message: "Return date is required" }),
   pickupLocation: z.string().min(2, "Pickup location is required"),
-  })
-  .refine((data) => data.returnDate > data.pickupDate, {
-    message: "Return date must be after pickup date",
-    path: ["returnDate"],
+  notes: z.string().optional(),
+}).refine((data) => data.returnDate > data.pickupDate, {
+  message: "Return date must be after pickup date",
+  path: ["returnDate"],
 });
-  
-  
-export function ReservationModal({
-  isOpen,
-  onClose,
-  onNext,
-  onBack,
-  car,
-}: ReservationModalProps) {
-  const [loading, setLoading] = useState(false);
-  type ReservationFormData = z.infer<typeof reservationSchema>;
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<ReservationFormData>({
-    resolver: zodResolver(reservationSchema),
-    mode: 'onChange',
+export type GuestReservationData = z.infer<typeof guestReservationSchema>;
+
+export function GuestReservationModal({ isOpen, onClose, onConfirm, car }: GuestReservationModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { register, handleSubmit, setValue, watch, formState: { errors }, } = useForm<GuestReservationData>({
+    resolver: zodResolver(guestReservationSchema),
+    mode: "onChange",
     defaultValues: {
       customerName: '',
       email: '',
       phone: '',
+      selectedCarId: car.id,
+      selectedCar: car,
+      pickupLocation: '',
       pickupDate: undefined,
       returnDate: undefined,
-      pickupLocation: '',
-    },
+      notes: '',
+    }
   });
 
-  const pickupDate = watch('pickupDate');
-  const returnDate = watch('returnDate');
+  const pickupDate = watch("pickupDate");
+  const returnDate = watch("returnDate");
 
-  const formatDateForAPI = (date: Date): string => {
-    return date.toISOString().split('T')[0] + 'T00:00:00Z';
+  const isDateReserved = (date: Date): boolean => {
+    if (!car.reserved_ranges) return false;
+    
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+
+    return car.reserved_ranges.some(range => {
+      const fromDate = new Date(range.from);
+      const toDate = new Date(range.to);
+      fromDate.setHours(0, 0, 0, 0);
+      toDate.setHours(0, 0, 0, 0);
+
+      return checkDate >= fromDate && checkDate <= toDate;
+    });
   };
 
-  const onSubmit = async (data: ReservationFormData) => {
+  const handleFormSubmit = async (data: GuestReservationData) => {
     if (!car) {
-      toast.error("Car information is missing");
+      toast.error('Car information is missing');
+      return;
+    }
+
+    if (!data.pickupDate || !data.returnDate) {
+      toast.error("Please select pickup and return dates");
       return;
     }
 
     setLoading(true);
+
     try {
-      const reservationPayload = {
+      const formattedPickupDate = data.pickupDate.toISOString();
+      const formattedReturnDate = data.returnDate.toISOString();
+
+      const reservationData = {
         car: car.id,
-        reserved_from: formatDateForAPI(data.pickupDate),
-        reserved_to: formatDateForAPI(data.returnDate),
-        guest_name: data.customerName,
+        reserved_from: formattedPickupDate,
+        reserved_to: formattedReturnDate,
         guest_email: data.email,
         guest_phone: data.phone,
         pickup_location: data.pickupLocation,
       };
 
-      console.log("Guest reservation payload:", reservationPayload);
-      
-      onNext(reservationPayload);
-      
-    } catch (error) {
-      console.error("Reservation error:", error);
-      toast.error("Failed to process reservation");
-    } finally {
+      const response = await postData(`${CONFIG.BASE_URL}${apiEndpoints.GUEST_RESERVATION}`, reservationData);
+
+      const resp = response.data;
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success(resp.message || 'Temporary Reservation Successful. Please, signup to complete reservation');
+      }
+
+      onConfirm();
+    }
+    catch (err: any) {
+      const errData = err?.response?.data;
+    
+      if (errData && typeof errData === 'object') {
+        Object.keys(errData).forEach((key) => {
+          if (Array.isArray(errData[key])) {
+            errData[key].forEach((message: string) => {
+              toast.error(message)
+            });
+          } else {
+            toast.error(errData[key]);
+          }
+        });
+      } else {
+        toast.error("Failed to make reservation");
+      }
+    }
+    finally {
       setLoading(false);
     }
   };
@@ -389,189 +147,218 @@ export function ReservationModal({
     const timeDiff = returnDate.getTime() - pickupDate.getTime();
     const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
     const totalPrice = days * car.daily_rental_price;
+    const deposit = totalPrice * 0.1;
     
-    return { days, totalPrice };
+    return { days, totalPrice, deposit };
   };
 
   const rentalDetails = calculateRentalDetails();
 
-  if (!isOpen) return null;
-  
   return (
-    <dialog open={isOpen} className='modal'>
+    <dialog open={isOpen} className="modal">
       <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-2 lg:p-4">
-        <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto trick">
+        <div className="bg-white rounded-lg w-full max-w-3xl max-h-[90vh] overflow-y-auto">
           {/* Header */}
           <div className="sticky top-0 bg-[#F3F4F6] px-6 py-4 flex items-center justify-between z-20">
             <div>
-              <h2 className="text-xl font-medium text-black">Guest Reservation - {car.car_type} {car.model || ''}</h2>
-              <p className="text-sm text-gray-600">₦{car.daily_rental_price?.toLocaleString()}/day</p>
+              <h2 className="text-xl font-medium text-black">
+                Guest Reservation - {car.car_type} {car.model || ""}
+              </h2>
+              <p className="text-sm text-gray-600">
+                ₦{car.daily_rental_price?.toLocaleString()}/day
+              </p>
             </div>
-            <button onClick={onClose} className="text-red-500 hover:text-red-700 transition-colors cursor-pointer" >
+            <button
+              onClick={onClose}
+              className="text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+            >
               <X size={20} />
             </button>
           </div>
 
-          <div className="px-2 lg:px-6 py-8">
-
-            {/* Step 1: Vehicle Information */}
-            <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="flex items-start gap-3 mb-6">
-                <UserRound className="size-6 text-[#4B61A1ED] mt-1" />
+          <form onSubmit={handleSubmit(handleFormSubmit)} className="px-6 py-8">
+            {/* Guest Information */}
+            <div className="space-y-6 mb-8">
+              <div className="flex items-start gap-3 mb-4">
+                <User className="size-6 text-[#4B61A1ED] mt-1" />
                 <div>
-                  <h3 className="text-lg lg:text-xl font-medium text-black mb-1">Customer Information</h3>
-                  <p className="text-sm text-gray-600">Enter customer details</p>
+                  <h3 className="text-lg font-medium text-black">Your Information</h3>
+                  <p className="text-sm text-gray-600">We'll use this to confirm your reservation</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">Customer Name</label>
-                  <input type="text" placeholder="Enter customer name" {...register('customerName')} className=" text-[#5C5C5C] text-sm border border-gray-300 px-4 py-3 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
-                  {errors.customerName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.customerName.message}</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">Phone Number</label>
-                  <PhoneNumberInput value={watch('phone')} onValueChange={(value) => setValue("phone", value, { shouldValidate: true })} />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-black mb-2">Email Address</label>
-                  <input type="email" placeholder="Enter customer email" {...register('email')} className=" text-[#5C5C5C] text-sm border border-gray-300 px-4 py-3 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
-                  {errors.email && (
-                    <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  <div className='grid grid-cols-1'>
-                    <SelectDate
-                      label="Pickup Date"
-                      placeholder="Select pickup date"
-                      value={pickupDate}
-                      onChange={(date) => {
-                        if (date) setValue("pickupDate", date, { shouldValidate: true });
-                      }}
-                      minDate={new Date()}
-                    />
-                    {errors.pickupDate && (
-                      <p className="text-red-500 text-xs mt-1">{errors.pickupDate.message}</p>
-                    )}
-                  </div>
-
-                  <div className='grid grid-cols-1'>
-                    <SelectDate
-                      label="Return Date"
-                      placeholder="Select return date"
-                      value={returnDate}
-                      onChange={(date) => {
-                        if (date) setValue("returnDate", date, { shouldValidate: true })
-                      }}
-                      minDate={pickupDate || new Date()}
-                    />
-                    {errors.returnDate && (
-                      <p className="text-red-500 text-xs mt-1">{errors.returnDate.message}</p>
-                    )}
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-black mb-2">
-                      Pickup Location
-                    </label>
-                    <input type="text" placeholder="e.g, Ikeja" {...register('pickupLocation')} className="text-[#5C5C5C] text-sm w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:ring focus:ring-neutral-500" />
-                    {errors.pickupLocation && (
-                      <p className="text-red-500 text-xs mt-1">{errors.pickupLocation.message}</p>
-                    )}
-                  </div>
-                </div>
-
-                {rentalDetails && (
-                  <div className="bg-blue-50 p-4 rounded-lg">
-                    <h4 className="font-semibold text-blue-800 mb-2">Rental Summary</h4>
-                    <div className="space-y-1 text-sm">
-                      <div className="flex justify-between">
-                        <span>Rental Days:</span>
-                        <span>{rentalDetails.days} days</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span>Daily Rate:</span>
-                        <span>₦{car.daily_rental_price?.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between font-semibold border-t pt-1">
-                        <span>Total Price:</span>
-                        <span>₦{rentalDetails.totalPrice.toLocaleString()}</span>
-                      </div>
-                      <div className="flex justify-between text-sm">
-                        <span>Deposit:</span>
-                        <span>₦{car.deposit?.toLocaleString() || '0'}</span>
-                      </div>
-                    </div>
-                  </div>
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="John Doe"
+                  {...register("customerName")}
+                  className="text-[#5C5C5C] text-sm w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0]"
+                />
+                {errors.customerName && (
+                  <p className="text-red-500 text-xs mt-1">{errors.customerName.message}</p>
                 )}
               </div>
-              <div className='bg-white px-6 py-4 flex items-center justify-end gap-4 mt-4'>
-                <button onClick={onBack} className={`flex px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer`} >
-                  Back
-                </button>
-                <button type="submit" disabled={loading} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
-                  {loading ? 'Processing...' : 'Make Reservation'}
-                </button>
+
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  placeholder="john@example.com"
+                  {...register("email")}
+                  className="text-[#5C5C5C] text-sm w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0]"
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+                )}
               </div>
-            </form>
 
-          </div>
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  placeholder="+234 801 234 5678"
+                  {...register("phone")}
+                  className="text-[#5C5C5C] text-sm w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0]"
+                />
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
+                )}
+              </div>
+            </div>
 
+            {/* Rental Dates */}
+            <div className="space-y-6 mb-8">
+              <div className="flex items-start gap-3 mb-4">
+                <Calendar className="size-6 text-[#4B61A1ED] mt-1" />
+                <div>
+                  <h3 className="text-lg font-medium text-black">Rental Period</h3>
+                  <p className="text-sm text-gray-600">Select your pickup and return dates</p>
+                </div>
+              </div>
+
+              <SelectDate
+                label="Pickup Date *"
+                placeholder="Select pickup date"
+                value={pickupDate}
+                onChange={(date) => {
+                  if (date) setValue("pickupDate", date, { shouldValidate: true });
+                }}
+                minDate={new Date()}
+              />
+              {errors.pickupDate && (
+                <p className="text-red-500 text-xs -mt-4">{errors.pickupDate.message}</p>
+              )}
+
+              <SelectDate
+                label="Return Date *"
+                placeholder="Select return date"
+                value={returnDate}
+                onChange={(date) => {
+                  if (date) setValue("returnDate", date, { shouldValidate: true });
+                }}
+                minDate={pickupDate || new Date()}
+              />
+              {errors.returnDate && (
+                <p className="text-red-500 text-xs -mt-4">{errors.returnDate.message}</p>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Pickup Location *
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g., Ikeja, Lagos"
+                  {...register("pickupLocation")}
+                  className="text-[#5C5C5C] text-sm w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0]"
+                />
+                {errors.pickupLocation && (
+                  <p className="text-red-500 text-xs mt-1">{errors.pickupLocation.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Additional Notes (Optional)
+                </label>
+                <textarea
+                  placeholder="Any special requests or notes"
+                  {...register("notes")}
+                  rows={3}
+                  className="text-[#5C5C5C] text-sm w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0] resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Rental Summary */}
+            {rentalDetails && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h4 className="font-semibold text-blue-800 mb-3">Rental Summary</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Rental Period:</span>
+                    <span className="font-medium text-blue-900">{rentalDetails.days} days</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Daily Rate:</span>
+                    <span className="font-medium text-blue-900">
+                      ₦{car.daily_rental_price.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-blue-300">
+                    <span className="text-blue-700 font-semibold">Total Cost:</span>
+                    <span className="font-bold text-blue-900">
+                      ₦{rentalDetails.totalPrice.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Deposit Required:</span>
+                    <span className="font-medium text-blue-900">
+                      ₦{rentalDetails.deposit.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Important Notice */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <h5 className="font-semibold text-yellow-800 mb-2">Important Notice</h5>
+              <ul className="text-xs text-yellow-700 space-y-1">
+                <li>• Your reservation will be confirmed via email</li>
+                <li>• Payment will be made upon vehicle pickup</li>
+                <li>• Please bring a valid ID and driver's license</li>
+                <li>• Cancellation policy applies as per rental terms</li>
+              </ul>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-4">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium disabled:bg-gray-400"
+              >
+                {loading ? "Processing..." : "Confirm Reservation"}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </dialog>
-  )
-}
-
-
-
-
-
-
-
-
-
-
-// Success Modal
-interface SuccessModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onDone: () => void
-}
-
-export function SuccessModal({ isOpen, onClose, onDone }: SuccessModalProps) {
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[550px] p-0 gap-0">
-        <div className="px-2 py-4 lg:p-8 space-y-6">
-          <div className="flex justify-center">
-            <div className="w-12 lg:w-20 h-12 lg:h-20 rounded-full border-4 border-[#10B981] flex items-center justify-center">
-              <CheckCircle2 className="size-8 text-[#10B981]" />
-            </div>
-          </div>
-
-          <div className="text-center space-y-3">
-            <h2 className="text-2xl font-bold text-[#0D183A]">Temporary Reservation Successful</h2>
-            <p className="text-sm text-gray-600">
-              Your car is soft reserved for 24 hours. An Email will be sent containing instructions on how to confirm
-              booking.
-            </p>
-          </div>
-
-          <div className="flex justify-center">
-            <button
-              onClick={onDone}
-              className="px-4 py-2 bg-[#F97316] text-white rounded-lg hover:bg-orange-600 font-medium cursor-pointer"
-            >
-              Done
-            </button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  )
+  );
 }

@@ -1,29 +1,29 @@
 import { useState, useEffect } from "react";
 import { useParams } from "react-router";
 import { CheckCircle2, AlertCircle } from "lucide-react";
-import { Skeleton } from "../ui/skeleton";
 import { useNavigate } from "react-router";
-import { getData } from "../lib/apiMethods";
-import CONFIG from "../utils/config";
-import { apiEndpoints } from "../lib/apiEndpoints";
+import { getData } from "@/components/lib/apiMethods";
+import CONFIG from "@/components/utils/config";
+import { apiEndpoints } from "@/components/lib/apiEndpoints";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const EmailVerification = () => {
+const CancelReservation = () => {
   const navigate = useNavigate();
-  const { uid, token } = useParams();
+  const { token } = useParams();
   const [status, setStatus] = useState("loading");
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    const verifyEmail = async () => {
+    const confirmCancellation = async () => {
       try {
-        if (!uid || !token) {
-          setErrorMessage('Invalid verification link.');
+        if (!token) {
+          setErrorMessage('Invalid cancellation link.');
           setStatus("error");
           return;
         }
 
-        const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.VERIFY_EMAIL}${uid}/${token}`);
+        const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.CONFIRM_RESERVATION_CANCELLATION}?token=${token}`);
         const errorData = await resp.data;
 
         if (resp.status === 200) {
@@ -44,7 +44,7 @@ const EmailVerification = () => {
         }
 
         setTimeout(() => {
-          navigate("/login")
+          navigate("/reservation-management");
         }, 3000)
       }
       catch (error) {
@@ -53,30 +53,12 @@ const EmailVerification = () => {
       }
     };
 
-    verifyEmail();
-  }, [uid, token, navigate]);
+    confirmCancellation();
+  }, [token, navigate]);
 
   console.log(status);
 
   return (
-    // <>
-    //   <img src={EmailIcon} alt="Email Sent" className="mx-auto mb-4 w-16 h-16" />
-
-    //   <div className="text-center mb-8">
-    //     <h1 className="text-2xl font-semibold text-[#000000] mb-4">
-    //       Email verification
-    //     </h1>
-    //     <p className="text-gray-600 text-sm leading-snug lg:w-[65%] mx-auto">
-    //       Email verified successfully.
-    //     </p>
-    //   </div>
-
-    //   <div className="flex justify-center mt-4">
-    //     <button type="button" onClick={handleNext} className="px-8 py-2 bg-[#F97316] hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
-    //       Go to Login
-    //     </button>
-    //   </div>
-    // </>
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
         {status === "loading" && (
@@ -95,8 +77,8 @@ const EmailVerification = () => {
             </div>
 
             <div className="text-center mb-8">
-              <h1 className="text-lg font-semibold text-gray-900 mb-4">
-                Email Verification
+              <h1 className="text-2xl font-semibold text-gray-900 mb-4">
+                Reservation Cancellation Successful
               </h1>
               <p className="text-gray-600 text-sm leading-snug">
                 {successMessage}
@@ -112,22 +94,13 @@ const EmailVerification = () => {
             </div>
 
             <div className="text-center mb-8">
-              <h1 className="text-lg font-semibold text-gray-900 mb-4">
-                Verification Failed
+              <h1 className="text-2xl font-semibold text-gray-900 mb-4">
+                Reservation Cancellation Failed
               </h1>
               <p className="text-gray-600 text-sm leading-snug">
                 {errorMessage}
               </p>
             </div>
-
-            {/* <div className="flex flex-col gap-3 justify-center mt-6">
-              <button type="button" onClick={} className="px-8 py-2 bg-orange-500 hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
-                Go to Login
-              </button>
-              <button type="button" onClick={() => navigate("/resend-verification")} className="px-8 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold rounded-lg transition-colors duration-200 min-w-[10rem] cursor-pointer" >
-                Request New Link
-              </button>
-            </div> */}
           </>
         )}
       </div>
@@ -135,4 +108,4 @@ const EmailVerification = () => {
   );
 };
 
-export default EmailVerification;
+export default CancelReservation;

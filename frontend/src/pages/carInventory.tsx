@@ -3,7 +3,7 @@ import ActionModal from "@/components/ActionModal";
 import AddCarModal from "@/components/AddCarModal";
 import CarInventoryCard from "@/components/carInventoryCard";
 import { apiEndpoints } from "@/components/lib/apiEndpoints";
-import { getData } from "@/components/lib/apiMethods";
+import { deleteData, getData } from "@/components/lib/apiMethods";
 import { useAuth } from "@/components/lib/authContext";
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group";
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
@@ -45,7 +45,7 @@ interface Car {
   duration_unit: string;
 }
 
-const ITEMS_PER_PAGE = 20;
+const ITEMS_PER_PAGE = 30;
 
 const VehicleInventoryCardSkeleton = () => (
   <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -81,6 +81,7 @@ const CarInventory = () => {
   const [availableCars, setAvailableCars] = useState(0);
   // const [filteredVehicles, setFilteredVehicles] = useState<Car[]>([]);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false);
   const [selectedCarId, setSelectedCarId] = useState<number | null>(null);
   const [selectedCar, setSelectedCar] = useState<Car | null>(null);
@@ -151,8 +152,43 @@ const CarInventory = () => {
   
           if (cars && Array.isArray(cars)) {
             const totalCount = resp?.data?.count;
-            const rentedCount = cars.filter((car: any) => !car.is_available).length;
-            const availableCount = cars.filter((car: any) => car.is_available).length;
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Count cars that are currently rented (today falls within reserved_ranges)
+            const rentedCount = cars.filter((car: any) => {
+              if (!car.reserved_ranges || car.reserved_ranges.length === 0) {
+                return false;
+              }
+
+              // Check if today falls within any reservation range
+              return car.reserved_ranges.some((range: any) => {
+                const fromDate = new Date(range.from);
+                const toDate = new Date(range.to);
+                fromDate.setHours(0, 0, 0, 0);
+                toDate.setHours(0, 0, 0, 0);
+
+                return today >= fromDate && today <= toDate;
+              });
+            }).length;
+
+            // Count available cars (no current reservations)
+            const availableCount = cars.filter((car: any) => {
+              if (!car.reserved_ranges || car.reserved_ranges.length === 0) {
+                return true; // No reservations means available
+              }
+
+              // Check if today does NOT fall within any reservation range
+              return !car.reserved_ranges.some((range: any) => {
+                const fromDate = new Date(range.from);
+                const toDate = new Date(range.to);
+                fromDate.setHours(0, 0, 0, 0);
+                toDate.setHours(0, 0, 0, 0);
+
+                return today >= fromDate && today <= toDate;
+              });
+            }).length;
   
             setTotalCars(totalCount);
             setRentedCars(rentedCount);
@@ -294,9 +330,60 @@ const CarInventory = () => {
     setDeleteModalOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
-    setSelectedCarId(null);
-  }
+  const handleDeleteConfirm = async (id: number) => {
+    setIsDeleting(true);
+
+    const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+
+    try {
+
+      if (!id) {
+        toast.error('Reservation not found');
+        return;
+      }
+
+
+      const response = await deleteData(`${CONFIG.BASE_URL}${apiEndpoints.UPDATE_CAR.replace(':id', id.toString())}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      const resp = response.data;
+
+      if (response.status === 200 || response.status === 201) {
+        toast.success(resp?.detail || resp?.message);
+        setSelectedCarId(null);
+        setDeleteModalOpen(false);
+      }
+      else if (resp.status === 400) {
+        toast.warning(resp.detail || resp.message || 'Cannot delete this car. There are pending or confirmed reservations');
+      }
+      else if (resp.status === 404) {
+        toast.error(resp.detail || resp.message || 'Verification link not found. Please request a new one.');
+      }
+    }
+    catch (err: any) {
+      const errData = err?.response?.data;
+
+      if (errData && typeof errData === 'object') {
+        Object.keys(errData).forEach((key) => {
+          if (Array.isArray(errData[key]) && errData[key].length > 0) {
+            errData[key].forEach((message: string) => {
+              toast.error(message);
+            });
+          }
+          else {
+            toast.error(errData[key]);
+          }
+        });
+      }
+    }
+    finally {
+      setIsDeleting(true);
+      setDeleteModalOpen(false);
+    }
+  };
+
+
 
   return (
     <div className="space-y-6 px-0 lg:px-4">
@@ -446,7 +533,7 @@ const CarInventory = () => {
 
       <AddCarModal isOpen={isAddCarModalOpen} onClose={() => { setIsAddCarModalOpen(false); setSelectedCar(null); setModalMode('add'); }} onConfirm={handleAddCarConfirm} carData={selectedCar} mode={modalMode} />
 
-      <ActionModal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Are you sure you want to delete this car?" onConfirm={handleDeleteConfirm} confirmText="Delete" cancelText="Cancel" confirmVariant="danger" />
+      <ActionModal isOpen={deleteModalOpen} onClose={() => setDeleteModalOpen(false)} title="Are you sure you want to delete this car?" onConfirm={() => selectedCarId !== null && handleDeleteConfirm(selectedCarId)} confirmText="Delete" cancelText="Cancel" confirmVariant="danger" />
     </div>
   );
 };

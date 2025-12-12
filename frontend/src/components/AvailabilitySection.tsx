@@ -2,31 +2,21 @@ import { useState } from "react"
 import { ChevronLeft, ChevronRight, ChevronDown, Star } from "lucide-react"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 
+interface ReservedRange {
+  from: string;
+  to: string;
+}
 interface AvailabilitySectionProps {
-  availableDates?: string[];
+  reservedRanges?: ReservedRange[];
 }
 
 interface RentalTermsSectionProps {
   rentalTerms?: string;
 }
 
-export function AvailabilitySection({ availableDates }: AvailabilitySectionProps) {
+export function AvailabilitySection({ reservedRanges = [] }: AvailabilitySectionProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(new Date())
-
-  const bookedDates = (availableDates ?? []).map((date) => {
-    const d = new Date(date)
-    return d.getFullYear() === currentMonth.getFullYear() && d.getMonth() === currentMonth.getMonth()
-      ? d.getDate()
-      : null
-  }).filter((d): d is number => d !== null)
-
-  const getBookedDaysForMonth = (month: Date) => {
-    return (availableDates ?? [])
-      .map((date) => new Date(date))
-      .filter(d => d.getMonth() === month.getMonth() && d.getFullYear() === month.getFullYear())
-      .map(d => d.getDate());
-  }
 
   const getDaysInMonth = (date: Date) => {
     const year = date.getFullYear()
@@ -36,8 +26,21 @@ export function AvailabilitySection({ availableDates }: AvailabilitySectionProps
     return { firstDay, daysInMonth }
   }
 
+  const isDateReserved = (day: number): boolean => {
+    const checkDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    checkDate.setHours(0, 0, 0, 0);
+
+    return reservedRanges.some(range => {
+      const fromDate = new Date(range.from);
+      const toDate = new Date(range.to);
+      fromDate.setHours(0, 0, 0, 0);
+      toDate.setHours(0, 0, 0, 0);
+
+      return checkDate >= fromDate && checkDate <= toDate;
+    });
+  }
+
   const { firstDay, daysInMonth } = getDaysInMonth(currentMonth)
-  const bookedDays = getBookedDaysForMonth(currentMonth)
 
   const previousMonth = () => {
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))
@@ -49,32 +52,48 @@ export function AvailabilitySection({ availableDates }: AvailabilitySectionProps
 
   const monthName = currentMonth.toLocaleDateString("en-US", { month: "long", year: "numeric" })
 
-  const isDateAvailable = (day: number) => {
-    const testDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
-    return !bookedDates.some(bookedDay => bookedDay === testDate.getDate());
-  }
-
-  const formatAvailableDates = () => {
-    const dates = availableDates ?? [];
-
-    if (dates.length === 0) {
-      return "No specific availability dates set";
+  const formatReservedRanges = () => {
+    if (reservedRanges.length === 0) {
+      return "No reservations - Fully available";
     }
 
-    const formattedDates = dates.map(date => {
-      return new Date(date).toLocaleDateString("en-US", {
-        weekday: 'short',
+    const formattedRanges = reservedRanges.map(range => {
+      const fromDate = new Date(range.from);
+      const toDate = new Date(range.to);
+      
+      const fromFormatted = fromDate.toLocaleDateString("en-US", {
         month: 'short',
         day: 'numeric'
       });
+      
+      const toFormatted = toDate.toLocaleDateString("en-US", {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      return `${fromFormatted} - ${toFormatted}`;
     });
 
-    if (formattedDates.length <= 3) {
-      return formattedDates.join(", ");
+    if (formattedRanges.length <= 2) {
+      return formattedRanges.join("; ");
     } else {
-      return `${formattedDates.slice(0, 3).join(", ")} and ${formattedDates.length - 3} more dates`;
+      return `${formattedRanges.slice(0, 2).join("; ")} and ${formattedRanges.length - 2} more`;
     }
   }
+
+  const getReservedDaysCount = () => {
+    let count = 0;
+    for (let day = 1; day <= daysInMonth; day++) {
+      if (isDateReserved(day)) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  const reservedDaysCount = getReservedDaysCount();
+  const availableDaysCount = daysInMonth - reservedDaysCount;
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="max-w-md">
@@ -87,7 +106,7 @@ export function AvailabilitySection({ availableDates }: AvailabilitySectionProps
           {/* Calendar Header */}
           <div className="mb-4 p-3 bg-blue-50 rounded-lg">
             <h4 className="font-semibold text-blue-800 mb-2">Available Dates</h4>
-            <p className="text-sm text-blue-700">{formatAvailableDates()}</p>
+            <p className="text-sm text-blue-700">{formatReservedRanges()}</p>
           </div>
 
           {/* Calendar Header */}
@@ -117,8 +136,8 @@ export function AvailabilitySection({ availableDates }: AvailabilitySectionProps
             {/* Calendar days */}
             {Array.from({ length: daysInMonth }).map((_, index) => {
               const day = index + 1
-              const isBooked = bookedDays.includes(day)
-              const isAvailable = isDateAvailable(day)
+              const isReserved = isDateReserved(day)
+              const today = new Date()
               const isToday = new Date().getDate() === day && 
                 new Date().getMonth() === currentMonth.getMonth() && 
                              new Date().getFullYear() === currentMonth.getFullYear()
@@ -127,14 +146,13 @@ export function AvailabilitySection({ availableDates }: AvailabilitySectionProps
                 <div
                   key={day}
                   className={`text-center py-2 text-sm rounded-full ${
-                    isBooked 
-                      ? "bg-red-500 text-white" 
+                    isReserved 
+                      ? "bg-red-500 text-white cursor-not-allowed" 
                       : isToday
                       ? "bg-blue-500 text-white"
-                      : isAvailable
-                      ? "bg-green-100 text-green-800"
-                      : "text-gray-400"
+                      : "bg-green-100 text-green-800 hover:bg-green-200 cursor-pointer"
                   }`}
+                  title={isReserved ? "This date is already reserved" : "Available for booking"}
                 >
                   {day}
                 </div>
@@ -150,7 +168,7 @@ export function AvailabilitySection({ availableDates }: AvailabilitySectionProps
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-red-500 rounded-sm" />
-              <span className="text-gray-600">Booked</span>
+              <span className="text-gray-600">Reserved</span>
             </div>
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 bg-blue-500 rounded-sm" />
@@ -160,14 +178,22 @@ export function AvailabilitySection({ availableDates }: AvailabilitySectionProps
 
           {/* Availability Status */}
           <div className="mt-4 p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <span className="font-medium">Current Status:</span>
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-gray-700">Available Days:</span>
+              <span className="text-green-600 font-semibold">{availableDaysCount}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="font-medium text-gray-700">Reserved Days:</span>
+              <span className="text-red-600 font-semibold">{reservedDaysCount}</span>
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+              <span className="font-medium">Overall Status:</span>
               <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                (availableDates?.length ?? 0) > 0
+                availableDaysCount > 0
                   ? "bg-green-100 text-green-800" 
-                  : "bg-yellow-100 text-yellow-800"
+                  : "bg-red-100 text-red-800"
               }`}>
-                {(availableDates?.length ?? 0) > 0 ? "Available" : "Not Available"}
+                {availableDaysCount > 0 ? "Available" : "Fully Booked"}
               </span>
             </div>
           </div>

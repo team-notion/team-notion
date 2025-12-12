@@ -26,9 +26,11 @@ export enum apiEndpoints {
 
   // RESERVATIONS
   MAKE_A_RESERVATION = '/cars/reserve/',
+  GUEST_RESERVATION = '/cars/reserve/guest/',
   MY_RESERVATIONS = '/cars/my-reservations/',
   UPDATE_RESERVATION = '/cars/reserve/:id',
-  CANCEL_RESERVATION = '/cars/reserve/:id/cancel',
+  CANCEL_RESERVATION = '/cars/reservations/request-cancel/',
+  CONFIRM_RESERVATION_CANCELLATION = '/cars/reservations/confirm-cancel/?token=',
 
   // NOTIFICATIONS
   GET_NOTIFICATIONS = '/notifications',

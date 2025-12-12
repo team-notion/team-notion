@@ -141,10 +141,9 @@ const CreateReservationModal = ({ isOpen, onClose, onConfirm }: CreateReservatio
 
       const reservationResp = reservationResponse.data;
 
-      console.log(reservationResponse)
-      console.log(reservationResp.data);
-
       if (reservationResponse.status === 200 || reservationResponse.status === 201) {
+        toast.success(reservationResp.message);
+        
         const initilizePaymentData = {
           reservation_code: reservationResp.reservation_code,
           amount: Number(reservationResp.deposit_amount),

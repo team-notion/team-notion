@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { ChevronLeft, ChevronRight, Star } from "lucide-react" 
-import { WarningModal, ReservationModal, SuccessModal } from "./GuestReservationModal";
+import { WarningModal, ReservationModal, SuccessModal } from "./ReservationModal";
 import { AvailabilitySection, RentalTermsSection, ReviewsSection } from "./AvailabilitySection";
 import { Picks } from "./home/sections/Picks";
 import Footer from "./home/Footer";
@@ -14,6 +14,8 @@ import { LOCAL_STORAGE_KEYS } from "./utils/localStorageKeys";
 import { toast } from "sonner";
 import { getData, postData } from "./lib/apiMethods";
 import { useNumberFormatter } from "./utils/formatters";
+import { GuestReservationModal } from "./GuestReservationModal";
+import Loader from "./ui/Loader/Loader";
 
 interface CarPhoto {
   id: number;
@@ -28,6 +30,7 @@ interface Car {
   car_type: string;
   year_of_manufacture: number;
   daily_rental_price: number;
+  reserved_ranges: { from: string; to: string }[];
   available_dates: string[];
   rental_terms: string;
   deposit: number;
@@ -40,6 +43,7 @@ interface Car {
   model: string | null;
   duration_non_paid_in_hours: number | null;
   features: string[] | null;
+  duration_unit: string;
 }
 
 export default function GuestReservation() {
@@ -68,7 +72,13 @@ export default function GuestReservation() {
     issueDate: "",
     issuingCountry: "",
     licenseClass: "",
+    location: '',
   });
+  
+
+  const handleFormChange = (field: keyof FormData, value: string | Date | undefined | number | null) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
 
 
   useEffect(() => {
@@ -138,77 +148,14 @@ export default function GuestReservation() {
   }
 
 
-  const handleGuestReservation = async () => {
-    if (!car) return;
-
-    try {
-      const reservationData = {
-        car: car.id,
-        reserved_from: formData.pickupDate + 'T00:00:00Z',
-        reserved_to: formData.returnDate + 'T23:59:59Z',
-        customer_username: formData.customerName,
-        guest_email: formData.email,
-        guest_phone: formData.phoneNumber,
-      };
-
-      const response = await postData(`${CONFIG.BASE_URL}${apiEndpoints.MAKE_A_RESERVATION}`, reservationData, {
-        headers: {'Content-Type': 'application/json'}
-      });
-
-      const resp = response.data;
-
-      if (resp) {
-        setShowReservationModal(false);
-        setShowSuccessModal(true);
-        toast.success("Reservation created successfully!");
-      }
-      else {
-        throw new Error(resp?.detail || "Failed to make reservation");
-      }
-      
-    } catch (error) {
-      console.error("Reservation error:", error);
-      toast.error("Failed to make reservation");
-    }
+  const handleGuestReservation = () => {
+    setShowReservationModal(false);
   };
 
 
 
-  const handleCustomerReservation = async (reservationData: any) => {
-    if (!car) return;
-    
-    try {
-      const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
-    
-      if (!token) {
-        toast.error("Please log in to make a reservation");
-        return;
-      }
-
-      const reservationDataWithCar = {
-        ...reservationData,
-        customer_username: formData?.customerName,
-      };
-
-      const response = await postData(`${CONFIG.BASE_URL}${apiEndpoints.MAKE_A_RESERVATION}`, reservationDataWithCar, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      const resp = response.data;
-
-      if (resp) {
-        setShowCustomerReservationModal(false);
-        setShowSuccessModal(true);
-        toast.success("Reservation created successfully!");
-      }
-      else {
-        throw new Error(resp?.detail || "Failed to make reservation");
-      }
-    
-    } catch (error: any) {
-      console.error("Reservation error:", error);
-      toast.error(error?.message || "Failed to make reservation");
-    }
+  const handleCustomerReservation = async () => {
+    setShowCustomerReservationModal(false);
   };
 
 
@@ -220,9 +167,6 @@ export default function GuestReservation() {
 
 
 
-  const handleFormChange = (data: Partial<typeof formData>) => {
-    setFormData({ ...formData, ...data })
-  }
 
   const handleDone = () => {
     setShowSuccessModal(false)
@@ -239,6 +183,7 @@ export default function GuestReservation() {
       issueDate: "",
       issuingCountry: "",
       licenseClass: "",
+      location: '',
     })
   }
 
@@ -257,7 +202,7 @@ export default function GuestReservation() {
     return (
       <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+          <Loader type='tailSpin' color='#175CD3' height={50} width={50} />
           <p className="mt-4 text-gray-600">Loading car details...</p>
         </div>
       </div>
@@ -446,11 +391,11 @@ export default function GuestReservation() {
         </div>
 
         <div className="mt-12 space-y-6">
-          <AvailabilitySection availableDates={car.available_dates} />
+          <AvailabilitySection reservedRanges={car.reserved_ranges} />
           <RentalTermsSection rentalTerms={car.rental_terms} />
           <ReviewsSection />
         </div>
-      </div>
+r      </div>
 
 
 
@@ -461,13 +406,13 @@ export default function GuestReservation() {
         onContinue={handleContinueAsGuest}
       />
 
-      <ReservationModal
+      {/* <ReservationModal
         isOpen={showReservationModal}
         onClose={() => setShowReservationModal(false)}
         onNext={handleGuestReservation}
         onBack={() => setShowReservationModal(false)}
         car={car}
-      />
+      /> */}
 
       <SuccessModal isOpen={showSuccessModal} onClose={() => setShowSuccessModal(false)} onDone={handleDone} />
 
@@ -475,7 +420,9 @@ export default function GuestReservation() {
 
       <Footer />
 
-      <CustomerReservationModal isOpen={showCustomerReservationModal} onClose={() => setShowCustomerReservationModal(false)} onNext={handleCustomerReservation} onConfirm={handleCustomerReservation} car={car} />
+      <GuestReservationModal isOpen={showReservationModal} onClose={() => setShowReservationModal(false)} onConfirm={handleGuestReservation} car={car} />
+
+      <CustomerReservationModal isOpen={showCustomerReservationModal} onClose={() => setShowCustomerReservationModal(false)} onConfirm={handleCustomerReservation} car={car} />
     </div>
   )
 }
