@@ -19,7 +19,7 @@ const PaymentVerification = () => {
         const reference = searchParams.get('reference');
         const paymentId = sessionStorage.getItem('pending_payment_id');
         
-        if (!paymentId) {
+        if (!paymentId || !trxref || !reference) {
           toast.error('Payment information not found');
           navigate('/reservation-management');
           return;
@@ -27,6 +27,9 @@ const PaymentVerification = () => {
 
         console.log(reference);
         console.log(trxref);
+
+        sessionStorage.setItem('trxref', trxref);
+        sessionStorage.setItem('reference', reference);
 
         const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
         
