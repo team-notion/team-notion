@@ -6,7 +6,6 @@ import { toast } from 'sonner';
 import { apiEndpoints } from '@/components/lib/apiEndpoints';
 import CONFIG from '@/components/utils/config';
 import { LOCAL_STORAGE_KEYS } from '@/components/utils/localStorageKeys';
-import Loader from '@/components/ui/Loader/Loader';
 import { CheckCircle2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
