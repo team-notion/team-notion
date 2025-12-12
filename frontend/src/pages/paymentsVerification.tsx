@@ -29,7 +29,7 @@ const PaymentVerification = () => {
           return;
         }
         
-        const response = await getData(`${CONFIG.BASE_URL}${apiEndpoints.VERIFY_PAYMENTS}?reference=${reference}`);
+        const response = await getData(`${CONFIG.BASE_URL}${apiEndpoints.VERIFY_PAYMENTS}${reference}`);
 
         const resp = response.data;
 
