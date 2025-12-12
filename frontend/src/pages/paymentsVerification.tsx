@@ -7,8 +7,10 @@ import { apiEndpoints } from '@/components/lib/apiEndpoints';
 import CONFIG from '@/components/utils/config';
 import { CheckCircle2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useAuth } from '@/components/lib/authContext';
 
 const PaymentVerification = () => {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [verifying, setVerifying] = useState(true);
@@ -25,7 +27,12 @@ const PaymentVerification = () => {
         
         if (!trxref || !reference) {
           toast.error('Payment information not found');
-          navigate('/reservation-management');
+          if (user?.userType === 'business' || user?.userType === 'owner') {
+            navigate('/reservation-management');
+          }
+          else {
+            navigate('/bookings')
+          }
           return;
         }
         
@@ -44,7 +51,12 @@ const PaymentVerification = () => {
           
           setVerifying(false);
           setTimeout(() => {
-            navigate('/reservation-management');
+            if (user?.userType === 'business' || user?.userType === 'owner') {
+              navigate('/reservation-management');
+            }
+            else {
+              navigate('/bookings')
+            }
           }, 5000);
         }
         else {
@@ -53,7 +65,12 @@ const PaymentVerification = () => {
           
           toast.error(resp?.message || 'Payment verification failed');
           setTimeout(() => {
-            navigate('/reservation-management');
+            if (user?.userType === 'business' || user?.userType === 'owner') {
+              navigate('/reservation-management');
+            }
+            else {
+              navigate('/bookings')
+            }
           }, 5000);
         }
       }
@@ -79,7 +96,12 @@ const PaymentVerification = () => {
           });
         }
         
-        navigate('/reservation-management');
+        if (user?.userType === 'business' || user?.userType === 'owner') {
+          navigate('/reservation-management');
+        }
+        else {
+          navigate('/bookings')
+        }
       }
       finally {
         setVerifying(false);

@@ -45,7 +45,7 @@ interface Car {
   duration_unit: string;
 }
 
-const ITEMS_PER_PAGE = 30;
+const ITEMS_PER_PAGE = 20;
 
 const VehicleInventoryCardSkeleton = () => (
   <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -90,7 +90,7 @@ const CarInventory = () => {
   
   const searchTerm = searchParams.get('search') || '';
   const sortBy = (searchParams.get('sort') as "make" | "model" | "year") || "make";
-  const currentPage = parseInt(searchParams.get('page') || '1', 10);
+  const currentPage = parseInt(searchParams.get('page') || '1', 20);
   const availabilityFilter = searchParams.get("availability") || "all";
 
   const handleSearchChange = (value: string) => {

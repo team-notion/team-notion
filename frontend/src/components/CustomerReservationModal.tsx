@@ -120,9 +120,11 @@ const CustomerReservationModal = ({ isOpen, onClose, onConfirm, car }: Reservati
       };
 
       
-      const reservationResponse = await postData(`${CONFIG.BASE_URL}${apiEndpoints.GUEST_RESERVATION}`, reservationPayload, {
+      const reservationResponse = await postData(`${CONFIG.BASE_URL}${apiEndpoints.MAKE_A_RESERVATION}`, reservationPayload, {
         headers: { Authorization: `Bearer ${token}` }
       })
+
+      console.log(reservationResponse);
 
       const reservationResp = reservationResponse.data;
 

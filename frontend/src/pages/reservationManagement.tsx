@@ -51,7 +51,7 @@ interface Booking {
   pickup_location: string
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 const ReservationManagement = () => {
   const { user } = useAuth();
@@ -72,11 +72,11 @@ const ReservationManagement = () => {
   const [isRescheduleReservationModalOpen, setIsRescheduleReservationModalOpen] = useState(false);
   const searchTerm = searchParams.get('search') || '';
   const sortBy = (searchParams.get('sort') as 'vehicle' | "reservation_code" | "plate_number" | 'status') || "vehicle";
-  const currentPage = parseInt(searchParams.get('page') || '1', 10);
+  const currentPage = parseInt(searchParams.get('page') || '1', 20);
   const confirmedBookingFilter = searchParams.get("booking_confirmed") || "all";
   const [pagination, setPagination] = useState({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize: 20,
   })
 
 
