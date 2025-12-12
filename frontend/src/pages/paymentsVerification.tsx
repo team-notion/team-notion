@@ -19,7 +19,7 @@ const PaymentVerification = () => {
         const reference = searchParams.get('reference');
         const paymentId = sessionStorage.getItem('pending_payment_id');
         
-        if (!paymentId || !trxref || !reference) {
+        if (!trxref || !reference) {
           toast.error('Payment information not found');
           navigate('/reservation-management');
           return;
