@@ -5,7 +5,6 @@ import { getData } from '@/components/lib/apiMethods';
 import { toast } from 'sonner';
 import { apiEndpoints } from '@/components/lib/apiEndpoints';
 import CONFIG from '@/components/utils/config';
-import { LOCAL_STORAGE_KEYS } from '@/components/utils/localStorageKeys';
 import { CheckCircle2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -29,12 +28,8 @@ const PaymentVerification = () => {
           navigate('/reservation-management');
           return;
         }
-
-        const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
         
-        const response = await getData(`${CONFIG.BASE_URL}${apiEndpoints.VERIFY_PAYMENTS}?reference=${reference}`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const response = await getData(`${CONFIG.BASE_URL}${apiEndpoints.VERIFY_PAYMENTS}?reference=${reference}`);
 
         const resp = response.data;
 
@@ -103,7 +98,7 @@ const PaymentVerification = () => {
             <Skeleton className='h-8 w-3/4 mx-auto' />
             <Skeleton className='h-4 w-full' />
             <Skeleton className='h-4 w-5/6 mx-auto' />
-            <p className="text-lg lg:text-xl font-semibold text-shadow-neutral-800">Verifying your payment...</p>
+            <p className="text-lg font-semibold text-shadow-neutral-800">Verifying your payment...</p>
           </div>
         )}
 
@@ -114,7 +109,7 @@ const PaymentVerification = () => {
             </div>
 
             <div className='text-center mb-8'>
-              <h1 className='text-lg lg:text-xl font-semibold text-neutral-800 mb-4'>
+              <h1 className='text-lg font-semibold text-neutral-800 mb-4'>
                 Payment Verification Success
               </h1>
               <p className="text-sm text-green-600 leading-snug">
@@ -131,7 +126,7 @@ const PaymentVerification = () => {
             </div>
 
             <div className='text-center mb-8'>
-              <h1 className='text-lg lg:text-xl font-semibold text-neutral-800 mb-4'>
+              <h1 className='text-lg font-semibold text-neutral-800 mb-4'>
                 Payment Verification Failure
               </h1>
               <p className="text-sm text-red-600 leading-snug">
