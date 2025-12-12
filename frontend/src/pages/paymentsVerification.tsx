@@ -25,6 +25,9 @@ const PaymentVerification = () => {
           return;
         }
 
+        console.log(reference);
+        console.log(trxref);
+
         const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
         
         const response = await getData(`${CONFIG.BASE_URL}${apiEndpoints.VERIFY_PAYMENTS}?reference=${reference}`,
@@ -35,8 +38,10 @@ const PaymentVerification = () => {
 
         if (response.status === 200 || response.status === 201) {
           toast.success(resp?.message || 'Payment successful! Your reservation is confirmed.');
+
           sessionStorage.removeItem('pending_payment_id');
           sessionStorage.removeItem('reservation_code');
+          
           navigate('/reservation-management');
         }
         else {
