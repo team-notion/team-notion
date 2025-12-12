@@ -3,8 +3,11 @@ import { Notification, useNotification } from "@/components/lib/notificationCont
 import { Button } from "@/components/ui/button";
 import { Item, ItemActions, ItemContent, ItemDescription, ItemTitle } from "@/components/ui/item";
 import NotificationCards from "@/components/notificationCards";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 
+const ITEMS_PER_PAGE = 10;
 
 const getNotificationIcon = (notification: Notification) => {
   const message = notification.message.toLowerCase();
@@ -109,7 +112,31 @@ const getAdditionalText = (title: string): string => {
 const BusinessNotifications = () => {
   const { notifications, markNotificationAsRead /* deleteNotification */ } = useNotification();
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
+
+  const currentPage = parseInt(searchParams.get('page') || '1', 20);
+
+  const handlePageChange = (page: number) => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.set("page", page.toString());
+    setSearchParams(newParams);
+  };
+
+  // Sort notifications by date (most recent first)
+  const sortedNotifications = useMemo(() => {
+    return [...notifications].sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [notifications]);
+
+  // Pagination
+  const totalPages = Math.ceil(sortedNotifications.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedNotifications = sortedNotifications.slice(startIndex, endIndex);
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   const handleNotificationClick = (notification: Notification) => {
     markNotificationAsRead(notification.id);
@@ -126,13 +153,19 @@ const BusinessNotifications = () => {
     <div className="space-y-6 px-0 lg:px-4">
       <div className="gap-3 overflow-hidden">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl lg:text-2xl font-semibold text-black leading-9">
-            Notifications
-          </h1>
-          {notifications.length > 0 && (
-            <p className="text-sm text-gray-500">
-              {notifications.filter((n) => !n.isRead).length} unread
+          <div>
+            <h2 className="text-xl lg:text-2xl font-semibold text-gray-900">Notifications</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              {notifications.length} total notification{notifications.length !== 1 ? 's' : ''}
             </p>
+          </div>
+          {unreadCount > 0 && (
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse"></div>
+              <span className="text-sm font-medium text-gray-700">
+                {unreadCount} unread
+              </span>
+            </div>
           )}
         </div>
 
@@ -143,58 +176,119 @@ const BusinessNotifications = () => {
             </ItemContent>
           </Item>
         ) : (
-          <div className="space-y-2 overflow-y-auto">
-            {notifications.map((notification) => (
-              <Item
-                key={notification.id}
-                className={`flex flex-col md:flex-row cursor-pointer bg-red-600 items-start md:items-center gap-4 lg:gap-8 p-2 transition-colors ${
-                  !notification.isRead ? "bg-accent/10" : ""
-                } ${getNotificationBgColor(notification)}`}
-                variant={"outline"}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <p className="text-xs text-muted-foreground font-medium">
-                  {new Date(notification.createdAt).toLocaleDateString(
-                    "en-US",
-                    {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    }
-                  )}
-                </p>
-                <ItemContent className="flex-1 lg:ml-3 space-y-1">
-                  <div className="flex gap-2 items-center">
-                    <div className="text-lg">
-                      {getNotificationIcon(notification)}
-                    </div>
-                    <ItemTitle>{notification.title}</ItemTitle>
+          <>
+            <div className="space-y-2">
+              {notifications.map((notification) => (
+                <Item
+                  key={notification.id}
+                  className={`flex flex-col md:flex-row cursor-pointer bg-red-600 items-start md:items-center gap-4 lg:gap-8 p-2 transition-colors ${
+                    !notification.isRead ? "bg-accent/10" : "border-gray-200"
+                  } ${getNotificationBgColor(notification)}`}
+                  variant={"outline"}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <div className="flex-shrink-0 w-full sm:w-auto">
+                    <p className="text-xs text-muted-foreground font-medium">
+                      {new Date(notification.createdAt).toLocaleDateString(
+                        "en-US",
+                        {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        }
+                      )}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      {new Date(notification.createdAt).toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
                   </div>
-                  <ItemDescription>{notification.message}</ItemDescription>
-                </ItemContent>
+                  <ItemContent className="flex-1 min-w-0">
+                    <div className="flex gap-2 items-start">
+                      <div className="flex-shrink-0 mt-0.5">
+                        {getNotificationIcon(notification)}
+                      </div>
+                      <ItemTitle>{notification.title}</ItemTitle>
+                    </div>
+                    <ItemDescription>{notification.message}</ItemDescription>
+                  </ItemContent>
 
-                {/* <div >
-                        <h3 className="font-semibold"></h3>
-                        <p className="text-sm text-muted-foreground">
-                      
-                        </p>
-                      </div> */}
-                {/* <ItemActions>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                        deleteNotification(notification.id);
-                    }}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </ItemActions> */}
-              </Item>
-            ))}
-          </div>
+                  {/* <div >
+                          <h3 className="font-semibold"></h3>
+                          <p className="text-sm text-muted-foreground">
+                        
+                          </p>
+                        </div> */}
+                  {/* <ItemActions>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-8 w-8 p-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                          deleteNotification(notification.id);
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </ItemActions> */}
+                </Item>
+              ))}
+
+               {totalPages > 1 && (
+                <div className="mt-8">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                          className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+
+                      {Array.from({ length: totalPages }).map((_, i) => {
+                        const pageNum = i + 1;
+                        const isActive = pageNum === currentPage;
+                        const isNearCurrent = Math.abs(pageNum - currentPage) <= 1;
+                        const isFirstOrLast = pageNum === 1 || pageNum === totalPages;
+
+                        if (isNearCurrent || isFirstOrLast) {
+                          return (
+                            <PaginationItem key={pageNum}>
+                              <PaginationLink
+                                onClick={() => handlePageChange(pageNum)}
+                                isActive={isActive}
+                                className="cursor-pointer"
+                              >
+                                {pageNum}
+                              </PaginationLink>
+                            </PaginationItem>
+                          );
+                        } else if (pageNum === 2 || pageNum === totalPages - 1) {
+                          return <PaginationEllipsis key={pageNum} />;
+                        }
+                        return null;
+                      })}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                          className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+
+                  {/* Results Summary */}
+                  <div className="text-center text-sm text-gray-600 mt-4">
+                    Showing {startIndex + 1} to {Math.min(endIndex, sortedNotifications.length)} of {sortedNotifications.length} notifications
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
         )}
 
         <NotificationCards isOpen={isNotificationModalOpen} onClose={handleCloseModal} title={selectedNotification?.title || ""} notificationIcon={ selectedNotification ? getNotificationIcon(selectedNotification) : undefined } description={selectedNotification?.message} additionalText={getAdditionalText(selectedNotification?.title || "")} />

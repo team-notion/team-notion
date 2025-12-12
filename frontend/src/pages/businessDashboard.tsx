@@ -53,7 +53,7 @@ interface Booking {
   status: "Pending" | "Confirmed" | "In Progress" | 'Cancelled'
 }
 
-const ITEMS_PER_PAGE = 10;
+const ITEMS_PER_PAGE = 20;
 
 const BusinessDashboard = () => {
   const { user } = useAuth();
@@ -69,7 +69,7 @@ const BusinessDashboard = () => {
   const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
-    pageSize: 10,
+    pageSize: 20,
   })
 
   useEffect(() => {
