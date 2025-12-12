@@ -144,7 +144,7 @@ export function TransactionTable<T extends object>({
                     {headerGroup.headers.map((header) => (
                       <th
                         key={header.id}
-                        className="px-6 py-5 font-semibold lg:min-w-[140px] text-sm"
+                        className="px-6 py-5 font-semibold lg:min-w-[147px] text-sm"
                         onClick={header.column.getToggleSortingHandler()}
                         style={{ cursor: header.column.getCanSort() ? "pointer" : "default" }}
                       >
@@ -177,7 +177,7 @@ export function TransactionTable<T extends object>({
                     className="text-left items-start justify-start text-sm font-light text-[#667085] hover:bg-[#EAECF0] border-b border-[#EAECF0] hover:border hover:border-[#EAECF0]"
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-6 py-5 lg:min-w-[140px]">
+                      <td key={cell.id} className="px-6 py-5 lg:min-w-[147px]">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}

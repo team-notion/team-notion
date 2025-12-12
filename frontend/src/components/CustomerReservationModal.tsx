@@ -1,4 +1,4 @@
-import { X, UserRound, Calendar } from "lucide-react";
+import { X, UserRound, Calendar, User } from "lucide-react";
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
 import SelectDate from "./SelectDate";
@@ -8,6 +8,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Label } from "./ui/label";
 import { toast } from "sonner";
+import { postData } from "./lib/apiMethods";
+import CONFIG from "./utils/config";
+import { apiEndpoints } from "./lib/apiEndpoints";
+import { LOCAL_STORAGE_KEYS } from "./utils/localStorageKeys";
 
 interface Car {
   id: number;
@@ -16,84 +20,160 @@ interface Car {
   year_of_manufacture: number;
   daily_rental_price: number;
   deposit: number;
+  reserved_ranges?: { from: string; to: string }[];
 }
 
 interface ReservationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onNext: (reservationData: any) => void;
-  onConfirm: (reservationData: any) => void;
+  onConfirm: () => void;
   car: Car;
 }
 
 const reservationSchema = z.object({
+  customerName: z.string().min(2, 'Name is required (minimum 2 characters)'),
+  email: z.string().email('Valid email is required'),
+  phone: z.string().min(10, 'Valid phone number is required'),
+  selectedCarId: z.number({ message: 'Vehicle selection is required' }),
+  selectedCar: z.any().optional(),
+  pickupDate: z.date({ message: "Pickup date is required" }),
+  returnDate: z.date({ message: "Return date is required" }),
   pickupLocation: z.string().min(2, "Pickup location is required"),
   notes: z.string().optional(),
-  startDate: z.date({ message: "Pickup date is required" }),
-  endDate: z.date({ message: "Return date is required" }),
-  paymentOption: z.enum(['pay_on_delivery', 'pay_now'], {
-    message: "Please select a payment option"
-  }),
-  })
-  .refine((data) => data.endDate > data.startDate, {
+}).refine((data) => data.returnDate > data.pickupDate, {
     message: "Return date must be after pickup date",
     path: ["returnDate"],
 });
 
 type ReservationFormData = z.infer<typeof reservationSchema>;
 
-const CustomerReservationModal = ({
-  isOpen,
-  onClose,
-  onNext,
-  onConfirm,
-  car,
-}: ReservationModalProps) => {
+const CustomerReservationModal = ({ isOpen, onClose, onConfirm, car }: ReservationModalProps) => {
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<ReservationFormData>({
     resolver: zodResolver(reservationSchema),
     mode:'onChange',
     defaultValues: {
-      startDate: undefined,
-      endDate: undefined,
-      paymentOption: 'pay_on_delivery',
+      customerName: '',
+      email: '',
+      selectedCarId: car.id,
+      selectedCar: car,
+      pickupDate: undefined,
+      returnDate: undefined,
       pickupLocation: '',
       notes: '',
     }
   });
 
-  const startDate = watch("startDate");
-  const endDate = watch("endDate");
+  const pickupDate = watch("pickupDate");
+  const returnDate = watch("returnDate");
+
+  const isDateReserved = (date: Date): boolean => {
+    if (!car.reserved_ranges) return false;
+
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+
+    return car.reserved_ranges.some(range => {
+      const fromDate = new Date(range.from);
+      const toDate = new Date(range.to);
+      fromDate.setHours(0, 0, 0, 0);
+      toDate.setHours(0, 0, 0, 0);
+
+      return checkDate >= fromDate && checkDate <= toDate;
+    })
+  }
 
   const formatDateForAPI = (date: Date) => {
     return date.toISOString().split('T')[0] + 'T00:00:00Z';
   };
 
 
-  const onSubmit = (data: ReservationFormData) => {
+  const onSubmit = async (data: ReservationFormData) => {
     if (!car) {
       toast.error("Car information is missing");
       return;
     }
 
+    if (!data.pickupDate || !data.returnDate) {
+      toast.error("Please select pickup and return dates");
+      return;
+    }
+
     setLoading(true);
+    
+    const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+
     try {
+      const formattedPickupDate = data.pickupDate.toISOString();
+      const formattedReturnDate = data.returnDate.toISOString();
+
       const reservationPayload = {
         car: car.id,
-        reserved_from: formatDateForAPI(data.startDate),
-        reserved_to: formatDateForAPI(data.endDate),
+        guest_email: data.email,
+        guest_phone: data.phone,
+        reserved_from: formattedPickupDate,
+        reserved_to: formattedReturnDate,
         pickup_location: data.pickupLocation,
         notes: data.notes || '',
-        payment_option: data.paymentOption,
       };
 
       
-      onNext(reservationPayload);
+      const reservationResponse = await postData(`${CONFIG.BASE_URL}${apiEndpoints.GUEST_RESERVATION}`, reservationPayload, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+
+      const reservationResp = reservationResponse.data;
+
+      if (reservationResponse.status === 200 || reservationResponse.status === 201) {
+        toast.success(reservationResp?.message);
+
+        const initializePaymentData = {
+          reservation_code: reservationResp.reservation_code,
+          amount: Number(reservationResp.deposit_amount),
+        }
+
+        const paymentInitResponse = await postData(`${CONFIG.BASE_URL}${apiEndpoints.INITIALIZE_PAYMENTS}`, initializePaymentData, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const paymentInitResp = paymentInitResponse.data;
+
+        if (paymentInitResponse.status === 200 || paymentInitResponse.status === 201) {
+          const paymentId = paymentInitResp.payment_id;
+
+          const completePaymentResponse = await postData(`${CONFIG.BASE_URL}${apiEndpoints.COMPLETE_PAYMENTS.replace(':id', paymentId)}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          })
+
+          const { authorization_url, payment_id } = completePaymentResponse.data;
+
+          sessionStorage.setItem('pending_payment_id', paymentId);
+          sessionStorage.setItem('reservation_code', reservationResp.reservation_code);
+
+          window.location.href = authorization_url;
+        }
+      }
+
+      onConfirm();
       
-    } catch (error) {
-      console.error("Reservation error:", error);
-      toast.error("Failed to process reservation");
+    } catch (err: any) {
+      const errData = err?.response?.data;
+    
+      if (errData && typeof errData === 'object') {
+        Object.keys(errData).forEach((key) => {
+          if (Array.isArray(errData[key])) {
+            errData[key].forEach((message: string) => {
+              toast.error(message)
+            });
+          } else {
+            toast.error(errData[key]);
+          }
+        });
+      } else {
+        toast.error("Failed to make reservation");
+      }
     } finally {
       setLoading(false);
     }
@@ -101,13 +181,14 @@ const CustomerReservationModal = ({
 
 
   const calculateRentalDetails = () => {
-    if (!startDate || !endDate) return null;
+    if (!pickupDate || !returnDate) return null;
     
-    const timeDiff = endDate.getTime() - startDate.getTime();
+    const timeDiff = returnDate.getTime() - pickupDate.getTime();
     const days = Math.ceil(timeDiff / (1000 * 3600 * 24));
     const totalPrice = days * car.daily_rental_price;
+    const deposit = totalPrice * 0.1;
     
-    return { days, totalPrice };
+    return { days, totalPrice, deposit };
   };
 
   const rentalDetails = calculateRentalDetails();
@@ -129,16 +210,72 @@ const CustomerReservationModal = ({
             </button>
           </div>
 
-          <div className="px-2 lg:px-6 py-8">
-            <form onSubmit={handleSubmit(onSubmit)}>
+          <form onSubmit={handleSubmit(onSubmit)} className="px-2 lg:px-6 py-8">
+            {/* Guest Information */}
+            <div className="space-y-6 mb-8">
+              <div className="flex items-start gap-3 mb-4">
+                <User className="size-6 text-[#4B61A1ED] mt-1" />
+                <div>
+                  <h3 className="text-lg font-medium text-black">Your Information</h3>
+                  <p className="text-sm text-gray-600">We'll use this to confirm your reservation</p>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Full Name *
+                </label>
+                <input
+                  type="text"
+                  placeholder="John Doe"
+                  {...register("customerName")}
+                  className="text-[#5C5C5C] text-sm w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0]"
+                />
+                {errors.customerName && (
+                  <p className="text-red-500 text-xs mt-1">{errors.customerName.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  placeholder="john@example.com"
+                  {...register("email")}
+                  className="text-[#5C5C5C] text-sm w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0]"
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-black mb-2">
+                  Phone Number *
+                </label>
+                <input
+                  type="tel"
+                  placeholder="+234 801 234 5678"
+                  {...register("phone")}
+                  className="text-[#5C5C5C] text-sm w-full px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:border-[#C8CCD0]"
+                />
+                {errors.phone && (
+                  <p className="text-red-500 text-xs mt-1">{errors.phone.message}</p>
+                )}
+              </div>
+            </div>
+            
+            <div className="space-y-6 mb-8">
               <div className="flex items-start gap-3 mb-6">
                 <Calendar className="size-6 text-[#4B61A1ED] mt-1" />
                 <div>
                   <h3 className="text-lg lg:text-xl font-medium text-black mb-1">
-                    Dates & Review
+                    Rental Period
                   </h3>
                   <p className="text-sm text-gray-600">
-                    Set rental dates and review details
+                    Select your pickup and return dates
                   </p>
                 </div>
               </div>
@@ -147,29 +284,29 @@ const CustomerReservationModal = ({
                 <SelectDate
                   label="Start Date"
                   placeholder="Select start date"
-                  value={startDate}
+                  value={pickupDate}
                   onChange={(date) => {
-                    if (date) setValue("startDate", date, { shouldValidate: true });
+                    if (date) setValue("pickupDate", date, { shouldValidate: true });
                   }}
                   minDate={new Date()}
                 />
-                {errors.startDate && (
-                  <p className="text-red-500 text-xs -mt-4">{errors.startDate.message}</p>
+                {errors.pickupDate && (
+                  <p className="text-red-500 text-xs -mt-4">{errors.pickupDate.message}</p>
                 )}
 
                 <SelectDate
                   label="End Date"
                   placeholder="Select end date"
-                  value={endDate}
+                  value={returnDate}
                   onChange={(date) => {
-                    if (date) setValue("endDate", date, { shouldValidate: true });
+                    if (date) setValue("returnDate", date, { shouldValidate: true });
                   }}
-                  minDate={startDate || new Date()}
+                  minDate={pickupDate || new Date()}
                 />
-                {errors.endDate && (
-                  <p className="text-red-500 text-xs -mt-4">{errors.endDate.message}</p>
+                {errors.returnDate && (
+                  <p className="text-red-500 text-xs -mt-4">{errors.returnDate.message}</p>
                 )}
-                <div>
+                {/* <div>
                   <Label className="mb-4">Payment Options</Label>
                   <RadioGroup defaultValue="pay_on_delivery" onValueChange={(value: 'pay_on_delivery' | 'pay_now') => 
                       setValue('paymentOption', value, { shouldValidate: true })
@@ -186,7 +323,7 @@ const CustomerReservationModal = ({
                   {errors.paymentOption && (
                     <p className="text-red-500 text-xs mt-1">{errors.paymentOption.message}</p>
                   )}
-                </div>
+                </div> */}
                 <div>
                   <label className="block text-sm font-medium text-black mb-2">
                     Pickup Location
@@ -203,16 +340,59 @@ const CustomerReservationModal = ({
                   <input type="text" placeholder="Enter any notes" {...register('notes')} onChange={(e) => setValue("notes", e.target.value)} className=" text-[#5C5C5C] text-sm border border-gray-300 px-4 py-3 w-full rounded-md focus:border-[#C8CCD0] disabled:bg-gray-100 disabled:border-gray-200 focus:outline-none" />
                 </div>
               </div>
-              <div className="bg-white px-6 py-4 flex items-center justify-end gap-4">
-                <button type="button" onClick={onClose} className={`flex px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer`} >
-                  Cancel
-                </button>
-                <button type="submit" disabled={loading} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
-                  {loading ? 'Processing...' : 'Make Reservation'}
-                </button>
+            </div>
+
+            {/* Rental Summary */}
+            {rentalDetails && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h4 className="font-semibold text-blue-800 mb-3">Rental Summary</h4>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Rental Period:</span>
+                    <span className="font-medium text-blue-900">{rentalDetails.days} days</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Daily Rate:</span>
+                    <span className="font-medium text-blue-900">
+                      ₦{car.daily_rental_price.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between pt-2 border-t border-blue-300">
+                    <span className="text-blue-700 font-semibold">Total Cost:</span>
+                    <span className="font-bold text-blue-900">
+                      ₦{rentalDetails.totalPrice.toLocaleString()}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-blue-700">Deposit Required:</span>
+                    <span className="font-medium text-blue-900">
+                      ₦{rentalDetails.deposit.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
               </div>
-            </form>
-          </div>
+            )}
+
+            {/* Important Notice */}
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <h5 className="font-semibold text-yellow-800 mb-2">Important Notice</h5>
+              <ul className="text-xs text-yellow-700 space-y-1">
+                <li>• Your reservation will be confirmed via email</li>
+                <li>• Payment will be made upon vehicle pickup</li>
+                <li>• Please bring a valid ID and driver's license</li>
+                <li>• Cancellation policy applies as per rental terms</li>
+              </ul>
+            </div>
+
+            <div className="bg-white px-6 py-4 flex items-center justify-end gap-4">
+              <button type="button" onClick={onClose} className={`flex px-8 py-3 text-sm border-2 border-[#FA8F45] text-[#FA8F45] rounded-lg hover:bg-orange-50 transition-colors font-medium cursor-pointer`} >
+                Cancel
+              </button>
+              <button type="submit" disabled={loading} className="px-8 py-3 text-sm bg-[#FA8F45] text-white rounded-lg hover:bg-[#E87E34] transition-colors font-medium cursor-pointer" >
+                {loading ? 'Processing...' : 'Confirm Reservation'}
+              </button>
+            </div>
+          </form>
 
         </div>
       </div>

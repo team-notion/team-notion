@@ -21,7 +21,7 @@ const ActionModal = ({ isOpen, onClose, title, description, onConfirm, confirmTe
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md p-8">
         <DialogHeader className="text-center space-y-4">
-          <DialogTitle className="text-xl text-center font-normal mt-5 text-black">
+          <DialogTitle className="text-lg text-center font-normal mt-5 text-black">
             {title}
           </DialogTitle>
           {description && (
@@ -30,10 +30,10 @@ const ActionModal = ({ isOpen, onClose, title, description, onConfirm, confirmTe
             </DialogDescription>
           )}
         </DialogHeader>
-        <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6">
+        <div className="flex flex-col sm:flex-row justify-between gap-3 mt-6 lg:w-[90%] lg:mx-auto">
           <button
             onClick={onClose}
-            className={`w-[7rem] px-6 py-3 rounded-xl font-medium transition-colors hover:cursor-pointer ${
+            className={`w-[7rem] px-6 py-3 text-xs rounded-xl font-medium transition-colors hover:cursor-pointer ${
               confirmVariant === "danger"
                 ? "bg-white border-2 border-[#F97316] text-[#F97316] hover:bg-orange-50"
                 : "bg-[#F97316] text-white hover:bg-orange-600"
@@ -43,7 +43,7 @@ const ActionModal = ({ isOpen, onClose, title, description, onConfirm, confirmTe
           </button>
           <button
             onClick={handleConfirm}
-            className={`w-[7rem] px-6 py-3 rounded-xl font-medium transition-colors hover:cursor-pointer ${
+            className={`w-[7rem] px-6 py-3 text-xs rounded-xl font-medium transition-colors hover:cursor-pointer ${
               confirmVariant === "danger"
                 ? "bg-[#F97316] text-white hover:bg-orange-600"
                 : "bg-white border-2 border-[#F97316] text-[#F97316] hover:bg-orange-50"

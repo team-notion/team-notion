@@ -435,6 +435,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return false;
       }
 
+      console.log(response)
       const data = response.data;
       const { accessToken: access } = data;
 
@@ -447,6 +448,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       setAccessToken(access);
       setupTokenRefreshTimeout(access);
+      setupSessionTimeout(access);
 
       return true;
 

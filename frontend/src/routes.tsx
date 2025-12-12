@@ -19,6 +19,7 @@ import UserResetPassword from "./components/auth/userResetPassword";
 import { Notifications } from "./pages/notifications";
 import BusinessNotifications from "./pages/businessNotifications";
 import PaymentVerification from "./pages/paymentsVerification";
+import CancelReservation from "./pages/cancelReservation";
 
 const routes = createBrowserRouter([
   {
@@ -50,8 +51,8 @@ const routes = createBrowserRouter([
     element: <UserResetPassword />,
   },
   {
-      path: "/",
-      element: <LandingPage />
+    path: "/",
+    element: <LandingPage />
   },
   {
     path: "/reservation/:carId",
@@ -92,6 +93,10 @@ const routes = createBrowserRouter([
       {
         path: "reservation-management",
         element: <ReservationManagement />,
+      },
+      {
+        path: "reservation-management/reservations/confirm-cancel/:token",
+        element: <CancelReservation />,
       },
       {
         path: "settings",

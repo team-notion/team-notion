@@ -33,11 +33,7 @@ const ActionCardSkeleton = () => (
 
 interface Booking {
   id: string
-  customer: {
-    name: string
-    email: string
-    phone: string
-  }
+  customer: any
   vehicle: {
     name: string
     code: string
@@ -49,74 +45,19 @@ interface Booking {
   }
   payment: number
   rentalValue: number
-  status: "Reserved" | "Paid" | "In Progress"
+  balanceDue: number
+  reservation_code: string
+  has_paid_deposit: boolean
+  plate_number: string
+  deposit_amount: number
+  status: "Pending" | "Confirmed" | "In Progress" | 'Cancelled'
 }
 
-const sampleBookings: Booking[] = [
-  {
-    id: "RES-001",
-    customer: {
-      name: "Esther Howard",
-      email: "EstherHoward@email.com",
-      phone: "+1 (555) 987-6543",
-    },
-    vehicle: {
-      name: "2023 BMW X5",
-      code: "LUX-001",
-    },
-    date: {
-      start: "6/18/2025",
-      end: "6/24/2025",
-      days: 7,
-    },
-    payment: 840,
-    rentalValue: 0,
-    status: "Reserved",
-  },
-  {
-    id: "RES-001",
-    customer: {
-      name: "Jane Cooper",
-      email: "JaneCooper@email.com",
-      phone: "+1 (555) 123-4567",
-    },
-    vehicle: {
-      name: "2023 Toyota Camry",
-      code: "ABC-123",
-    },
-    date: {
-      start: "4/15/2025",
-      end: "4/20/2025",
-      days: 5,
-    },
-    payment: 325,
-    rentalValue: 0,
-    status: "Paid",
-  },
-  {
-    id: "RES-001",
-    customer: {
-      name: "Ronald Richards",
-      email: "RonaldRichards@email.com",
-      phone: "+1 (555) 456-7890",
-    },
-    vehicle: {
-      name: "2022 Honda Civic",
-      code: "XYZ-789",
-    },
-    date: {
-      start: "9/10/2025",
-      end: "9/14/2025",
-      days: 4,
-    },
-    payment: 220,
-    rentalValue: 0,
-    status: "In Progress",
-  },
-]
+const ITEMS_PER_PAGE = 10;
 
 const BusinessDashboard = () => {
   const { user } = useAuth();
+
   const navigate = useNavigate();
   const [totalCars, setTotalCars] = useState(0);
   const [loading, setLoading] = useState(false);
@@ -145,9 +86,44 @@ const BusinessDashboard = () => {
   
           if (cars && Array.isArray(cars)) {
             const totalCount = resp?.data?.count;
-            const rentedCount = cars.filter((car: any) => !car.is_available).length;
-            const availableCount = cars.filter((car: any) => car.is_available).length;
-  
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            // Count cars that are currently rented (today falls within reserved_ranges)
+            const rentedCount = cars.filter((car: any) => {
+              if (!car.reserved_ranges || car.reserved_ranges.length === 0) {
+                return false;
+              }
+
+              // Check if today falls within any reservation range
+              return car.reserved_ranges.some((range: any) => {
+                const fromDate = new Date(range.from);
+                const toDate = new Date(range.to);
+                fromDate.setHours(0, 0, 0, 0);
+                toDate.setHours(0, 0, 0, 0);
+
+                return today >= fromDate && today <= toDate;
+              });
+            }).length;
+
+            // Count available cars (no current reservations)
+            const availableCount = cars.filter((car: any) => {
+              if (!car.reserved_ranges || car.reserved_ranges.length === 0) {
+                return true; // No reservations means available
+              }
+
+              // Check if today does NOT fall within any reservation range
+              return !car.reserved_ranges.some((range: any) => {
+                const fromDate = new Date(range.from);
+                const toDate = new Date(range.to);
+                fromDate.setHours(0, 0, 0, 0);
+                toDate.setHours(0, 0, 0, 0);
+
+                return today >= fromDate && today <= toDate;
+              });
+            }).length;
+
             setTotalCars(totalCount);
             setRentedCars(rentedCount);
             setAvailableCars(availableCount);
@@ -228,6 +204,7 @@ const BusinessDashboard = () => {
               // Calculate rental days
               const startDate = new Date(booking.reserved_from);
               const endDate = new Date(booking.reserved_to);
+              const rentalValue = Number(booking.deposit_amount) + Number(booking.balance_due);
               const rentalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
 
               // Format dates
@@ -240,20 +217,22 @@ const BusinessDashboard = () => {
                 });
               };
 
+              const vehicleName = carDetails?.car_type 
+                ? `${carDetails.year_of_manufacture || ''} ${carDetails.car_type}`.trim()
+                : 'N/A';
+    
+              const plateNumber = carDetails?.license || 'N/A';
+              const reservationCode = booking.reservation_code || booking.id || `RES-${booking.id}`;
 
               return {
-                id: booking.reservation_code || `RES-${booking.id}`,
+                id: reservationCode,
                 customer: {
                   name: `Customer ${booking.customer}`, // Placeholder - fetch from user endpoint
-                  email: 'customer@email.com', // Placeholder
-                  phone: 'N/A', // Placeholder
+                  email: booking.customer_email,
+                  // phone: 'N/A', // Placeholder
                 },
-                vehicle: {
-                  name: carDetails?.car_type 
-                    ? `${carDetails.year_of_manufacture || ''} ${carDetails.car_type}`.trim()
-                    : 'N/A',
-                  code: carDetails?.license || 'N/A',
-                },
+                vehicle: vehicleName,
+                plate_number: plateNumber,
                 date: {
                   start: formatDate(booking.reserved_from),
                   end: formatDate(booking.reserved_to),
@@ -262,10 +241,14 @@ const BusinessDashboard = () => {
                 payment: booking?.amount_paid 
                   ? booking.amount_paid
                   : 0,
-                rentalValue: carDetails?.daily_rental_price 
-                  ? carDetails.daily_rental_price * rentalDays
+                rentalValue: rentalValue ? rentalValue : 0,
+                balanceDue: booking.balance_due
+                  ? booking.balance_due
                   : 0,
-                status: booking.has_paid_deposit ? 'Paid' : 'Reserved',
+                status: booking.has_paid_deposit ? 'Confirmed' : 'Pending',
+                deposit_amount: booking?.deposit_amount || 0,
+                has_paid_deposit: booking.has_paid_deposit,
+                reservation_code: reservationCode,
               };
             })
           );
@@ -322,8 +305,8 @@ const BusinessDashboard = () => {
         cell: ({ row }) => (
           <div className="flex flex-col">
             <span className="font-medium text-[#344054]">{row.original.customer.name}</span>
-            {/* <span className="text-xs text-[#667085]">{row.original.customer.email}</span>
-            <span className="text-xs text-[#667085]">{row.original.customer.phone}</span> */}
+            <span className="text-xs text-[#667085]">{row.original.customer.email}</span>
+            {/* <span className="text-xs text-[#667085]">{row.original.customer.phone}</span> */}
           </div>
         ),
       },
@@ -334,7 +317,7 @@ const BusinessDashboard = () => {
 
           <div className="flex flex-col">
             <span className="font-medium text-[#344054]">{row.original.vehicle.name}</span>
-            <span className="text-xs text-[#667085]">{row.original.vehicle.code}</span>
+            <span className="text-xs text-[#667085]">{row.original.plate_number}</span>
           </div>
         ),
       },
@@ -343,22 +326,42 @@ const BusinessDashboard = () => {
         header: "DATE",
         cell: ({ row }) => (
           <div className="flex flex-col">
-            <span className="text-[#344054]">
+            <span className="text-sm text-[#344054] font-medium">{row.original.date.days}{' '}{row.original.date.days === 1 ? 'day' : 'days'}</span>
+            <span className="text-[#344054] text-xs">
               {row.original.date.start} - {row.original.date.end}
             </span>
-            <span className="text-xs text-[#667085]">{row.original.date.days} days</span>
           </div>
         ),
       },
       {
         accessorKey: "payment",
-        header: "PAYMENT",
-        cell: ({ row }) => <span className="font-medium text-[#344054]">₦ {row.original.payment.toLocaleString()}</span>,
+        header: "DEPOSIT",
+        cell: ({ row }) => {
+          const payment = Number(row.original?.payment);
+          return (
+            <span className="font-medium text-[#344054]">₦ {payment.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          )
+        },
       },
       {
         accessorKey: "rentalValue",
         header: "RENTAL VALUE",
-        cell: ({ row }) => <span className="font-medium text-[#344054]">₦ {row.original?.rentalValue.toLocaleString()}</span>,
+        cell: ({ row }) => {
+          const rentalValue = Number(row.original?.rentalValue);
+          return (
+            <span className="font-medium text-[#344054]">₦ {rentalValue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          )
+        },
+      },
+      {
+        accessorKey: "balanceDue",
+        header: "BALANCE DUE",
+        cell: ({ row }) => {
+          const balanceDue = Number(row.original?.balanceDue);
+          return (
+            <span className="font-medium text-[#344054]">₦ {balanceDue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          )
+        },
       },
       {
         accessorKey: "status",
@@ -366,8 +369,8 @@ const BusinessDashboard = () => {
         cell: ({ row }) => {
           const status = row.original.status
           const statusColors = {
-            Reserved: "bg-[#EFF8FF] text-[#175CD3]",
-            Paid: "bg-[#ECFDF3] text-[#027A48]",
+            Pending: "bg-[#EFF8FF] text-[#175CD3]",
+            Confirmed: "bg-[#ECFDF3] text-[#027A48]",
             "In Progress": "bg-[#FFFAEB] text-[#B54708]",
             Completed: "bg-[#F9FAFB] text-[#344054]",
             Cancelled: "bg-[#FEF3F2] text-[#B42318]",
@@ -388,7 +391,7 @@ const BusinessDashboard = () => {
     [],
   )
 
-  const pageCount = Math.ceil(sampleBookings.length / pagination.pageSize);
+  const totalPages = Math.ceil(totalBookings / ITEMS_PER_PAGE);
   
   return (
     <div className='space-y-6 px-0 lg:px-4'>
@@ -452,7 +455,7 @@ const BusinessDashboard = () => {
           <BusinessDashboardActionCard type="add-car" onClick={() => { setIsAddCarModalOpen(true); }} />
       </div>
 
-      <TransactionTable title='Recent Bookings' showButton={true} buttonText="View all booking" columns={columns} data={bookings} pageCount={pageCount} pageSize={pagination.pageSize} pageIndex={pagination.pageIndex} isLoading={bookingsLoading} onPaginationChange={setPagination} totalItems={totalBookings} emptyStateTitle="No bookings yet" emptyStateDescription="You don't have any bookings yet. When customers make reservations, they'll appear here." onButtonClick={() => navigate('/reservation-management')} />
+      <TransactionTable title='Recent Bookings' showButton={true} buttonText="View all booking" columns={columns} data={bookings} pageCount={totalPages} pageSize={ITEMS_PER_PAGE} pageIndex={pagination.pageIndex} isLoading={bookingsLoading} onPaginationChange={setPagination} totalItems={totalBookings} emptyStateTitle="No bookings yet" emptyStateDescription="You don't have any bookings yet. When customers make reservations, they'll appear here." onButtonClick={() => navigate('/reservation-management')} />
 
       <AddCarModal isOpen={isAddCarModalOpen} onClose={() => setIsAddCarModalOpen(false)} onConfirm={handleAddCarConfirm} />
     </div>

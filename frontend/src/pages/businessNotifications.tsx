@@ -123,8 +123,8 @@ const BusinessNotifications = () => {
   };
 
   return (
-    <div className="space-y-6 px-0 lg:px-4 h-screen overflow-hidden">
-      <div className="gap-3">
+    <div className="space-y-6 px-0 lg:px-4">
+      <div className="gap-3 overflow-hidden">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-xl lg:text-2xl font-semibold text-black leading-9">
             Notifications

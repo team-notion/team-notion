@@ -320,16 +320,16 @@ const CarCard = ({ car }: CarCardProps) => {
       </CardHeader>
       <CardContent className="px-2 xl:px-4">
         <div className="flex items-center gap-1">
-          <span className="text-sm font-medium">Mileage</span>
+          <span className="text-sm font-medium">Mileage: </span>
           <span className="text-sm font-medium">{car.mileage} miles</span>
         </div>
 
-        <div className="flex flex-col md:flex-row gap-2 items-start md:items-center justify-between mt-2">
-          <div className="flex gap-1 items-center">
-            <span className="text-sm lg:text-base font-semibold text-gray-600">₦{formatPrice(car.daily_rental_price)}</span>
-            <span className="text-gray-600 text-sm font-semibold">per day</span>
+        <div className="flex flex-wrap gap-1 items-start md:items-center justify-between mt-0.5">
+          <div className="flex items-center">
+            <span className="text-sm font-semibold text-gray-600">₦{formatPrice(car.daily_rental_price)}</span>
+            <span className="text-gray-600 text-sm font-semibold">/day</span>
           </div>
-          <button onClick={() => navigate(`/reservation/${car.id}`)} className="block w-[8rem] bg-[#F97316] text-white px-6 py-2.5 rounded-xl cursor-pointer hover:bg-orange-600 text-center" >
+          <button onClick={() => navigate(`/reservation/${car.id}`)} className="block w-[7.5rem] bg-[#F97316] text-white px-4 py-2 rounded-xl cursor-pointer hover:bg-orange-600 text-center" >
             Rent now
           </button>
         </div>
