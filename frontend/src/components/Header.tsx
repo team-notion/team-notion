@@ -17,6 +17,8 @@ const Header: React.FC<HeaderProps> = ({ sidebarOpen }) => {
   const [isMobile, setIsMobile] = useState(false);
   const { user } = useAuth();
 
+  console.log(user);
+
   const getUserInitials = () => {
     if (!user) return 'U';
 

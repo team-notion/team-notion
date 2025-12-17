@@ -13,8 +13,8 @@ const menuItems = [
   { name: "Dashboard", icon: FiHome, path: "/business-dashboard" },
   { name: "Car Inventory", icon: AiOutlineCar, path: "/car-inventory" },
   { name: "Reservation Management", icon: FiCalendar, path: "/reservation-management" },
-  { name: "Analytics Dashboard", icon: TfiBarChartAlt, path: "/analytics" },
-  { name: "Customers", icon: GoPeople, path: "/customers" },
+  // { name: "Analytics Dashboard", icon: TfiBarChartAlt, path: "/analytics" },
+  // { name: "Customers", icon: GoPeople, path: "/customers" },
 ]
 
 

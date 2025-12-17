@@ -345,15 +345,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<User | null>(null);
   const [accessToken, setAccessToken] = useState<string | null>(null);
-  const [sessionTimeoutId, setSessionTimeoutId] = useState<NodeJS.Timeout | null>(null);
-  const [refreshTimeoutId, setRefreshTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const refreshInProgressRef = useRef(false);
 
 
   const getStorage = useCallback((key: string): string | null => {
-    const localValue = localStorage.getItem(key);
-    if (localValue) return localValue;
-    return sessionStorage.getItem(key);
+    return localStorage.getItem(key) || sessionStorage.getItem(key);
   }, []);
 
 
@@ -368,16 +366,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
 
-  const removeStorage = useCallback((key: string) => {
-    localStorage.removeItem(key);
-    sessionStorage.removeItem(key);
+  const clearAllStorage = useCallback(() => {
+    const keysToRemove = [
+      LOCAL_STORAGE_KEYS.TOKEN,
+      LOCAL_STORAGE_KEYS.REFRESH_TOKEN,
+      LOCAL_STORAGE_KEYS.USER,
+      LOCAL_STORAGE_KEYS.IS_USER_EXIST,
+      LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID,
+      LOCAL_STORAGE_KEYS.REFRESH_TOKEN_USER_ID,
+      LOCAL_STORAGE_KEYS.REMEMBER_ME,
+    ];
+
+    keysToRemove.forEach(key => {
+      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
+    })
   }, []);
 
 
-  const isTokenExpired = (token: string): boolean => {
+  const isTokenExpired = useCallback((token: string): boolean => {
     try {
       const decoded = decodeJWT(token);
-      if (decoded && decoded.exp) {
+      if (decoded?.exp) {
         const currentTime = Math.floor(Date.now() / 1000);
         return decoded.exp < currentTime;
       }
@@ -386,21 +396,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     catch (err) {
       return false;
     }
-  }
+  }, []);
 
 
-  const getTokenExpirationTime = (token: string): number | null => {
+  const getTokenExpirationTime = useCallback((token: string): number | null => {
     try {
       const decoded = decodeJWT(token);
-      return decoded && decoded.exp ? decoded.exp : null;
+      return decoded?.exp ?? null;
     }
     catch (err) {
       return null;
     }
-  };
+  }, []);
 
 
-  const isTokenAboutToExpire = (token: string): boolean => {
+  const isTokenAboutToExpire = useCallback((token: string): boolean => {
     const expirationTime = getTokenExpirationTime(token);
     if (!expirationTime) return false;
 
@@ -408,7 +418,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const timeToExpire = expirationTime - currentTime;
 
     return timeToExpire <= TOKEN_REFRESH_THRESHOLD && timeToExpire > 0;
-  }
+  }, [getTokenExpirationTime]);
+
+
+  const clearTimeouts = useCallback(() => {
+    if (sessionTimeoutRef.current) {
+      clearTimeout(sessionTimeoutRef.current);
+      sessionTimeoutRef.current = null;
+    }
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
+      refreshTimeoutRef.current = null;
+    }
+  }, [])
+
+  const handleSessionExpired = useCallback(() => {
+    clearTimeouts();
+    clearAllStorage();
+
+    setIsAuthenticated(false);
+    setUser(null);
+    setAccessToken(null);
+
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
+  }, [clearTimeouts, clearAllStorage]);
+
+
+
+  const checkSession = useCallback((): boolean => {
+    const token = getStorage(LOCAL_STORAGE_KEYS.TOKEN);
+    if (!token) return false;
+
+    const expired = isTokenExpired(token);
+    if (expired) {
+      handleSessionExpired();
+      toast.error('Your session has expired. Please log in again');
+      return false;
+    }
+
+    return true;
+  }, [getStorage, isTokenExpired, handleSessionExpired]);
+
 
 
   const refreshAccessToken = useCallback(async (): Promise<boolean> => {
@@ -435,16 +487,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return false;
       }
 
-      console.log(response)
       const data = response.data;
       const { accessToken: access } = data;
+      if (!accessToken) {
+        handleSessionExpired();
+        return false;
+      }
 
       const rememberMe = getStorage(LOCAL_STORAGE_KEYS.REMEMBER_ME) === 'true';
       setStorage(LOCAL_STORAGE_KEYS.TOKEN, access, rememberMe);
-
-      if (access) {
-        removeStorage(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
-      }
 
       setAccessToken(access);
       setupTokenRefreshTimeout(access);
@@ -460,56 +511,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     finally {
       refreshInProgressRef.current = false;
     }
-  }, [getStorage, setStorage]);
+  }, [getStorage, setStorage, handleSessionExpired]);
   
   
-  const handleSessionExpired = () => {
-    if (sessionTimeoutId) {
-      clearTimeout(sessionTimeoutId);
-      setSessionTimeoutId(null);
-    }
-
-    if (refreshTimeoutId) {
-      clearTimeout(refreshTimeoutId);
-      setRefreshTimeoutId(null);
-    }
-
-    removeStorage(LOCAL_STORAGE_KEYS.TOKEN);
-    removeStorage(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
-    removeStorage(LOCAL_STORAGE_KEYS.USER);
-    removeStorage(LOCAL_STORAGE_KEYS.IS_USER_EXIST);
-    removeStorage(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID);
-    removeStorage(LOCAL_STORAGE_KEYS.REFRESH_TOKEN_USER_ID);
-    removeStorage(LOCAL_STORAGE_KEYS.REMEMBER_ME);
-    
-    setIsAuthenticated(false);
-    setUser(null);
-    setAccessToken(null);
-
-    window.location.href = '/login';
-  };
-
-
-
-  const checkSession = (): boolean => {
-    const token = getStorage(LOCAL_STORAGE_KEYS.TOKEN);
-    if (!token) return false;
-
-    const expired = isTokenExpired(token);
-    if (expired) {
-      handleSessionExpired();
-      toast.error('Your session has expired. Please log in again');
-      return false;
-    }
-
-    return true;
-  };
 
 
 
   const setupTokenRefreshTimeout = useCallback((token: string) => {
-    if (refreshTimeoutId) {
-      clearTimeout(refreshTimeoutId);
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
     }
 
     const expirationTime = getTokenExpirationTime(token);
@@ -529,19 +539,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const timeout = setTimeout(async () => {
         refreshAccessToken();
       }, refreshTime);
-
-      setRefreshTimeoutId(timeout);
     }
     else if (timeToExpire <= TOKEN_REFRESH_THRESHOLD) {
       refreshAccessToken();
     }
-  }, [refreshTimeoutId, refreshAccessToken, getTokenExpirationTime]);
+  }, [refreshAccessToken, getTokenExpirationTime, handleSessionExpired]);
 
 
 
   const setupSessionTimeout = useCallback((token: string) => {
-    if (sessionTimeoutId) {
-      clearTimeout(sessionTimeoutId);
+    if (sessionTimeoutRef.current) {
+      clearTimeout(sessionTimeoutRef.current);
     }
 
     const expirationTime = getTokenExpirationTime(token);
@@ -556,21 +564,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return;
     }
 
-    // const warningTime = Math.max(0, (timeToExpire - 300) * 1000);
-
-    // if (warningTime > 0) {
-    //   setTimeout(() => {
-    //     toast.warning('Your session will expire in 5 minutes.');
-    //   }, warningTime);
-    // }
-
-    const expirationTimeout = setTimeout(() => {
+    sessionTimeoutRef.current = setTimeout(() => {
       toast.error('Your session has expired. Please log in again.');
       handleSessionExpired();
     }, timeToExpire * 1000);
-
-    setSessionTimeoutId(expirationTimeout);
-  }, [sessionTimeoutId]);
+  }, [getTokenExpirationTime, handleSessionExpired]);
 
 
   const login = useCallback((token: string, refreshToken: string, userData: any, rememberMe: boolean = false) => {
@@ -610,45 +608,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
 
   const logout = useCallback(() => {
-    if (sessionTimeoutId) {
-      clearTimeout(sessionTimeoutId);
-      setSessionTimeoutId(null);
-    }
-
-    if (refreshTimeoutId) {
-      clearTimeout(refreshTimeoutId);
-      setRefreshTimeoutId(null);
-    }
-
-    removeStorage(LOCAL_STORAGE_KEYS.TOKEN);
-    removeStorage(LOCAL_STORAGE_KEYS.REFRESH_TOKEN);
-    removeStorage(LOCAL_STORAGE_KEYS.USER);
-    removeStorage(LOCAL_STORAGE_KEYS.IS_USER_EXIST);
-    removeStorage(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID);
-    removeStorage(LOCAL_STORAGE_KEYS.REFRESH_TOKEN_USER_ID);
-    removeStorage(LOCAL_STORAGE_KEYS.REMEMBER_ME);
+    clearTimeouts();
+    clearAllStorage();
 
     setIsAuthenticated(false);
     setUser(null);
     setAccessToken(null);
 
     toast.success('Logged out successfully');
-  }, [sessionTimeoutId, refreshTimeoutId, removeStorage]);
+  }, [clearTimeouts, clearAllStorage]);
 
 
   useEffect(() => {
-    // Check if user is authenticated on mount
     const token = getStorage(LOCAL_STORAGE_KEYS.TOKEN);
     const userDataStr = getStorage(LOCAL_STORAGE_KEYS.USER);
-    const rememberMeStr = getStorage(LOCAL_STORAGE_KEYS.REMEMBER_ME);
 
     if (token && userDataStr) {
       try {
-        const expired = isTokenExpired(token);
-        const userData = JSON.parse(userDataStr);
-        const isRemembered = rememberMeStr === 'true';
+        if (!isTokenExpired(token)) {
+          const userData = JSON.parse(userDataStr);
 
-        if (!expired) {
           setUser(userData);
           setAccessToken(token);
           setIsAuthenticated(true);
@@ -666,12 +645,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     return () => {
-      if (sessionTimeoutId) {
-        clearTimeout(sessionTimeoutId);
-      }
-      if (refreshTimeoutId) {
-        clearTimeout(refreshTimeoutId);
-      }
+      clearTimeouts();
     };
   }, []);
 
