@@ -15,7 +15,6 @@ const ResetPassword = () => {
   const [showResetEmailModal, setShowResetEmailModal] = useState(false);
 
   const handleEmailSubmitted = (email: string) => {
-    console.log("Email submitted:", email);
     setDetails(prev => ({ ...prev, email }));
     setShowResetEmailModal(true);
     setCurrentStep(2);
@@ -37,7 +36,6 @@ const ResetPassword = () => {
 
   const handleResetPasswordEmailNext = () => {
     const message = `Password reset link sent successfully, please check your email`;
-    console.log(message);
   }
 
   return (

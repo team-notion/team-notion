@@ -518,14 +518,10 @@ const Bookings = () => {
   );
 
   const handleViewDetails = (booking: Booking) => {
-    console.log('View booking details:', booking);
-    // You can implement a modal or detail page view here
     toast.info(`Viewing details for booking ${booking.id}`);
   };
 
   const handleUpdateStatus = (bookingId: string, newStatus: string) => {
-    console.log(`Update booking ${bookingId} to ${newStatus}`);
-    // Implement status update logic here
     toast.success(`Booking ${bookingId} marked as ${newStatus}`);
     
     // Update local state
