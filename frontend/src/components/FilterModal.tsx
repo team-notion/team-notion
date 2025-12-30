@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
@@ -14,24 +14,28 @@ interface FilterModalProps {
     priceRanges: string[]
     months: string[]
   }) => void
+  availableCarTypes: string[]
+  availableModels: string[]
 }
 
 type FilterSection = "Car type" | "Model" | "Price range" | "Availability"
 
-export function FilterModal({ open, onOpenChange, onApplyFilters }: FilterModalProps) {
+export function FilterModal({ open, onOpenChange, onApplyFilters, availableCarTypes, availableModels }: FilterModalProps) {
   const [activeSection, setActiveSection] = useState<FilterSection>("Car type")
   const [selectedCarTypes, setSelectedCarTypes] = useState<string[]>([])
   const [selectedModels, setSelectedModels] = useState<string[]>([])
   const [selectedPriceRanges, setSelectedPriceRanges] = useState<string[]>([])
   const [selectedMonths, setSelectedMonths] = useState<string[]>([])
 
-  const carTypes = ["SUV", "Pick up", "Sports car", "Sedan"]
-  const models = ["Nissan", "Honda", "Elantra", "Corolla", "Infiniti", "Chevy", "BMw", "Mazda", "Cayman", "4MATIC"]
+  const carTypes = availableCarTypes.length > 0 ? availableCarTypes : []
+  const models = availableModels.length > 0 ? availableModels : []
+
   const priceRanges = [
     "₦ 10,000 - ₦ 20,000/day",
     "₦ 20,000 - ₦ 40,000/day",
     "₦ 40,000 - ₦ 80,000/day",
     "₦ 80,000 - ₦ 120,000/day",
+    "above ₦ 120,000+/day",
   ]
   const months = [
     "January",
@@ -47,6 +51,17 @@ export function FilterModal({ open, onOpenChange, onApplyFilters }: FilterModalP
     "November",
     "December",
   ]
+
+
+  useEffect(() => {
+    if (!open) {
+      setSelectedCarTypes([])
+      setSelectedModels([])
+      setSelectedPriceRanges([])
+      setSelectedMonths([])
+    }
+  })
+
 
   const toggleSelection = (item: string, section: FilterSection) => {
     switch (section) {
@@ -80,6 +95,22 @@ export function FilterModal({ open, onOpenChange, onApplyFilters }: FilterModalP
     }
   }
 
+
+  const getSelectionCount = (section: FilterSection) => {
+    switch (section) {
+      case "Car type":
+        return selectedCarTypes.length
+      case "Model":
+        return selectedModels.length
+      case "Price range":
+        return selectedPriceRanges.length
+      case "Availability":
+        return selectedMonths.length
+      default:
+        return 0
+    }
+  }
+
   const renderContent = () => {
     let items: string[] = []
     switch (activeSection) {
@@ -96,6 +127,19 @@ export function FilterModal({ open, onOpenChange, onApplyFilters }: FilterModalP
         items = months
         break
     }
+
+
+    if (items.length === 0) {
+      return (
+        <div className="flex-1 p-2 lg:p-6">
+          <h3 className="text-xl font-semibold text-[#0D183A] mb-6">{activeSection}</h3>
+          <div className="flex items-center justify-center h-40">
+            <p className="text-gray-500">No {activeSection.toLowerCase()} available</p>
+          </div>
+        </div>
+      )
+    }
+
 
     return (
       <div className="flex-1 p-2 lg:p-6">
@@ -129,6 +173,15 @@ export function FilterModal({ open, onOpenChange, onApplyFilters }: FilterModalP
     onOpenChange(false)
   }
 
+  const handleClearAll = () => {
+    setSelectedCarTypes([])
+    setSelectedModels([])
+    setSelectedPriceRanges([])
+    setSelectedMonths([])
+  }
+
+  const totalSelections = selectedCarTypes.length + selectedModels.length + selectedPriceRanges.length + selectedMonths.length
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -138,7 +191,12 @@ export function FilterModal({ open, onOpenChange, onApplyFilters }: FilterModalP
         showCloseButton={false}
       >
         <div className="flex items-center justify-between p-3 md:p-6 border-b">
-          <DialogTitle className="text-xl font-medium text-[#0D183A]">Find whats best for you</DialogTitle>
+          <DialogTitle className="text-xl font-medium text-[#0D183A]">
+            Find whats best for you
+            {totalSelections > 0 && (
+              <span className="ml-2 text-sm text-gray-500">({totalSelections} selected)</span>
+            )}
+          </DialogTitle>
           <button
             onClick={() => onOpenChange(false)}
             className="text-[#FE130A] border border-[#FE130A] bg-white rounded-2xl p-1 font-bold cursor-pointer hover:text-red-600 transition-colors"
@@ -150,32 +208,45 @@ export function FilterModal({ open, onOpenChange, onApplyFilters }: FilterModalP
         <div className="flex min-h-[400px]">
           {/* Sidebar */}
           <div className="w-40 lg:w-48 bg-[#E8E4F3] p-2 md:p-4 space-y-1">
-            {(["Car type", "Model", "Price range", "Availability"] as FilterSection[]).map((section) => (
-              <button
-                key={section}
-                onClick={() => setActiveSection(section)}
-                className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors relative cursor-pointer ${
-                  activeSection === section ? "bg-white text-[#0D183A]" : "text-[#0D183A]"
-                }`}
-              >
-                {activeSection === section && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#F97316] rounded-l-md" />
-                )}
-                {section}
-              </button>
-            ))}
+            {(["Car type", "Model", "Price range", "Availability"] as FilterSection[]).map((section) => {
+              const count = getSelectionCount(section)
+              return (
+                <button
+                  key={section}
+                  onClick={() => setActiveSection(section)}
+                  className={`w-full text-left px-4 py-3 rounded-md text-sm font-medium transition-colors relative cursor-pointer ${
+                    activeSection === section ? "bg-white text-[#0D183A]" : "text-[#0D183A]"
+                  }`}
+                >
+                  {activeSection === section && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#F97316] rounded-l-md" />
+                  )}
+                  <div className="flex items-center justify-between">
+                    <span>{section}</span>
+                    {count > 0 && (
+                      <span className="text-xs bg-[#F97316] text-white rounded-full px-2 py-0.5">
+                        {count}
+                      </span>
+                    )}
+                  </div>
+                </button>
+              )
+          })}
           </div>
 
           {renderContent()}
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end p-3 border-t">
-          <Button
-            onClick={handleResults}
-            className="bg-[#F97316] hover:bg-orange-600 text-white px-10 py-5 lg:py-6 rounded-md font-medium cursor-pointer"
-          >
-            Results
+        <div className="flex justify-between items-center p-3 border-t">
+          {totalSelections > 0 && (
+            <Button onClick={handleClearAll} variant="ghost" className="text-[#FE130A] hover:text-red-600 hover:bg-red-50" >
+              Clear all
+            </Button>
+          )}
+          <div className="flex-1" />
+          <Button onClick={handleResults} className="bg-[#F97316] hover:bg-orange-600 text-white px-10 py-5 lg:py-6 rounded-md font-medium cursor-pointer" >
+            Results {totalSelections > 0 && `(${totalSelections})`}
           </Button>
         </div>
       </DialogContent>
