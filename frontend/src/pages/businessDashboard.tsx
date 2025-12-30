@@ -440,7 +440,7 @@ const BusinessDashboard = () => {
                   title: "TODAY'S REVENUE",
                   value: `₦${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                   change: {
-                    type: revenuePercentage ? 0 ? "increase" : "decrease" : '',
+                    type: revenuePercentage > 0 ? "increase" : revenuePercentage < 0 ? "decrease" : '',
                     value: revenuePercentage,
                     period: "of bookings confirmed",
                   },
@@ -453,7 +453,7 @@ const BusinessDashboard = () => {
                   title: "RENTED CARS",
                   value: `${rentedCars}`,
                   change: {
-                    type: rentedCars ? 0 ? "increase" : 'decrease' : '',
+                    type: rentedCars > 0 ? "increase" : rentedCars < 0 ? "decrease" : '',
                     value: totalCars > 0 ? Math.round((rentedCars / totalCars) * 100) : 0,
                     period: "this week",
                   },
