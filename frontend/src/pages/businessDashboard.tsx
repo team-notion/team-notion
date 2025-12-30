@@ -64,13 +64,28 @@ const BusinessDashboard = () => {
   const [rentedCars, setRentedCars] = useState(0);
   const [totalBookings, setTotalBookings] = useState(0);
   const [availableCars, setAvailableCars] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [isAddCarModalOpen, setIsAddCarModalOpen] = useState(false);
   const [pagination, setPagination] = useState({
     pageIndex: 0,
     pageSize: 20,
-  })
+  });
+
+
+  useEffect(() => {
+    if (bookings && bookings.length > 0) {
+      const revenue = bookings.reduce((total, booking) => {
+        if (booking.has_paid_deposit) {
+          return total + Number(booking.payment || 0);
+        }
+        return total;
+      }, 0);
+    
+      setTotalRevenue(revenue);
+    }
+  }, [bookings]);
 
 
   const fetchCars = async () => {
@@ -416,7 +431,7 @@ const BusinessDashboard = () => {
                 data={{
                   type: "revenue",
                   title: "TODAY'S REVENUE",
-                  value: "$2,400",
+                  value: `₦${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                   change: {
                     type: "increase",
                     value: 10,
@@ -429,7 +444,7 @@ const BusinessDashboard = () => {
                 data={{
                   type: "rented cars",
                   title: "RENTED CARS",
-                  value: `${rentedCars}`,
+                  value: `₦{rentedCars}`,
                   change: {
                     type: rentedCars ? 0 ? "increase" : 'decrease' : '',
                     value: totalCars > 0 ? Math.round((rentedCars / totalCars) * 100) : 0,
@@ -442,7 +457,7 @@ const BusinessDashboard = () => {
                 data={{
                   type: "available cars",
                   title: "AVAILABLE CARS",
-                  value: `${availableCars}`,
+                  value: `₦{availableCars}`,
                   change: {
                     type: "",
                     value: totalCars > 0 ? Math.round((availableCars / totalCars) * 100) : 0,
