@@ -40,7 +40,7 @@ const Signup = () => {
 
   const handleCustomerSignupNext = (email: string, formData: any) => {
     setDetails(prev => ({ 
-      ...prev, 
+      ...prev,
       email,
       ...formData 
     }));
