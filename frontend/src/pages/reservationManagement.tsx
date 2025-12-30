@@ -61,6 +61,7 @@ const ReservationManagement = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [confirmedBookings, setConfirmedBookings] = useState(0);
   const [pendingBookings, setPendingBookings] = useState(0);
+  const [totalRevenue, setTotalRevenue] = useState(0);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -78,6 +79,22 @@ const ReservationManagement = () => {
     pageIndex: 0,
     pageSize: 20,
   })
+
+
+
+  useEffect(() => {
+    if (bookings && bookings.length > 0) {
+      const revenue = bookings.reduce((total, booking) => {
+        if (booking.has_paid_deposit) {
+          return total + Number(booking.payment || 0);
+        }
+        return total;
+      }, 0);
+    
+      setTotalRevenue(revenue);
+    }
+  }, [bookings]);
+
 
 
   const handleSearchChange = (value: string) => {
@@ -612,7 +629,7 @@ const ReservationManagement = () => {
           )
           : (
             <>
-              <CarInventoryCard data={{ title: "REVENUE", value: "$2,400", type: "revenue" }} />
+              <CarInventoryCard data={{ title: "REVENUE", value: `₦${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, type: "revenue" }} />
               <CarInventoryCard data={{ title: "TOTAL RESERVATIONS", value: `${totalBookings}`, type: "total reservations" }} />
               <CarInventoryCard data={{ title: "CONFIRMED BOOKINGS", value: `${confirmedBookings}`, type: "confirmed bookings" }} />
               <CarInventoryCard data={{ title: "PENDING BOOKINGS", value: `${pendingBookings}`, type: "pending bookings" }} />
