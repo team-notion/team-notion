@@ -72,87 +72,87 @@ const BusinessDashboard = () => {
     pageSize: 20,
   })
 
-  useEffect(() => {
-    const fetchCars = async () => {
-      setLoading(true);
 
-      try {
-        const userId = user?.id || localStorage.getItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID);
+  const fetchCars = async () => {
+    setLoading(true);
 
-        const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_ALL_CARS_BY_OWNER_ID}${userId}`);
+    try {
+      const userId = user?.id || localStorage.getItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID) || sessionStorage.getItem(LOCAL_STORAGE_KEYS.USER_BIO_DATA_ID);
 
-        if (resp.status === 200) {
-          const cars = resp?.data?.results;
-  
-          if (cars && Array.isArray(cars)) {
-            const totalCount = resp?.data?.count;
-            
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+      const resp = await getData(`${CONFIG.BASE_URL}${apiEndpoints.GET_ALL_CARS_BY_OWNER_ID}${userId}`);
 
-            // Count cars that are currently rented (today falls within reserved_ranges)
-            const rentedCount = cars.filter((car: any) => {
-              if (!car.reserved_ranges || car.reserved_ranges.length === 0) {
-                return false;
-              }
+      if (resp.status === 200) {
+        const cars = resp?.data?.results;
 
-              // Check if today falls within any reservation range
-              return car.reserved_ranges.some((range: any) => {
-                const fromDate = new Date(range.from);
-                const toDate = new Date(range.to);
-                fromDate.setHours(0, 0, 0, 0);
-                toDate.setHours(0, 0, 0, 0);
+        if (cars && Array.isArray(cars)) {
+          const totalCount = resp?.data?.count;
+          
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
 
-                return today >= fromDate && today <= toDate;
-              });
-            }).length;
-
-            // Count available cars (no current reservations)
-            const availableCount = cars.filter((car: any) => {
-              if (!car.reserved_ranges || car.reserved_ranges.length === 0) {
-                return true; // No reservations means available
-              }
-
-              // Check if today does NOT fall within any reservation range
-              return !car.reserved_ranges.some((range: any) => {
-                const fromDate = new Date(range.from);
-                const toDate = new Date(range.to);
-                fromDate.setHours(0, 0, 0, 0);
-                toDate.setHours(0, 0, 0, 0);
-
-                return today >= fromDate && today <= toDate;
-              });
-            }).length;
-
-            setTotalCars(totalCount);
-            setRentedCars(rentedCount);
-            setAvailableCars(availableCount);
-          }
-        }
-      }
-      catch (err: any) {
-        const errData = err?.response?.data;
-
-        if (errData && typeof errData === 'object') {
-          Object.keys(errData).forEach((key) => {
-            if (Array.isArray(errData[key]) && errData[key].length > 0) {
-              errData[key].forEach((message: string) => {
-                toast.error(message);
-              });
+          // Count cars that are currently rented (today falls within reserved_ranges)
+          const rentedCount = cars.filter((car: any) => {
+            if (!car.reserved_ranges || car.reserved_ranges.length === 0) {
+              return false;
             }
-            else {
-              toast.error(errData[key]);
+
+            // Check if today falls within any reservation range
+            return car.reserved_ranges.some((range: any) => {
+              const fromDate = new Date(range.from);
+              const toDate = new Date(range.to);
+              fromDate.setHours(0, 0, 0, 0);
+              toDate.setHours(0, 0, 0, 0);
+
+              return today >= fromDate && today <= toDate;
+            });
+          }).length;
+
+          // Count available cars (no current reservations)
+          const availableCount = cars.filter((car: any) => {
+            if (!car.reserved_ranges || car.reserved_ranges.length === 0) {
+              return true; // No reservations means available
             }
-          });
+
+            // Check if today does NOT fall within any reservation range
+            return !car.reserved_ranges.some((range: any) => {
+              const fromDate = new Date(range.from);
+              const toDate = new Date(range.to);
+              fromDate.setHours(0, 0, 0, 0);
+              toDate.setHours(0, 0, 0, 0);
+
+              return today >= fromDate && today <= toDate;
+            });
+          }).length;
+
+          setTotalCars(totalCount);
+          setRentedCars(rentedCount);
+          setAvailableCars(availableCount);
         }
-      }
-      finally {
-        setLoading(false);
       }
     }
+    catch (err: any) {
+      const errData = err?.response?.data;
+
+      if (errData && typeof errData === 'object') {
+        Object.keys(errData).forEach((key) => {
+          if (Array.isArray(errData[key]) && errData[key].length > 0) {
+            errData[key].forEach((message: string) => {
+              toast.error(message);
+            });
+          }
+          else {
+            toast.error(errData[key]);
+          }
+        });
+      }
+    }
+    finally {
+      setLoading(false);
+    }
+  }
 
 
-    
+  useEffect(() => {    
     fetchCars();
   }, [user])
   
@@ -290,6 +290,7 @@ const BusinessDashboard = () => {
 
   const handleAddCarConfirm = () => {
     setIsAddCarModalOpen(false);
+    
   }
 
   const columns = useMemo<ColumnDef<Booking>[]>(
@@ -457,7 +458,7 @@ const BusinessDashboard = () => {
 
       <TransactionTable title='Recent Bookings' showButton={true} buttonText="View all booking" columns={columns} data={bookings} pageCount={totalPages} pageSize={ITEMS_PER_PAGE} pageIndex={pagination.pageIndex} isLoading={bookingsLoading} onPaginationChange={setPagination} totalItems={totalBookings} emptyStateTitle="No bookings yet" emptyStateDescription="You don't have any bookings yet. When customers make reservations, they'll appear here." onButtonClick={() => navigate('/reservation-management')} />
 
-      <AddCarModal isOpen={isAddCarModalOpen} onClose={() => setIsAddCarModalOpen(false)} onConfirm={handleAddCarConfirm} />
+      <AddCarModal isOpen={isAddCarModalOpen} onClose={() => setIsAddCarModalOpen(false)} onConfirm={() => { handleAddCarConfirm; fetchCars(); }} />
     </div>
   )
 }
