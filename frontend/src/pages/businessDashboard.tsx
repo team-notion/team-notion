@@ -444,7 +444,7 @@ const BusinessDashboard = () => {
                 data={{
                   type: "rented cars",
                   title: "RENTED CARS",
-                  value: `₦{rentedCars}`,
+                  value: `${rentedCars}`,
                   change: {
                     type: rentedCars ? 0 ? "increase" : 'decrease' : '',
                     value: totalCars > 0 ? Math.round((rentedCars / totalCars) * 100) : 0,
@@ -457,7 +457,7 @@ const BusinessDashboard = () => {
                 data={{
                   type: "available cars",
                   title: "AVAILABLE CARS",
-                  value: `₦{availableCars}`,
+                  value: `${availableCars}`,
                   change: {
                     type: "",
                     value: totalCars > 0 ? Math.round((availableCars / totalCars) * 100) : 0,
