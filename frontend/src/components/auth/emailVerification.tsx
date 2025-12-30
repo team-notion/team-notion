@@ -56,8 +56,6 @@ const EmailVerification = () => {
     verifyEmail();
   }, [uid, token, navigate]);
 
-  console.log(status);
-
   return (
     // <>
     //   <img src={EmailIcon} alt="Email Sent" className="mx-auto mb-4 w-16 h-16" />

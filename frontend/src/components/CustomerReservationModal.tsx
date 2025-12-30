@@ -124,8 +124,6 @@ const CustomerReservationModal = ({ isOpen, onClose, onConfirm, car }: Reservati
         headers: { Authorization: `Bearer ${token}` }
       })
 
-      console.log(reservationResponse);
-
       const reservationResp = reservationResponse.data;
 
       if (reservationResponse.status === 200 || reservationResponse.status === 201) {

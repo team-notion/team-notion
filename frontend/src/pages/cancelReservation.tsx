@@ -56,8 +56,6 @@ const CancelReservation = () => {
     confirmCancellation();
   }, [token, navigate]);
 
-  console.log(status);
-
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
       <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">

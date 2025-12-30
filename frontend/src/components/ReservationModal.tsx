@@ -370,8 +370,6 @@ export function ReservationModal({
         guest_phone: data.phone,
         pickup_location: data.pickupLocation,
       };
-
-      console.log("Guest reservation payload:", reservationPayload);
       
       onNext(reservationPayload);
       

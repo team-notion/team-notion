@@ -36,7 +36,6 @@ const Signup = () => {
     }));
     setCurrentStep(3);
     // navigate('/login');
-    console.log("Business signup completed, moving to next step");
   }
 
   const handleCustomerSignupNext = (email: string, formData: any) => {
@@ -47,13 +46,11 @@ const Signup = () => {
     }));
     setCurrentStep(3);
     // navigate('/login');
-    console.log("Customer signup completed, moving to next step");
   }
 
   const handleVerifyEmailNext = () => {
     const userRole = userType === "owner" ? "Business" : "Customer";
     const message = `${userRole} email verified, moving next to landing page`;
-    console.log(message);
     // alert(message);
   }
   

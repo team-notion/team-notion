@@ -224,8 +224,6 @@ const ProfileManagement = () => {
       phone_no: phone_no,
       country_code: country_code || prev.country_code 
     }));
-
-    console.log("Phone changed:", `${phone_no}, Country code: ${country_code}`);
   };
 
 
@@ -320,7 +318,7 @@ const ProfileManagement = () => {
 
                 return (
                   <label key={index}  htmlFor={inputId} className="h-52 border-2 border-dashed border-gray-300 rounded-lg p-8 flex flex-col items-center justify-center hover:border-gray-300 transition cursor-pointer" >
-                    <input type="file" id={inputId} accept="image/*" className="hidden object-cover" onChange={(e) => { const file = e.target.files?.[0]; if (file) { console.log(`Photo ${index} selected:`, file.name); } }} />
+                    <input type="file" id={inputId} accept="image/*" className="hidden object-cover" onChange={(e) => { const file = e.target.files?.[0]; } } />
                     <Upload className="w-8 h-8 text-gray-400 mb-2" />
 
                     <p className="text-sm text-gray-600">Upload an image</p>

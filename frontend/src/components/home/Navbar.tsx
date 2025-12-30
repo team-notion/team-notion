@@ -51,7 +51,6 @@ const Navbar = () => {
 
 
   const getUserInitials = () => {
-    console.log(user)
     if (!user) return 'U';
 
     if (user.username) {

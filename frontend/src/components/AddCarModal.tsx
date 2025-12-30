@@ -317,9 +317,6 @@ const AddCarModal = ({ isOpen, onClose, onConfirm, carData = null, mode = 'add' 
         features: data.features,
       };
 
-      console.log(payload);
-      console.log(carData)
-
       if (isEditMode && carData) {
         const updateEndpoint = apiEndpoints.UPDATE_CAR.replace(':id', carData.id.toString());
         

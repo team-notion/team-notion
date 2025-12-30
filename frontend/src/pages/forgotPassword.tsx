@@ -35,7 +35,6 @@ const ForgotPassword = () => {
 
   const handleResetPasswordEmailNext = () => {
     const message = `Password reset link sent successfully, please check your email`;
-    console.log(message);
   }
 
   return (

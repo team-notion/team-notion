@@ -132,8 +132,6 @@ const BusinessProfile = () => {
       phone_no: phone_no,
       country_code: country_code || prev.country_code 
     }));
-
-    console.log("Phone changed:", `${phone_no}, Country code: ${country_code}`);
   };
 
   if (loading || isSaving) {
