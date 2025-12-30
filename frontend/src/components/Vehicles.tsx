@@ -373,11 +373,11 @@ function VehicleCard({ vehicle }: { vehicle: Car }) {
       </div>
 
       <CardHeader className="px-2 xl:px-4">
-        <CardTitle className="mb-1 text-lg font-semibold text-[#0D183A]">
+        <CardTitle className="text-lg font-semibold text-[#0D183A]">
           {`${vehicle.year_of_manufacture} ${vehicle.car_type} ${vehicle.model}`}
         </CardTitle>
       </CardHeader>
-      <CardContent className="px-2 xl:px-4">
+      <CardContent className="px-2 xl:px-4 flex flex-col gap-2">
         <div className="flex items-center gap-1">
           <span className="text-sm text-gray-600">Mileage: </span>
           <span className="text-sm text-gray-600">{vehicle.mileage?.toLocaleString()} miles</span>
@@ -387,7 +387,7 @@ function VehicleCard({ vehicle }: { vehicle: Car }) {
           <span className="text-sm text-gray-600">{vehicle.location}</span>
         </div>
 
-        <div className="mb-4 flex items-center gap-1">
+        {/* <div className="mb-4 flex items-center gap-1">
           <span className="text-sm font-semibold text-gray-900">{rating}</span>
           {[...Array(5)].map((_, i) => (
             <Star
@@ -401,7 +401,7 @@ function VehicleCard({ vehicle }: { vehicle: Car }) {
               }`}
             />
           ))}
-        </div>
+        </div> */}
 
         <div className="flex flex-wrap gap-1 items-start md:items-center justify-between mt-0.5">
           <div className="flex items-center">
