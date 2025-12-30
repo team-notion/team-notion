@@ -54,6 +54,7 @@ const Bookings = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [totalBookings, setTotalBookings] = useState(0);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [activeBookings, setActiveBookings] = useState(0);
   const [loading, setLoading] = useState(true);
   const [confirmedBookings, setConfirmedBookings] = useState(0);
   const [pendingBookings, setPendingBookings] = useState(0);
@@ -80,6 +81,25 @@ const Bookings = () => {
     newParams.set("page", page.toString());
     setSearchParams(newParams);
   };
+
+
+  useEffect(() => {
+    if (bookings && bookings.length > 0) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const activeCount = bookings.filter((booking) => {
+        const startDate = new Date(booking.reserved_from);
+        const endDate = new Date(booking.reserved_to);
+        startDate.setHours(0, 0, 0, 0);
+        endDate.setHours(0, 0, 0, 0);
+
+        return booking.has_paid_deposit && today >= startDate && today <= endDate;
+      }).length;
+
+      setActiveBookings(activeCount);
+    }
+  }, [bookings]);
 
 
   useEffect(() => {
@@ -568,7 +588,7 @@ const Bookings = () => {
               <div className="bg-white p-4 rounded-lg border border-gray-200">
                 <h3 className="text-sm font-medium text-gray-600">Active</h3>
                 <p className="text-2xl font-bold text-green-600">
-                  {bookings.filter(b => b.status === 'In Progress').length}
+                  {activeBookings}
                 </p>
               </div>
               <div className="bg-white p-4 rounded-lg border border-gray-200">
