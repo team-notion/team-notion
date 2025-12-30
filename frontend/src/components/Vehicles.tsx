@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ChevronLeft, ChevronRight, GitPullRequestDraft, SlidersHorizontal, Star, } from "lucide-react"
+import { ChevronLeft, ChevronRight, GitPullRequestDraft, ImageOff, SlidersHorizontal, Star, } from "lucide-react"
 import { FilterModal } from "./FilterModal"
 import { useNavigate } from "react-router"
 import { Skeleton } from "./ui/skeleton"
@@ -10,6 +10,7 @@ import { getData } from "./lib/apiMethods"
 import CONFIG from "./utils/config"
 import { apiEndpoints } from "./lib/apiEndpoints"
 import { toast } from "sonner"
+import { useNumberFormatter } from "./utils/formatters"
 
 interface CarPhoto {
   id: number;
@@ -281,29 +282,110 @@ function CategorySection({ title, vehicles }: { title: string; vehicles: Car[] }
 
 function VehicleCard({ vehicle }: { vehicle: Car }) {
   const navigate = useNavigate();
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
+  const formatPrice = useNumberFormatter({ decimals: 2 });
+
+  const images = (vehicle?.photos || [])
+    .map((photo) => {
+      const url = photo.image_url || photo.photo;
+      if (url && (url.startsWith("http://") || url.startsWith("https://"))) {
+        return url;
+      }
+      return null;
+    })
+    .filter((url): url is string => url !== null);
+
+  const getCurrentImage = () => {
+    if (images.length === 0) return null;
+    // ensure index is within bounds
+    const idx = images.length ? currentImageIndex % images.length : 0;
+    return images[idx];
+  };
+
+  const handleImageError = (index: number) => {
+    const newErrors = new Set(imageErrors);
+    newErrors.add(index);
+    setImageErrors(newErrors);
+
+    // Try to find next valid image
+    for (let i = 0; i < images.length; i++) {
+      if (!newErrors.has(i)) {
+        setCurrentImageIndex(i);
+        return;
+      }
+    }
+  };
+
+  const goToPreviousImage = () => {
+    if (images.length === 0) return;
+    setCurrentImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const goToNextImage = () => {
+    if (images.length === 0) return;
+    setCurrentImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  const goToImage = (index: number) => {
+    if (index >= 0 && index < images.length && !imageErrors.has(index)) {
+      setCurrentImageIndex(index);
+    }
+  };
+
+  const currentImage = getCurrentImage();
+  const hasMultipleImages = images.length > 1;
 
   const rating = 4.5;
 
+
   return (
-    <Card className="overflow-hidden rounded-2xl border-0 bg-white shadow-sm transition-shadow hover:shadow-md">
-      <div className="aspect-[4/3]">
-        <img
-          src={vehicle.photos[0]?.image_url || "/placeholder.svg"}
-          alt={`${vehicle.year_of_manufacture} ${vehicle.car_type} ${vehicle.model}`}
-          className="h-full w-full object-contain"
-          />
-        {!vehicle.is_available && (
-          <div className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
-            Not Available
-          </div>
+    <Card className="w-full rounded-2xl hover:shadow-md overflow-hidden hover:scale-[1.02] transition-transform duration-200 h-auto py-0 pb-3 ease-in-out">
+      <div className='relative overflow-hidden bg-gray-200 h-[12.5rem] flex-shrink-0'>
+        <div className="relative w-full h-full flex items-center justify-center bg-gray-100">
+          {currentImage ? (
+            <img src={currentImage} alt={`${vehicle.year_of_manufacture} ${vehicle.car_type} ${vehicle.model}`} className="h-full w-full object-cover" loading="lazy" onError={() => handleImageError(currentImageIndex)} crossOrigin="anonymous" />
+          )
+          : 
+          (
+            <div className="flex flex-col items-center justify-center h-full bg-gray-100">
+              <ImageOff className="w-12 h-12 text-gray-400 mb-2" />
+              <p className="text-sm text-gray-500">No images available</p>
+            </div>
+          )}
+          {!vehicle.is_available && (
+            <div className="absolute top-2 right-2 bg-red-500 text-white px-3 py-1 rounded-full text-xs font-semibold">
+              Not Available
+            </div>
+          )}
+        </div>
+
+        {hasMultipleImages && (
+          <>
+            <button onClick={goToPreviousImage} className="absolute left-1.5 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black p-2 rounded-full group-hover:opacity-100 transition-opacity duration-200 z-20" aria-label="Previous image" >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button onClick={goToNextImage} className="absolute right-1.5 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white text-black p-2 rounded-full group-hover:opacity-100 transition-opacity duration-200 z-20" aria-label="Next image" >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </>
         )}
       </div>
 
-      <div className="p-5">
-        <h3 className="mb-1 text-lg font-bold text-[#0D183A]">
+      <CardHeader className="px-2 xl:px-4">
+        <CardTitle className="mb-1 text-lg font-semibold text-[#0D183A]">
           {`${vehicle.year_of_manufacture} ${vehicle.car_type} ${vehicle.model}`}
-        </h3>
-        <p className="mb-3 text-sm text-gray-600">Mileage: {vehicle.mileage?.toLocaleString()} km * {vehicle.location}</p>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="px-2 xl:px-4">
+        <div className="flex items-center gap-1">
+          <span className="text-sm text-gray-600">Mileage: </span>
+          <span className="text-sm text-gray-600">{vehicle.mileage?.toLocaleString()} miles</span>
+        </div>
+        <div className="flex items-center gap-1">
+          <span className="text-sm text-gray-600">Location: </span>
+          <span className="text-sm text-gray-600">{vehicle.location}</span>
+        </div>
 
         <div className="mb-4 flex items-center gap-1">
           <span className="text-sm font-semibold text-gray-900">{rating}</span>
@@ -321,16 +403,16 @@ function VehicleCard({ vehicle }: { vehicle: Car }) {
           ))}
         </div>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-xl font-bold text-gray-900">₦ {vehicle.daily_rental_price.toLocaleString()}</span>
-            <span className="text-sm text-gray-600">/day</span>
+        <div className="flex flex-wrap gap-1 items-start md:items-center justify-between mt-0.5">
+          <div className="flex items-center">
+            <span className="text-sm font-semibold text-gray-600">₦ {formatPrice(vehicle.daily_rental_price)}</span>
+            <span className="text-sm text-gray-600 font-semibold">/day</span>
           </div>
-          <Button onClick={() => { navigate("/reservation") }} className="rounded-lg bg-orange-500 px-6 py-2 font-semibold text-white hover:bg-orange-600 cursor-pointer">
+          <Button onClick={() => navigate(`/reservation/${vehicle.id}`)} className="rounded-lg bg-orange-500 px-6 py-2 font-semibold text-white hover:bg-orange-600 cursor-pointer">
             Rent Now
           </Button>
         </div>
-      </div>
+      </CardContent>
     </Card>
   )
 }
