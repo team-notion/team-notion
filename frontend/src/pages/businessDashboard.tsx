@@ -63,6 +63,7 @@ const BusinessDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [rentedCars, setRentedCars] = useState(0);
   const [totalBookings, setTotalBookings] = useState(0);
+  const [revenuePercentage, setRevenuePercentage] = useState(0);
   const [availableCars, setAvailableCars] = useState(0);
   const [totalRevenue, setTotalRevenue] = useState(0);
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -82,7 +83,13 @@ const BusinessDashboard = () => {
         }
         return total;
       }, 0);
-    
+
+      const confirmedBookings = bookings.filter(b => b.has_paid_deposit).length;
+      const percentageConfirmed = totalBookings > 0 
+        ? Math.round((confirmedBookings / totalBookings) * 100) 
+        : 0;
+
+      setRevenuePercentage(percentageConfirmed);
       setTotalRevenue(revenue);
     }
   }, [bookings]);
@@ -433,9 +440,9 @@ const BusinessDashboard = () => {
                   title: "TODAY'S REVENUE",
                   value: `₦${totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
                   change: {
-                    type: "increase",
-                    value: 10,
-                    period: "",
+                    type: revenuePercentage ? 0 ? "increase" : "decrease" : '',
+                    value: revenuePercentage,
+                    period: "of bookings confirmed",
                   },
                 }}
               />
