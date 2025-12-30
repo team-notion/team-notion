@@ -124,8 +124,8 @@ const VehicleCard = ({ data, onEdit, onDelete }: VehicleCardProps) => {
   const hasMultipleImages = images.length > 1;
 
   return (
-    <Card className="w-full rounded-2xl hover:shadow-md overflow-hidden hover:scale-[1.02] transition-transform duration-200 flex flex-col h-full pt-0 pb-2 gap-2 ease-in-out">
-      <div className="relative overflow-hidden bg-gray-200 aspect-[4/3] sm:aspect-video md:aspect-[16/10] lg:aspect-video flex-shrink-0">
+    <Card className="w-full rounded-2xl hover:shadow-md overflow-hidden hover:scale-[1.02] min-w-[300px] sm:min-w-[350px] transition-transform duration-200 flex flex-col h-full pt-0 pb-2 gap-2 ease-in-out">
+      <div className="relative overflow-hidden bg-gray-200 h-[12.5rem] flex-shrink-0">
         <div className="relative w-full h-full flex items-center justify-center bg-gray-100">
           {currentImage ? (
             <img src={currentImage} alt={data?.car_type} className="w-full h-full object-cover" loading="lazy" onError={() => handleImageError(currentImageIndex)} crossOrigin="anonymous" />
