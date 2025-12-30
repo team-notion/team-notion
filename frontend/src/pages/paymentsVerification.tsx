@@ -1,6 +1,6 @@
 // PaymentVerification.jsx
 import { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { getData } from '@/components/lib/apiMethods';
 import { toast } from 'sonner';
 import { apiEndpoints } from '@/components/lib/apiEndpoints';
@@ -12,7 +12,6 @@ import { useAuth } from '@/components/lib/authContext';
 const PaymentVerification = () => {
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const [verifying, setVerifying] = useState(true);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -28,10 +27,10 @@ const PaymentVerification = () => {
         if (!trxref || !reference) {
           toast.error('Payment information not found');
           if (user?.userType === 'business' || user?.userType === 'owner') {
-            navigate('/reservation-management');
+            window.location.href = '/reservation-management';
           }
           else {
-            navigate('/bookings')
+            window.location.href = '/bookings'
           }
           return;
         }
@@ -52,10 +51,10 @@ const PaymentVerification = () => {
           setVerifying(false);
           setTimeout(() => {
             if (user?.userType === 'business' || user?.userType === 'owner') {
-              navigate('/reservation-management');
+              window.location.href = '/reservation-management';
             }
             else {
-              navigate('/bookings')
+              window.location.href = '/bookings'
             }
           }, 5000);
         }
@@ -66,10 +65,10 @@ const PaymentVerification = () => {
           toast.error(resp?.message || 'Payment verification failed');
           setTimeout(() => {
             if (user?.userType === 'business' || user?.userType === 'owner') {
-              navigate('/reservation-management');
+              window.location.href = '/reservation-management';
             }
             else {
-              navigate('/bookings')
+              window.location.href = '/bookings'
             }
           }, 5000);
         }
@@ -97,10 +96,10 @@ const PaymentVerification = () => {
         }
         
         if (user?.userType === 'business' || user?.userType === 'owner') {
-          navigate('/reservation-management');
+          window.location.href = '/reservation-management';
         }
         else {
-          navigate('/bookings')
+          window.location.href = '/bookings'
         }
       }
       finally {

@@ -393,7 +393,7 @@ export default function GuestReservation() {
         <div className="mt-12 space-y-6">
           <AvailabilitySection reservedRanges={car.reserved_ranges} />
           <RentalTermsSection rentalTerms={car.rental_terms} />
-          <ReviewsSection />
+          {/* <ReviewsSection /> */}
         </div>
 r      </div>
 
